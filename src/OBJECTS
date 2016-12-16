@@ -1,0 +1,5 @@
+objects = \
+diffusion_matrix_class.o \
+main.o \
+matrix_class.o \
+sparse_matrix_class.o
