@@ -2,5 +2,6 @@ diffusion_matrix_class.o: sparse_matrix_class.o
 
 main.o: matrix_class.o
 main.o: sparse_matrix_class.o
+main.o: heat_laplacian_operator.o
 
 sparse_matrix_class.o: matrix_class.o
