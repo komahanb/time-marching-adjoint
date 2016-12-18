@@ -2,29 +2,30 @@
 
 !=====================================================================!
 ! Module implementing the Laplacian operator for heat equation
+! 
+! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================!
 
 module heat_laplacian_operator
 
   ! petsc modules
-
   use petscsys
   use petscmat
 
   implicit none
 
   private
-  public  :: init_laplacian, build_laplacian, destroy_laplacian
+  public  :: initialize, build, destroy
 
   type(integer) :: nx   ! maximum number of x cells
   type(integer) :: ny   ! maximum number of y cells
   type(integer) :: nz   ! maximum number of z cells
   type(integer) :: ng   ! maximum number of groups
   type(integer) :: ierr ! petsc error code
-
+  
   type :: laplacian_operator
 
-     type(Mat)            :: L        ! petsc matrix for heat laplacian operator
+     type(Mat)                  :: L        ! petsc matrix for heat laplacian operator
      type(integer)              :: n        ! dimensions of matrix
      type(integer)              :: nnz      ! max number of nonzeros
      type(integer)              :: localn   ! local size on proc
@@ -32,14 +33,14 @@ module heat_laplacian_operator
      type(integer), allocatable :: o_nnz(:) ! vector of off-diagonal preallocation
 
   end type laplacian_operator
-
+  
 contains
 
   !-------------------------------------------------------------------!
   ! Perform initialization tasks for the laplacian operator           !
   !-------------------------------------------------------------------!
   
-  subroutine init_laplacian(this)
+  subroutine initialize(this)
 
     type(laplacian_operator) :: this
 
@@ -55,13 +56,13 @@ contains
     call MatSetOption(this % L, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE, ierr)
     call MatSetOption(this % L, MAT_IGNORE_ZERO_ENTRIES, PETSC_TRUE, ierr)
 
-  end subroutine init_laplacian
+  end subroutine initialize
 
   !-------------------------------------------------------------------!
   ! Build the laplacian operator
   !-------------------------------------------------------------------!
 
-  subroutine build_laplacian(this)
+  subroutine build(this)
 
     type(laplacian_operator) :: this
 
@@ -106,17 +107,24 @@ contains
     ! print out operator to file
     call print_operator(this)
 
-  end subroutine build_laplacian
+  end subroutine build
 
   !-------------------------------------------------------------------!
   ! Destroy laplacian operator
   !-------------------------------------------------------------------!
 
-  subroutine destroy_laplacian(this)
+  subroutine destroy(this)
 
     type(laplacian_operator) :: this
     
-  end subroutine destroy_laplacian
+    ! deallocate matrix
+    call MatDestroy(this%L,ierr)
+
+    ! deallocate other parameters
+    if (allocated(this%d_nnz)) deallocate(this%d_nnz)
+    if (allocated(this%o_nnz)) deallocate(this%o_nnz)
+    
+  end subroutine destroy
 
   !-------------------------------------------------------------------!
   ! Determine the dimensions and number of nonzero entries in the mat
@@ -221,6 +229,8 @@ contains
 !!$
 !!$    end do ROWS
 
+    stop
+
   end subroutine preallocate_matrix
 
   !-------------------------------------------------------------------!
@@ -239,6 +249,8 @@ contains
     ! compute index
     matidx = g + ng*(i - 1) + ng*nx*(j - 1) + ng*nx*ny*(k - 1)
     
+    stop
+
   end subroutine indices_to_matrix
 
   !-------------------------------------------------------------------!
@@ -258,6 +270,8 @@ contains
     i = mod(irow,ng*nx)/ng + 1
     j = mod(irow,ng*nx*ny)/(ng*nx)+ 1
     k = mod(irow,ng*nx*ny*nz)/(ng*nx*ny) + 1 
+
+    stop
     
   end subroutine matrix_to_indices
 
