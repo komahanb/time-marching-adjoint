@@ -1,0 +1,45 @@
+# Compiled objects and modules
+*.log
+*.mod
+*.o
+*.out
+
+# Compiler python objects
+*.pyc
+
+# Documentation builds
+docs/build
+
+# CMFD executable
+cmfd
+
+# VIM backups
+*.swp
+
+# emacs backups
+*~
+*#*
+.#*
+
+# PETSC output files
+*.bin
+*.info
+fort*
+output
+
+# Matlab
+*.png
+*.m
+*.mat
+*.fig
+
+# CMake files
+CMake*
+tools
+
+# Inkscape source files
+*.svg
+
+# ignore doxygen folder and gh-pages
+doxygen
+gh-pages

@@ -1,7 +1,15 @@
-diffusion_matrix_class.o: sparse_matrix_class.o
+physics.o: function.o
+diffusion.o: physics.o
 
-main.o: matrix_class.o
-main.o: sparse_matrix_class.o
+global.o: clock.o diffusion.o
+
+main.o: constants.o
+main.o: global.o
+main.o: matrix.o
+main.o: sparse_matrix.o
 main.o: heat_laplacian_operator.o
 
-sparse_matrix_class.o: matrix_class.o
+diffusion_matrix.o: sparse_matrix.o
+sparse_matrix.o: matrix.o
+
+

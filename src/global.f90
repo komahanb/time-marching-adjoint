@@ -6,20 +6,23 @@
 
 module global
 
-  use header, only: heat_obj
-  use timing, only: timer
+  use diffusion_class, only: diffusion
+  use clock_class, only: clock
 
   implicit none
+
+  ! Make all variables static (even if the module is descoped the
+  ! values retain their values)
   save
 
   ! Main object
-  type(heat_obj) :: heat
+  type(diffusion) :: diff_obj
 
   ! Timing objects
-  type(timer) :: time_total ! timer for whole calculation
-  type(timer) :: time_mat   ! timer for mat building
-  type(timer) :: time_res   ! timer for res building
-  type(timer) :: time_lin   ! timer for linear solves
+  type(clock) :: clock_total ! clock for whole calculation
+  type(clock) :: clock_mat   ! clock for mat building
+  type(clock) :: clock_res   ! clock for res building
+  type(clock) :: clock_lin   ! clock for linear solves
 
   ! PETSc error code
   type(integer) :: ierr

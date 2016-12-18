@@ -1,6 +1,14 @@
 objects = \
-diffusion_matrix_class.o \
-main.o \
-matrix_class.o \
-sparse_matrix_class.o \
-heat_laplacian_operator.o
+clock.o \
+matrix.o \
+sparse_matrix.o \
+vector.o \
+function.o \
+physics.o \
+constants.o \
+global.o \
+diffusion.o \
+diffusion_matrix.o \
+heat_laplacian_operator.o \
+main.o
+
