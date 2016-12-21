@@ -5,7 +5,7 @@
 program heat
 
   use constants
-  use global
+  use variables
 
   ! petsc modules
   use petscsys
@@ -20,13 +20,13 @@ program heat
   call initialize()
   
   ! begin total timer
-  call clock_total % start()
+  call clock_tot % start()
   
   ! execute cmfd
   call execute()
   
   ! stop timer
-  call clock_total % stop()
+  call clock_tot % stop()
 
   ! finalize run
   call finalize()
@@ -146,7 +146,7 @@ contains
     if (master) then
        write(*, FMT='(/,/,A)') 'RESULTS'
        write(*, FMT='(A)')     '**********************'
-       write(*, FMT='(/,"Total Execution time (s): ",F0.4)') clock_total % elapsed
+       write(*, FMT='(/,"Total Execution time (s): ",F0.4)') clock_tot % elapsed
        ! write(*, FMT='("K-effective: ",F0.8,/)') cmfd%keff
     end if
 

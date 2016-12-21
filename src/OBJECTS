@@ -6,7 +6,7 @@ vector.o \
 function.o \
 physics.o \
 constants.o \
-global.o \
+variables.o \
 diffusion.o \
 diffusion_matrix.o \
 heat_laplacian_operator.o \

@@ -1,15 +1,14 @@
+clock.o: constants.o 
 physics.o: function.o
 diffusion.o: physics.o
 
-global.o: clock.o diffusion.o
-
-main.o: constants.o
-main.o: global.o
-main.o: matrix.o
-main.o: sparse_matrix.o
-main.o: heat_laplacian_operator.o
+variables.o: clock.o diffusion.o
 
 diffusion_matrix.o: sparse_matrix.o
 sparse_matrix.o: matrix.o
 
-
+main.o: constants.o
+main.o: variables.o
+main.o: matrix.o
+main.o: sparse_matrix.o
+main.o: heat_laplacian_operator.o
