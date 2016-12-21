@@ -31,6 +31,6 @@ module constants
   integer, parameter :: MAX_WORD_LEN = 150
 
   ! Unit numbers
-  integer, parameter :: UNIT_LOG = 9 ! unit # for writing log file
+  integer, parameter :: LOG_UNIT = 6 ! unit # for writing log file
 
 end module constants

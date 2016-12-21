@@ -25,7 +25,7 @@ module heat_laplacian_operator
   
   type :: laplacian_operator
 
-     type(Mat)                  :: L        ! petsc matrix for heat laplacian operator
+     type(mat)                  :: L        ! petsc matrix for heat laplacian operator
      type(integer)              :: n        ! dimensions of matrix
      type(integer)              :: nnz      ! max number of nonzeros
      type(integer)              :: localn   ! local size on proc

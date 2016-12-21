@@ -30,7 +30,7 @@ module clock_class
      ! object variables
      logical :: running      = .false. ! is clock running?
      integer :: start_counts = 0       ! counts when started
-     real(8)    :: elapsed      = 0.      ! total time elapsed in seconds
+     real(8) :: elapsed      = 0.      ! total time elapsed in seconds
 
    contains
 
@@ -39,6 +39,7 @@ module clock_class
      procedure :: getElapsed
      procedure :: stop
      procedure :: reset
+     procedure :: getDateTime
 
   end type clock
 
@@ -49,7 +50,7 @@ contains
   !-------------------------------------------------------------------!
 
   subroutine start(this)
-    
+
     class(clock), intent(inout) :: this
 
     ! Turn clock on and measure starting time
@@ -112,5 +113,50 @@ contains
     this % elapsed      = ZERO
 
   end subroutine reset
+
+  !---------------------------------------------------------------------!
+  ! Determines the date and time at which the program began execution
+  ! and returns it in a readable format
+  ! ---------------------------------------------------------------------!
+
+  subroutine getDateTime(this, today_date, today_time)
+
+    class(clock), intent(inout) :: this
+
+    character(10), intent(out)  :: today_date
+    character(8),  intent(out)  :: today_time
+
+    integer       :: val(8)
+    character(8)  :: date_
+    character(10) :: time_
+    character(5)  :: zone
+
+    call date_and_time(date_, time_, zone, val)
+
+    ! val(1) = year (YYYY)
+    ! val(2) = month (MM)
+    ! val(3) = day (DD)
+    ! val(4) = timezone
+    ! val(5) = hours (HH)
+    ! val(6) = minutes (MM)
+    ! val(7) = seconds (SS)
+    ! val(8) = milliseconds
+
+    if (val(2) < 10) then
+       if (val(3) < 10) then
+          today_date = date_(6:6) // "/" // date_(8:8) // "/" // date_(1:4)
+       else
+          today_date = date_(6:6) // "/" // date_(7:8) // "/" // date_(1:4)
+       end if
+    else
+       if (val(3) < 10) then
+          today_date = date_(5:6) // "/" // date_(8:8) // "/" // date_(1:4)
+       else
+          today_date = date_(5:6) // "/" // date_(7:8) // "/" // date_(1:4)
+       end if
+    end if
+    today_time = time_(1:2) // ":" // time_(3:4) // ":" // time_(5:6)
+
+  end subroutine getDateTime
 
 end module clock_class

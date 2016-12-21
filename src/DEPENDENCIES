@@ -1,3 +1,6 @@
+mpi.o: constants.o
+mpi.o: variables.o
+
 clock.o: constants.o 
 physics.o: function.o
 diffusion.o: physics.o
@@ -9,6 +12,6 @@ sparse_matrix.o: matrix.o
 
 main.o: constants.o
 main.o: variables.o
+main.o: mpi.o
 main.o: matrix.o
 main.o: sparse_matrix.o
-main.o: heat_laplacian_operator.o

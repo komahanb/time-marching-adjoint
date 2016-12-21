@@ -1,4 +1,5 @@
 objects = \
+mpi.o \
 clock.o \
 matrix.o \
 sparse_matrix.o \
@@ -9,6 +10,5 @@ constants.o \
 variables.o \
 diffusion.o \
 diffusion_matrix.o \
-heat_laplacian_operator.o \
 main.o
 

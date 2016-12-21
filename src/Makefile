@@ -21,7 +21,7 @@ PROFILE  = no
 OPTIMIZE = yes
 MPI      = yes
 HDF5     = no
-PETSC    = yes
+PETSC    = no
 F2008    = yes
 
 #=====================================================================#
@@ -105,7 +105,7 @@ endif
 # MPI for distributed-memory parallelism
 
 ifeq ($(MPI),yes)
-  F90 = $(MPI_DIR)/bin/mpif90
+  F90 = mpif90
   F90FLAGS += -DMPI
 endif
 
