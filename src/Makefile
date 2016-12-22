@@ -16,21 +16,23 @@ include OBJECTS
 #=====================================================================#
 
 COMPILER = gnu
-DEBUG    = no
+DEBUG    = yes
 PROFILE  = no
 OPTIMIZE = yes
 MPI      = yes
 HDF5     = no
 PETSC    = no
 F2008    = yes
+LAPACK   = yes
 
 #=====================================================================#
 # External Library Paths
 #=====================================================================#
 
-MPI_DIR   = $(HOME)/install/mpich-3.2/builild
-HDF5_DIR  = /opt/hdf5/1.8.9-$(COMPILER)
-PETSC_DIR = $(HOME)/install/petsc/3.7.4
+MPI_DIR    = $(HOME)/install/mpich-3.2/builild
+HDF5_DIR   = /opt/hdf5/1.8.9-$(COMPILER)
+PETSC_DIR  = $(HOME)/install/petsc/3.7.4
+LAPACK_DIR = /usr
 
 #=====================================================================#
 # Add git SHA-1 hash
@@ -101,6 +103,12 @@ endif
 #=====================================================================#
 # Setup External Libraries
 #=====================================================================#
+
+# LAPACK for linear algebra
+ifeq ($(LAPACK),yes)
+  F90FLAGS += -I/$(LAPACK_DIR)/include
+  LDFLAGS  += -L$(LAPACK_DIR)/lib -llapack
+endif
 
 # MPI for distributed-memory parallelism
 

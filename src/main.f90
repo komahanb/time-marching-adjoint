@@ -1,5 +1,7 @@
+#include "scalar.fpp"
+
 !=====================================================================!
-! Program that solves the heat equation
+! Program that solves the diffusion equation
 !=====================================================================!
 
 program main
@@ -9,8 +11,6 @@ program main
 
   implicit none
 
-  type(diffusion) :: hello
-
   call initialize()
    
   call execute()
@@ -18,6 +18,163 @@ program main
   call finalize()
 
 contains
+
+  !-------------------------------------------------------------------!
+  ! Execute the simulation on one dimensional grid
+  !-------------------------------------------------------------------!
+  
+  subroutine execute()
+    
+    use dimmpi
+
+    type(integer), parameter :: NDIM    = 1  ! physical dimension
+    type(integer), parameter :: NPOINTS = 99  ! number of grid points
+    type(integer), parameter :: NSTEPS  = 99  ! number of time steps
+
+    ! state vector
+    type(scalar), allocatable, dimension(:,:) :: state
+
+    ! diffusion operator matrix
+    type(scalar), allocatable, dimension(:,:) :: D
+    
+
+    ! grid
+    type(scalar), allocatable, dimension(:,:) :: xpts
+
+    ! diffusion parameter
+    type(scalar), parameter :: alpha = 1.0d-3
+
+    ! generation of grid and time steps
+    real(dp) :: dx, dt
+
+    ! Loop over
+    type(integer) :: i, j, k
+    type(integer) :: n, p
+    type(integer) :: irow, icol
+
+    ! spatial and temporal bounds
+    type(scalar), parameter :: xfinal = 1.0d0
+    type(scalar), parameter :: tfinal = 1.0d0
+    
+    type(scalar) :: dval, odval
+
+    ! Lapack variables
+    integer, allocatable, dimension(:)        :: ipiv
+    integer                                   :: info, size
+
+    ! Temporary lapack vector for RHS
+    type(scalar), allocatable, dimension(:) :: rhs
+    
+    allocate(state(NPOINTS, NSTEPS))
+    allocate(rhs(NPOINTS))
+    allocate(xpts(NDIM,NPOINTS))    
+    allocate(D(NPOINTS, NPOINTS))
+    
+    dx = xfinal/dble(NPOINTS-1)
+    dt = tfinal/dble(NSTEPS-1)
+    
+    ! generate the spatial grid
+    do i = 1, NPOINTS
+       xpts(:,i) = dble(i-1)*dx
+    end do
+
+    ! Initial condition
+    do p = 1, NPOINTS       
+       state(p,1) = sin(10.0d0*PI*xpts(1,p)) ! note that
+    end do
+   
+    ! Boundary conditions
+
+    ! left end
+    state(1, :) = 0.15d0
+
+    ! right end
+    state(NPOINTS, :) = 0.15d0
+
+    odval = alpha*dt/(dx*dx)
+    dval  = 1.0d0 + 2.0d0*odval
+    
+    ! Assemble diffusion matrix using central difference
+    D = 0.0d0
+    do irow = 1, NPOINTS
+
+       ! leading diagonal
+       icol = irow
+       D(irow,icol) = dval
+
+       ! sub diagonal
+       icol = irow - 1
+       if ( icol .ge. 1) then
+          D(irow, icol) = -odval
+       end if
+
+       ! super diagonal
+       icol = irow + 1
+       if ( icol .le. NPOINTS) then
+          D(irow, icol) = -odval
+       end if
+
+    end do
+
+    ! apply BC to the matrix ( make the diagonal as identity, and off
+    ! diagonal as zero)
+    ! off diagonal as zero
+    D(1,:) = 0.0d0
+    D(NPOINTS,:) = 0.0d0
+
+    D(1,1) = 1.0d0
+    D(NPOINTS,NPOINTS) = 1.0d0
+
+    !D =  transpose(D)
+  
+!!$    do i = 1, NPOINTS
+!!$       print *, i, D(i,:)
+!!$    end do
+
+    size = NPOINTS
+    if ( .not. allocated(ipiv)   ) allocate( ipiv(size) )
+
+    do n = 2, NSTEPS
+       
+       ! Previous solution is the RHS
+       rhs = state(:, n-1)                    
+       
+#if defined COMPLEX
+       call ZGESV(size, 1, D, size, IPIV, rhs, size, INFO)
+#else
+       call DGESV(size, 1, D, size, IPIV, rhs, size, INFO)
+#endif
+       if (INFO .ne. 0) then
+          print*, "LAPACK ERROR:", info
+          call MPI_STOP_ALL
+       end if
+       
+       ! Result is the next solution
+       state(:, n)  = rhs
+
+       write(*,'(F15.3,E15.3)') (n-1)*dt, norm2(state(:,n-1) - state(:,n))/sqrt(dble(NPOINTS))
+
+    end do
+
+    ! write the solution
+    open (unit = 2, file = "solution.dat")
+    write(2,*) 'variables= "x","t","u"'
+    write(2,*) 'zone i=', NPOINTS,' j=',NSTEPS,' datapacking=point'
+    do i = 1, NSTEPS
+       do j = 1, NPOINTS
+          write (2,*) dble(j-1)*dx, dble(i-1)*dt, state(j,i)
+       end do
+    end do
+    close(2)
+
+    if (allocated(ipiv)) deallocate(ipiv)
+
+    deallocate(rhs)
+    deallocate(state)
+    deallocate(xpts)
+    deallocate(D)
+
+  end subroutine execute
 
   !-------------------------------------------------------------------!
   ! Initialize the simulation
@@ -109,16 +266,6 @@ contains
   end subroutine initialize
 
   !-------------------------------------------------------------------!
-  ! Execute the simulation
-  !-------------------------------------------------------------------!
-  
-  subroutine execute()
-
-    write(*, *) 'Executing'
-
-  end subroutine execute
-
-  !-------------------------------------------------------------------!
   ! Finalize the simulation
   !-------------------------------------------------------------------!
 
@@ -131,9 +278,10 @@ contains
 
     ! print output
     if (master) then
-       write(LOG_UNIT, '(/,/,A)') 'RESULTS'
-       write(LOG_UNIT, '(A)')     '**********************'
-       write(LOG_UNIT, '(/,"Total Execution time (s): ",F0.4)') clock_tot % elapsed
+       write(LOG_UNIT, '(/,A)') '======================================================='
+       write(LOG_UNIT, '(A)')   '                    RESULTS                            '
+       write(LOG_UNIT, '(A,/)') '======================================================='
+       write(LOG_UNIT, '("Total Execution time (s): ",F0.4)') clock_tot % elapsed
     end if
 
     call MPI_STOP_ALL
