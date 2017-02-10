@@ -13,7 +13,7 @@ module blas
   ! (typically double precision, unless a special compiler option was
   ! used while compiling BLAS). This "dp" is only used in lapack.f90
   ! The "d" routines data type is defined as "double precision", so we
-  ! make "dp" the same kind as 0.d0 ("double precision"), so as long as
+  ! make "dp" the same kind as 0._WP ("double precision"), so as long as
   ! BLAS and this file were compiled with the same compiler options,
   ! it will be consistent. (If for example all double precision is
   ! promoted to quadruple precision, it will be promoted both in BLAS

@@ -85,17 +85,17 @@ contains
 
        ! add the diagonal entry
        icol = irow
-       val  = 2.0d0
+       val  = 2.0_WP
        call MatSetValue(this % L, irow, icol, val, INSERT_VALUES, ierr)
 
        ! add the lower diagonal entry
        icol = irow - 1
-       val  = -1.0d0
+       val  = -1.0_WP
        call MatSetValue(this % L, irow, icol, val, INSERT_VALUES, ierr)
 
        ! add the upper diagonal entry
        icol = irow - 1
-       val  = -1.0d0
+       val  = -1.0_WP
        call MatSetValue(this % L, irow, icol, val, INSERT_VALUES, ierr)
 
     end do ROWS

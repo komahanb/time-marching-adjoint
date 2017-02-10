@@ -18,6 +18,7 @@
 
 module function_class
 
+  use constants, only : WP
   implicit none
 
   private
@@ -48,11 +49,12 @@ module function_class
      
      pure subroutine interface_evaluate(this, f, time, x, u, udot, uddot)
 
-       import abstract_function
+       import :: WP
+       import :: abstract_function
 
        class(abstract_function), intent(inout) :: this
        type(scalar), intent(inout)             :: f
-       real(dp), intent(in)                    :: time
+       real(WP), intent(in)                    :: time
        type(scalar), intent(in), dimension(:)  :: x, u, udot, uddot
 
      end subroutine interface_evaluate
@@ -63,16 +65,16 @@ module function_class
      
      subroutine interface_gradient(this, res, scale, time, x, u, udot, uddot)
 
-       import abstract_function
+       import :: WP
+       import :: abstract_function
 
        class(abstract_function)                  :: this
        type(scalar), intent(inout), dimension(:) :: res
-       real(dp), intent(in)                      :: time
+       real(WP), intent(in)                      :: time
        type(scalar), intent(in), dimension(:)    :: x, u, udot, uddot
        type(scalar)                              :: scale
 
      end subroutine interface_gradient
-
 
      !----------------------------------------------------------------!
      ! Interface for evaluating the gradient for t, x, U, Udot, Uddot
@@ -81,11 +83,12 @@ module function_class
      subroutine interface_sv_gradient(this, res, alpha, beta, gamma, &
           &  time, x, u, udot, uddot)
 
-       import abstract_function
+       import :: WP
+       import :: abstract_function
 
        class(abstract_function)                  :: this
        type(scalar), intent(inout), dimension(:) :: res
-       real(dp), intent(in)                      :: time
+       real(WP), intent(in)                      :: time
        type(scalar), intent(in), dimension(:)    :: x, u, udot, uddot
        type(scalar), intent(in)                  :: alpha, beta, gamma
 

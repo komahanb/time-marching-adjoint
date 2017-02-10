@@ -26,7 +26,7 @@ Module vanderpol_class
      ! Define constants and other parameters needed for residual and
      ! jacobian assembly here
 
-     type(scalar) :: m = 1.0d0
+     type(scalar) :: m = 1.0_WP
 
    contains
      procedure :: mapDesignVars
@@ -82,11 +82,11 @@ contains
 
     class(vanderpol) :: this
     type(scalar), intent(inout), dimension(:) :: res
-    real(dp), intent(in)                      :: time
+    real(WP), intent(in)                      :: time
     type(scalar), intent(in), dimension(:)    :: u, udot, uddot
 
     res(1) = udot(1) - u(2)
-    res(2) = udot(2) - this % m *( 1.0d0 - u(1)*u(1) )*u(2) + u(1)
+    res(2) = udot(2) - this % m *( 1.0_WP - u(1)*u(1) )*u(2) + u(1)
 
   end subroutine assembleResidual
 
@@ -112,11 +112,11 @@ contains
     class(vanderpol) :: this
     type(scalar), intent(inout), dimension(:,:) :: jac
     type(scalar), intent(in)                    :: alpha, beta, gamma
-    real(dp), intent(in)                        :: time
+    real(WP), intent(in)                        :: time
     type(scalar), intent(in), dimension(:)      :: u, udot, uddot
 
     ! Zero all entries first
-    jac = 0.0d0
+    jac = 0.0_WP
 
     !-----------------------------------------------------------------!
     ! Add dR/dQ
@@ -124,13 +124,13 @@ contains
 
     ! derivative of first equation
     
-    jac(1,1) = jac(1,1) + alpha*0.0d0
-    jac(1,2) = jac(1,2) - alpha*1.0d0
+    jac(1,1) = jac(1,1) + alpha*0.0_WP
+    jac(1,2) = jac(1,2) - alpha*1.0_WP
 
     ! derivative of second equation
     
-    jac(2,1) = jac(2,1) + this % m*alpha*(1.0d0 + 2.0d0*u(1)*u(2))
-    jac(2,2) = jac(2,2) + this % m*alpha*(u(1)*u(1)-1.0d0)
+    jac(2,1) = jac(2,1) + this % m*alpha*(1.0_WP + 2.0_WP*u(1)*u(2))
+    jac(2,2) = jac(2,2) + this % m*alpha*(u(1)*u(1)-1.0_WP)
     
     !-----------------------------------------------------------------!
     ! Add dR/dQDOT
@@ -138,13 +138,13 @@ contains
     
     ! derivative of first equation
     
-    jac(1,1) = jac(1,1) + beta*1.0d0
-    jac(1,2) = jac(1,2) + beta*0.0d0
+    jac(1,1) = jac(1,1) + beta*1.0_WP
+    jac(1,2) = jac(1,2) + beta*0.0_WP
 
     ! derivative of second equation
 
-    jac(2,1) = jac(2,1) + this % m*beta*0.0d0
-    jac(2,2) = jac(2,2) + this % m*beta*1.0d0
+    jac(2,1) = jac(2,1) + this % m*beta*0.0_WP
+    jac(2,2) = jac(2,2) + this % m*beta*1.0_WP
 
   end subroutine assembleJacobian
 
@@ -159,11 +159,11 @@ contains
     class(vanderpol) :: this
 
 
-    real(dp), intent(in) :: time
+    real(WP), intent(in) :: time
     type(scalar), intent(inout), dimension(:) :: u, udot
     
-    u(1) = 2.0d0
-    u(2) = 0.0d0
+    u(1) = 2.0_WP
+    u(2) = 0.0_WP
 
   end subroutine getInitialStates
 
@@ -189,7 +189,7 @@ contains
 
     class(vanderpol)                       :: this
     type(scalar), intent(inout), dimension(:,:) :: jac
-    real(dp), intent(in) :: time
+    real(WP), intent(in) :: time
     type(scalar), intent(in), dimension(:)      :: x, u, udot, uddot
     type(scalar)                                :: scale
 

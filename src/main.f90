@@ -44,7 +44,7 @@ contains
     type(scalar), parameter :: alpha = 1.0d-3
     
     ! generation of grid and time steps
-    real(dp) :: dx, dt
+    real(WP) :: dx, dt
 
     ! Loop over
     type(integer) :: i, j, k
@@ -52,8 +52,8 @@ contains
     type(integer) :: irow, icol
 
     ! spatial and temporal bounds
-    type(scalar), parameter :: xfinal = 1.0d0
-    type(scalar), parameter :: tfinal = 1.0d0
+    type(scalar), parameter :: xfinal = 1.0_WP
+    type(scalar), parameter :: tfinal = 1.0_WP
     
     type(scalar) :: dval, odval
 
@@ -79,22 +79,22 @@ contains
 
     ! Initial condition
     do p = 1, NPOINTS       
-       state(p,1) = sin(10.0d0*PI*xpts(1,p)) ! note that
+       state(p,1) = sin(10.0_WP*PI*xpts(1,p)) ! note that
     end do
    
     ! Boundary conditions
 
     ! left end
-    state(1, :) = 0.15d0
+    state(1, :) = 0.15_WP
 
     ! right end
-    state(NPOINTS, :) = 0.15d0
+    state(NPOINTS, :) = 0.15_WP
 
     odval = alpha*dt/(dx*dx)
-    dval  = 1.0d0 + 2.0d0*odval
+    dval  = 1.0_WP + 2.0_WP*odval
     
     ! Assemble diffusion matrix using central difference
-    D = 0.0d0
+    D = 0.0_WP
     do irow = 1, NPOINTS
 
        ! leading diagonal
@@ -118,11 +118,11 @@ contains
     ! apply BC to the matrix ( make the diagonal as identity, and off
     ! diagonal as zero)
     ! off diagonal as zero
-    D(1,:) = 0.0d0
-    D(NPOINTS,:) = 0.0d0
+    D(1,:) = 0.0_WP
+    D(NPOINTS,:) = 0.0_WP
 
-    D(1,1) = 1.0d0
-    D(NPOINTS,NPOINTS) = 1.0d0
+    D(1,1) = 1.0_WP
+    D(NPOINTS,NPOINTS) = 1.0_WP
 
     !D =  transpose(D)
   

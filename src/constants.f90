@@ -16,7 +16,7 @@ module constants
   integer, parameter :: VERSION_RELEASE = 0
 
   ! Physical constants
-  type(scalar), parameter :: PI = 22.0_WP/7.0_WP !3.1415926535898d0
+  type(scalar), parameter :: PI = 22.0_WP/7.0_WP !3.1415926535898_WP
   
   ! Handy double numbers
   type(scalar), parameter :: & 

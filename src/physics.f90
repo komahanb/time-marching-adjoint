@@ -8,6 +8,7 @@
 
 module physics_class
 
+  use constants, only : WP
   use function_class, only  : abstract_function
 
   implicit none
@@ -55,11 +56,12 @@ module physics_class
      
      subroutine InterfaceGetResidualDVSens(this, jac, scale, time, x, u, udot, uddot)
 
+       import WP
        import physics
        
        class(physics)                         :: this
        type(scalar), intent(inout), dimension(:,:) :: jac
-       real(dp), intent(in)                        :: time
+       real(WP), intent(in)                        :: time
        type(scalar), intent(in), dimension(:)      :: x, u, udot, uddot
        type(scalar)                                :: scale
 
@@ -70,11 +72,15 @@ module physics_class
      !----------------------------------------------------------------!
      
      subroutine InterfaceInitialize(this,  x, function)
+
+       import WP
        import physics
        import abstract_function
+
        class(physics) :: this
        class(abstract_function), target, OPTIONAL  :: function
        type(scalar), intent(in), dimension(:), OPTIONAl :: x
+
      end subroutine InterfaceInitialize
     
      !----------------------------------------------------------------!
@@ -83,11 +89,12 @@ module physics_class
 
      subroutine residual_assembly_interface(this, res, time, u, udot, uddot)
 
+       import WP
        import physics
 
        class(physics) :: this
        type(scalar), intent(inout), dimension(:) :: res
-       real(dp), intent(in) :: time
+       real(WP), intent(in) :: time
        type(scalar), intent(in), dimension(:) :: u, udot, uddot
 
      end subroutine residual_assembly_interface
@@ -99,12 +106,13 @@ module physics_class
      subroutine jacobian_assembly_interface(this, jac, alpha, beta, gamma, &
           & time, u, udot, uddot)
 
+       import WP
        import physics
 
        class(physics) :: this
        type(scalar), intent(inout), dimension(:,:) :: jac
        type(scalar), intent(in) :: alpha, beta, gamma
-       real(dp), intent(in) :: time
+       real(WP), intent(in) :: time
        type(scalar), intent(in), dimension(:) :: u, udot, uddot
 
      end subroutine jacobian_assembly_interface
@@ -115,10 +123,11 @@ module physics_class
      
      subroutine initial_condition_interface(this, time, u, udot)
 
+       import WP
        import physics
 
        class(physics) :: this
-       real(dp), intent(in) :: time
+       real(WP), intent(in) :: time
        type(scalar), intent(inout), dimension(:) :: u, udot
 
      end subroutine initial_condition_interface
@@ -128,7 +137,10 @@ module physics_class
      !----------------------------------------------------------------!
      
      function InterfaceGetNumStateVars(this)
+
+       import WP
        import physics
+
        class(physics) :: this
        integer :: InterfaceGetNumStateVars
      end function InterfaceGetNumStateVars
@@ -138,8 +150,12 @@ module physics_class
      !-------------------------------------------------------------------!
      
      subroutine InterfaceMapDesignVars(this)
+
+       import WP
        import physics
+
        class(physics) :: this
+
      end subroutine InterfaceMapDesignVars
 
   end interface

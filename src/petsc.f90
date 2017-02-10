@@ -52,11 +52,11 @@ program main
   rows: do irow = istart, iend - 1
      cols: do icol = istart, iend - 1
         if (irow .eq. icol) then
-           tmp = 2.0d0  ! d
+           tmp = 2.0_WP  ! d
         else if (irow .eq. icol - 1) then
-           tmp = -1.0d0 ! -r
+           tmp = -1.0_WP ! -r
         else if (icol .eq. icol + 1) then
-           tmp = -1.0d0 ! -r
+           tmp = -1.0_WP ! -r
         end if
         call MatSetValue(A, irow, icol, tmp, INSERT_VALUES, ierr)
      end do cols
@@ -105,7 +105,7 @@ program main
 !!$  call VecSetSizes(ax, PETSC_DECIDE, n, ierr)
 !!$  call VecSetFromOptions(ax, ierr)
 
-!  call VecSet(b, 1.0d0, ierr)
+!  call VecSet(b, 1.0_WP, ierr)
 !  call MatMult(A, x, b)
 
   !-------------------------------------------------------------------!
@@ -124,7 +124,7 @@ program main
  !        call VecSetRandom(u,rctx,ierr)
  !        call PetscRandomDestroy(rctx,ierr)
  !     else
-  call VecSet(ax, 1.0d0, ierr)
+  call VecSet(ax, 1.0_WP, ierr)
   !     endif
   call MatMult(A, ax, b, ierr)
 
@@ -162,7 +162,7 @@ program main
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   !  Check the error
-  call VecAXPY(x, -1.0d0, b, ierr)
+  call VecAXPY(x, -1.0_WP, b, ierr)
   call VecNorm(x, NORM_2, norm, ierr)
   call KSPGetIterationNumber(cksp, iters, ierr)
 
@@ -180,7 +180,7 @@ program main
 !!$ ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 !!$
 !!$ !  Check the error
-!!$ call VecAXPY(x,-1.0d0,u,ierr)
+!!$ call VecAXPY(x,-1.0_WP,u,ierr)
 !!$ call VecNorm(x,NORM_2,norm,ierr)
 !!$ call KSPGetIterationNumber(cksp,its,ierr)
 !!$ if (rank .eq. 0) then

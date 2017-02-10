@@ -3,4 +3,3 @@
 #else
 #define scalar real(8)
 #endif
-#define dp 8
