@@ -1,6 +1,7 @@
 program = diffusion
 
 templates = $(wildcard templates/*.o)
+
 xml_fort = xml-fortran/xmlparse.o \
            xml-fortran/read_xml_primitives.o \
            xml-fortran/write_xml_primitives.o
@@ -45,7 +46,7 @@ GIT_SHA1 = $(shell git log -1 | head -n 1 | awk '{print $$2}')
 #=====================================================================#
 
 ifeq ($(COMPILER),gnu)
-  F90 = gfortran
+  F90 = gfortran-6
   F90FLAGS := -cpp -fbacktrace -std=f2008
   LDFLAGS =
 
@@ -106,7 +107,7 @@ endif
 
 # LAPACK for linear algebra
 ifeq ($(LAPACK),yes)
-  F90FLAGS += -I/$(LAPACK_DIR)/include
+  F90FLAGS += -I$(LAPACK_DIR)/include
   LDFLAGS  += -L$(LAPACK_DIR)/lib -llapack
 endif
 

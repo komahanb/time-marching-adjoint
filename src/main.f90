@@ -25,7 +25,7 @@ contains
   
   subroutine execute()
     
-    use dimmpi
+    use mpi_wrapper
 
     type(integer), parameter :: NDIM    = 1  ! physical dimension
     type(integer), parameter :: NPOINTS = 99  ! number of grid points
@@ -181,7 +181,7 @@ contains
   
   subroutine initialize()
 
-    use dimmpi
+    use mpi_wrapper
   
     integer :: i                    ! loop counter
     integer :: argc                 ! number of command line arguments
@@ -270,7 +270,7 @@ contains
 
   subroutine finalize()
     
-    use dimmpi
+    use mpi_wrapper
 
     ! stop timer
     call clock_tot % stop()

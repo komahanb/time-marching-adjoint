@@ -11,5 +11,7 @@ variables.o \
 diffusion.o \
 diffusion_matrix.o \
 linear_solver_class.o \
+lapack.o \
+blas.o \
 main.o
 

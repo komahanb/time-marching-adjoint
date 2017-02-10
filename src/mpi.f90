@@ -4,7 +4,7 @@
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================!
 
-module dimmpi
+module mpi_wrapper
   
   use constants, only: LOG_UNIT
   use variables, only: idproc, numproc, master, mpierr
@@ -65,4 +65,4 @@ contains
 
   end subroutine MPI_STOP_ALL
 
-end module dimmpi
+end module mpi_wrapper

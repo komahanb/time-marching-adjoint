@@ -6,23 +6,26 @@
 
 module constants
 
+  use iso_fortran_env , only : WP => real64
+
   implicit none
 
   ! Versioning numbers
-  integer, parameter :: VERSION_MAJOR = 0
-  integer, parameter :: VERSION_MINOR = 0
+  integer, parameter :: VERSION_MAJOR   = 0
+  integer, parameter :: VERSION_MINOR   = 0
   integer, parameter :: VERSION_RELEASE = 0
 
   ! Physical constants
-  type(scalar), parameter :: PI = 22.0d0/7.0d0 !3.1415926535898d0
+  type(scalar), parameter :: PI = 22.0_WP/7.0_WP !3.1415926535898d0
   
   ! Handy double numbers
   type(scalar), parameter :: & 
-       INFINITY     = huge(0.0d0),       & ! positive infinity
-       ZERO         = 0.0d0,             & ! double zero
-       ONE          = 1.0d0,             & ! double one
-       TWO          = 2.0d0,             & ! double two
-       HALF         = 0.5d0                ! double half
+       INFINITY     = huge(0.0_WP),       & ! biggest floating number
+       TINY         = epsilon(0.0_WP),    & ! smallest floating number
+       ZERO         = 0.0_WP,             & ! zero
+       ONE          = 1.0_WP,             & ! one
+       TWO          = 2.0_WP,             & ! two
+       HALF         = 0.5_WP                ! half
 
   ! Maximum number of words in a single line, length of line, and
   ! length of single word
