@@ -44,7 +44,7 @@ contains
     type(scalar), parameter :: alpha = 1.0d-3
     
     ! generation of grid and time steps
-    real(WP) :: dx, dt
+    type(scalar) :: dx, dt
 
     ! Loop over
     type(integer) :: i, j, k

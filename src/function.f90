@@ -54,7 +54,7 @@ module function_class
 
        class(abstract_function), intent(inout) :: this
        type(scalar), intent(inout)             :: f
-       real(WP), intent(in)                    :: time
+       type(scalar), intent(in)                :: time
        type(scalar), intent(in), dimension(:)  :: x, u, udot, uddot
 
      end subroutine interface_evaluate
@@ -70,7 +70,7 @@ module function_class
 
        class(abstract_function)                  :: this
        type(scalar), intent(inout), dimension(:) :: res
-       real(WP), intent(in)                      :: time
+       type(scalar), intent(in)                  :: time
        type(scalar), intent(in), dimension(:)    :: x, u, udot, uddot
        type(scalar)                              :: scale
 
@@ -88,7 +88,7 @@ module function_class
 
        class(abstract_function)                  :: this
        type(scalar), intent(inout), dimension(:) :: res
-       real(WP), intent(in)                      :: time
+       type(scalar), intent(in)                  :: time
        type(scalar), intent(in), dimension(:)    :: x, u, udot, uddot
        type(scalar), intent(in)                  :: alpha, beta, gamma
 

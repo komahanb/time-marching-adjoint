@@ -80,9 +80,9 @@ contains
   
   subroutine assembleResidual( this, res, time, u, udot, uddot )
 
-    class(vanderpol) :: this
+    class(vanderpol)                          :: this
     type(scalar), intent(inout), dimension(:) :: res
-    real(WP), intent(in)                      :: time
+    type(scalar), intent(in)                  :: time
     type(scalar), intent(in), dimension(:)    :: u, udot, uddot
 
     res(1) = udot(1) - u(2)
@@ -109,10 +109,10 @@ contains
   subroutine assembleJacobian( this, jac, alpha, beta, gamma, &
        & time, u, udot, uddot )
 
-    class(vanderpol) :: this
+    class(vanderpol)                            :: this
     type(scalar), intent(inout), dimension(:,:) :: jac
     type(scalar), intent(in)                    :: alpha, beta, gamma
-    real(WP), intent(in)                        :: time
+    type(scalar), intent(in)                    :: time
     type(scalar), intent(in), dimension(:)      :: u, udot, uddot
 
     ! Zero all entries first
@@ -156,10 +156,8 @@ contains
 
   subroutine getInitialStates(this, time, u, udot)
 
-    class(vanderpol) :: this
-
-
-    real(WP), intent(in) :: time
+    class(vanderpol)                          :: this
+    type(scalar), intent(in)                  :: time
     type(scalar), intent(inout), dimension(:) :: u, udot
     
     u(1) = 2.0_WP
@@ -187,9 +185,9 @@ contains
   
   subroutine getResidualDVSens(this, jac, scale, time, x, u, udot, uddot)
 
-    class(vanderpol)                       :: this
+    class(vanderpol)                            :: this
     type(scalar), intent(inout), dimension(:,:) :: jac
-    real(WP), intent(in) :: time
+    type(scalar), intent(in)                    :: time
     type(scalar), intent(in), dimension(:)      :: x, u, udot, uddot
     type(scalar)                                :: scale
 
