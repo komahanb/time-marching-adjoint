@@ -30,20 +30,19 @@ contains
     type(integer), parameter :: NDIM    = 1  ! physical dimension
     type(integer), parameter :: NPOINTS = 99  ! number of grid points
     type(integer), parameter :: NSTEPS  = 99  ! number of time steps
-
+    
     ! state vector
     type(scalar), allocatable, dimension(:,:) :: state
 
     ! diffusion operator matrix
-    type(scalar), allocatable, dimension(:,:) :: D
+    type(scalar), allocatable, dimension(:,:) :: D  
     
-
     ! grid
     type(scalar), allocatable, dimension(:,:) :: xpts
-
+    
     ! diffusion parameter
     type(scalar), parameter :: alpha = 1.0d-3
-
+    
     ! generation of grid and time steps
     real(dp) :: dx, dt
 
