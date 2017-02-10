@@ -8,7 +8,7 @@
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================!
 
-module vector_class
+module vector_interface
 
   implicit none
 
@@ -30,7 +30,7 @@ module vector_class
      procedure :: set_size
      
      ! deferred procedures
-     procedure(add_element_interface), deferred :: add_element
+     procedure(add_entry_interface), deferred :: add_entry
      
   end type vector
 
@@ -39,10 +39,10 @@ module vector_class
   abstract interface
      
      !================================================================!
-     ! interface to adding elements into the vector
+     ! interface to adding entryies into the vector
      !================================================================!
      
-     subroutine add_element_interface(this, idx, val)
+     subroutine add_entry_interface(this, idx, val)
 
        import vector
        
@@ -50,7 +50,7 @@ module vector_class
        type(integer) :: idx
        type(scalar)  :: val
 
-     end subroutine add_element_interface
+     end subroutine add_entry_interface
 
   end interface
 
@@ -82,4 +82,4 @@ contains
 
   end subroutine set_size
 
-end module vector_class
+end module vector_interface
