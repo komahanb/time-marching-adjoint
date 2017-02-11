@@ -1,11 +1,5 @@
 program = diffusion
 
-templates = $(wildcard templates/*.o)
-
-xml_fort = xml-fortran/xmlparse.o \
-           xml-fortran/read_xml_primitives.o \
-           xml-fortran/write_xml_primitives.o
-
 #=====================================================================#
 # Object Files
 #=====================================================================#
@@ -161,18 +155,12 @@ endif
 # Targets
 #=====================================================================#
 
-all: xml-fortran $(program)
-
-xml-fortran:
-	cd xml-fortran; make MACHINE=$(MACHINE) F90=$(F90) F90FLAGS="$(F90FLAGS)"
-	cd templates; make F90=$(F90) F90FLAGS="$(F90FLAGS)"
+all: $(program)
 
 $(program): $(objects)
-	$(F90) $(objects) $(templates) $(xml_fort) -o $@ $(LDFLAGS)
+	$(F90) $(objects) -o $@ $(LDFLAGS)
 
 distclean: clean
-	cd xml-fortran; make clean
-	cd templates; make clean
 
 clean:
 	@rm -f *.o *.mod $(program)
@@ -185,10 +173,10 @@ neat:
 #=====================================================================#
 
 .SUFFIXES: .f90 .o
-.PHONY: all xml-fortran clean neat distclean 
+.PHONY: all clean neat distclean 
 
 %.o: %.f90
-	$(F90) $(F90FLAGS) -DGIT_SHA1="\"$(GIT_SHA1)\"" -Ixml-fortran -Itemplates -c $<
+	$(F90) $(F90FLAGS) -DGIT_SHA1="\"$(GIT_SHA1)\"" -c $<
 
 #=====================================================================#
 # Dependencies

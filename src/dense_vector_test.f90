@@ -5,7 +5,7 @@
 
 module dense_vector_test
 
-  use constants, only : WP
+  use constants, only : WP, TINY
   use dense_vector_interface
   
 contains

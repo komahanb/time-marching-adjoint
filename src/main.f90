@@ -9,10 +9,12 @@ program main
   use constants
   use variables
   use dense_matrix_test
+  use dense_vector_test
 
   implicit none
 
   call test_dense_matrix(10,10)
+  call test_dense_vector(10)
 
   stop
 

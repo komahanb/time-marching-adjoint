@@ -31,7 +31,8 @@ module vector_interface
      
      ! deferred procedures
      procedure(add_entry_interface), deferred :: add_entry
-     
+     procedure(get_entry_interface), deferred :: get_entry
+
   end type vector
 
   ! define interfaces to all abstract procedures
@@ -51,6 +52,16 @@ module vector_interface
        type(scalar)  :: val
 
      end subroutine add_entry_interface
+
+     type(scalar) function get_entry_interface(this, idx)
+
+       import vector
+       
+       class(vector) :: this
+       type(integer) :: idx
+
+     end function get_entry_interface
+       
 
   end interface
 

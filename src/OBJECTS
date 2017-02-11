@@ -6,6 +6,8 @@ sparse_matrix.o \
 dense_matrix.o \
 dense_matrix_test.o \
 vector.o \
+dense_vector.o \
+dense_vector_test.o \
 function.o \
 physics.o \
 constants.o \
