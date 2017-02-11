@@ -9,7 +9,7 @@
 module dense_matrix_interface
 
   use constants, only : WP
-  use matrix_interface,  only: matrix
+  use matrix_interface, only: matrix
 
   implicit none
 
@@ -53,6 +53,7 @@ contains
     ! Allocate space
     allocate(this % vals(this % get_row_size(), this% get_col_size()))
 
+    ! Zero the entries
     this % vals = 0.0_WP
     
   end function constructor
@@ -76,12 +77,14 @@ contains
   ! Fetch the entry corresponding to the row and column
   !=================================================================!
 
-  type(scalar) function get_dense_entry(this, row, col)
+  type(scalar) function get_dense_entry(this, row, col) result(val)
 
     class(dense_matrix) :: this
     type(integer) :: row
     type(integer) :: col
 
+    val = this % vals(row, col)
+    
   end function get_dense_entry
 
 end module dense_matrix_interface

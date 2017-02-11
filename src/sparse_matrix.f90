@@ -7,7 +7,7 @@
 
 module sparse_matrix_interface
 
-  use matrix_interface,  only: matrix
+  use matrix_interface, only: matrix
 
   implicit none
 

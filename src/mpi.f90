@@ -8,8 +8,10 @@ module mpi_wrapper
   
   use constants, only: LOG_UNIT
   use variables, only: idproc, numproc, master, mpierr
-  use mpi
 
+#if defined USE_COMPLEX
+  use mpi
+#endif
   implicit none
   
   private
@@ -23,6 +25,7 @@ contains
 
   subroutine MPI_START_ALL()
 
+#if defined MPI
     ! Initialize MPI
     call MPI_Init(mpierr)
 
@@ -42,6 +45,7 @@ contains
     !   write(LOG_UNIT,'(2x,a,i3)') '>> Number of Processors = ', numproc
     !end if
     ! write(LOG_UNIT,'(2x,a,i3)') '>> Processor ', idproc + 1, 'of', numproc,'...[OK]'
+#endif
 
   end subroutine MPI_START_ALL
 
@@ -50,7 +54,7 @@ contains
   !-------------------------------------------------------------------!
 
   subroutine MPI_STOP_ALL()
-
+#if defined MPI
     ! Make sure all procs are here
     call MPI_Barrier(MPI_COMM_WORLD, mpierr)
     if (mpierr /= MPI_SUCCESS) then
@@ -62,7 +66,7 @@ contains
     if (mpierr /= MPI_SUCCESS) then
        stop 'MPI Finalize error'
     endif
-
+#endif
   end subroutine MPI_STOP_ALL
 
 end module mpi_wrapper

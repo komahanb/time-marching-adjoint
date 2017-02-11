@@ -1,7 +1,7 @@
 module diffusion_matrix_class
 
   ! module references
-  use sparse_matrix_class,  only: sparse_matrix
+  use sparse_matrix_interface,  only: sparse_matrix
 
   ! module options
   implicit none
