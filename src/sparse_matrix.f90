@@ -5,7 +5,7 @@
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================!
 
-module sparse_matrix_impl
+module sparse_matrix_interface
 
   use matrix_interface,  only: matrix
 
@@ -80,4 +80,4 @@ module sparse_matrix_impl
 
     end function get_sparse_entry
     
-end module sparse_matrix_impl
+end module sparse_matrix_interface
