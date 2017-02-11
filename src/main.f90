@@ -8,8 +8,13 @@ program main
   
   use constants
   use variables
+  use dense_matrix_test
 
   implicit none
+
+  call test_dense_matrix(10,10)
+
+  stop
 
   call initialize()
    

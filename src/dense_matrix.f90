@@ -69,7 +69,7 @@ contains
     type(integer)       :: row
     type(scalar)        :: val
 
-    print *, 'Added values to dense matrix!'
+    this % vals(row, col) = val
 
   end subroutine add_dense_entry
 
