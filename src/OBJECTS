@@ -1,8 +1,8 @@
 objects = \
-mpi.o \
 clock.o \
 matrix.o \
 sparse_matrix.o \
+dense_matrix.o \
 vector.o \
 function.o \
 physics.o \

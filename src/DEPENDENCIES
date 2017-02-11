@@ -7,8 +7,10 @@ diffusion.o: physics.o
 
 variables.o: clock.o diffusion.o
 
-diffusion_matrix.o: sparse_matrix.o
 sparse_matrix.o: matrix.o
+diffusion_matrix.o: sparse_matrix.o
+dense_matrix.o: matrix.o
+dense_matrix.o: constants.o
 
 main.o: constants.o
 main.o: variables.o
