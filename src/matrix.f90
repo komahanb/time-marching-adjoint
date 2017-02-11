@@ -1,14 +1,14 @@
 #include "scalar.fpp"
-
 !=====================================================================!
 ! Module that contains matrix type definition and procedures to add
 ! and get entries from the matrix. This class also defines the
-! interface to add elements into the matrix.
+! interface to add entries into the matrix and get entries from the
+! matrix.
 !
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================!
 
-module matrix_class
+module matrix_interface
 
   implicit none
 
@@ -17,12 +17,13 @@ module matrix_class
 
   type, abstract :: matrix
      
-     ! type options
      private
 
-     ! attributes
-     integer :: row_size ! the number of rows in a matrix
-     integer :: col_size ! the number of columns in a matrix
+     ! the number of rows in a matrix
+     type(integer) :: row_size
+
+     ! the number of columns in a matrix
+     type(integer) :: col_size 
 
    contains
 
@@ -33,28 +34,43 @@ module matrix_class
      procedure :: set_row_size
      
      ! deferred procedures
-     procedure(add_element_interface), deferred :: add_element
+     procedure(add_entry_interface), deferred :: add_entry
+     procedure(get_entry_interface), deferred :: get_entry
      
   end type matrix
 
-  ! define interfaces to all abstract procedures
+  ! Define interfaces to all abstract procedures
  
   abstract interface
-     
-     !================================================================!
-     ! interface to adding elements into the matrix
-     !================================================================!
-     
-     subroutine add_element_interface(this, row, col, val)
 
-       import matrix
+     !----------------------------------------------------------------!     
+     ! Adding entry into a matrix  
+     !----------------------------------------------------------------!
+
+     subroutine add_entry_interface(this, row, col, val)
+
+       import :: matrix
 
        class(matrix) :: this
        type(integer) :: row
        type(integer) :: col
        type(scalar)  :: val
 
-     end subroutine add_element_interface
+     end subroutine add_entry_interface
+
+     !----------------------------------------------------------------!
+     ! Getting a scalar entry from a matrix
+     !----------------------------------------------------------------!
+     
+     type(scalar) function get_entry_interface(this, row, col)
+
+       import :: matrix
+
+       class(matrix) :: this
+       type(integer) :: row
+       type(integer) :: col
+
+     end function get_entry_interface
 
   end interface
 
@@ -112,4 +128,4 @@ contains
 
   end subroutine set_col_size
   
-end module matrix_class
+end module matrix_interface
