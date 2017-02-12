@@ -1,19 +1,16 @@
-mpi.o: constants.o
-mpi.o: variables.o
+constants.o:
+clock.o: constants.o
+vector.o: 
+matrix.o:
 
-clock.o: constants.o 
-physics.o: function.o
+physics.o: constants.o
+physics.o: vector.o
+physics.o: matrix.o
+
 diffusion.o: physics.o
 
-variables.o: clock.o diffusion.o
+variables.o: diffusion.o
+variables.o: clock.o
 
-sparse_matrix.o: matrix.o
-diffusion_matrix.o: sparse_matrix.o
-dense_matrix.o: matrix.o
-dense_matrix.o: constants.o
-
-main.o: constants.o
-main.o: variables.o
-main.o: mpi.o
-main.o: matrix.o
-main.o: sparse_matrix.o
+mpi.o: constants.o
+mpi.o: variables.o

@@ -6,7 +6,7 @@
 
 module diffusion_class
   
-  use physics_class, only: physics
+  use physics_interface, only: physics
   
   ! type, extends(physics) :: diffusion
 

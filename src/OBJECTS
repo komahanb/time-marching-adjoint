@@ -1,6 +1,8 @@
 objects = \
-mpi.o \
+constants.o \
 clock.o \
+variables.o \
+mpi.o \
 matrix.o \
 sparse_matrix.o \
 dense_matrix.o \
@@ -8,10 +10,8 @@ dense_matrix_test.o \
 vector.o \
 dense_vector.o \
 dense_vector_test.o \
-function.o \
 physics.o \
-constants.o \
-variables.o \
+function.o \
 diffusion.o \
 diffusion_matrix.o \
 linear_solver_class.o \
