@@ -12,6 +12,7 @@ dense_vector.o \
 dense_vector_test.o \
 physics.o \
 time_dependent_physics.o \
+time_independent_physics.o \
 function.o \
 diffusion.o \
 diffusion_matrix.o \
