@@ -8,7 +8,7 @@
 
 module physics_interface
 
-  use constants, only        : WP
+  use constants, only : WP
   use vector_interface, only : vector
   use matrix_interface, only : matrix
 
@@ -25,7 +25,6 @@ module physics_interface
   type, abstract :: physics
 
      type(integer) :: num_state_vars 
-     type(integer) :: order
 
    contains  
 
@@ -35,6 +34,7 @@ module physics_interface
 
   end type physics
 
+  ! Interfaces to deferred procedures
   interface
 
      !----------------------------------------------------------------!
@@ -64,19 +64,6 @@ module physics_interface
        class(vector),  intent(in)    :: state_vectors(:)
 
      end subroutine jacobian_assembly_interface
-
-     !----------------------------------------------------------------!
-     ! Interface for supplying the initial condition to the integrator!
-     !----------------------------------------------------------------!
-
-     subroutine initial_condition_interface(this, state_vectors)
-
-       import :: physics, vector
-
-       class(physics), intent(inout) :: this
-       class(vector),  intent(inout) :: state_vectors(:)
-
-     end subroutine initial_condition_interface
 
   end interface
 
