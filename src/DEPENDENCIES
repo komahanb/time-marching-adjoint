@@ -14,3 +14,8 @@ variables.o: clock.o
 
 mpi.o: constants.o
 mpi.o: variables.o
+
+vanderpol.o: constants.o
+vanderpol.o: time_dependent_physics.o
+vanderpol.o: dense_vector.o
+vanderpol.o: dense_matrix.o

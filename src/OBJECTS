@@ -19,5 +19,6 @@ diffusion_matrix.o \
 linear_solver_class.o \
 lapack.o \
 blas.o \
+vanderpol.o \
 main.o
 

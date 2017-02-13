@@ -55,13 +55,14 @@ module physics_interface
      ! Interface for jacobian assembly at each time step
      !----------------------------------------------------------------!
      
-     pure subroutine jacobian_assembly_interface(this, jacobian, state_vectors)
+     pure subroutine jacobian_assembly_interface(this, jacobian, state_vectors, coeffs)
 
        import :: physics, vector, matrix
 
        class(physics), intent(inout) :: this
        class(matrix),  intent(inout) :: jacobian
        class(vector),  intent(in)    :: state_vectors(:)
+       type(scalar), intent(in)      :: coeffs(:)
 
      end subroutine jacobian_assembly_interface
 
