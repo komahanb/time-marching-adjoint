@@ -35,12 +35,12 @@ module vector_interface
 
   end type vector
 
-  ! define interfaces to all abstract procedures
+  ! Define interfaces to all abstract procedures
  
   abstract interface
      
      !================================================================!
-     ! interface to adding entryies into the vector
+     ! Interface to adding entryies into the vector
      !================================================================!
      
      subroutine add_entry_interface(this, idx, val)
@@ -68,26 +68,25 @@ module vector_interface
 contains
   
   !===================================================================!
-  ! returns the size
+  ! Returns the size of the vector
   !===================================================================!
   
-  function get_size(this)
+  pure type(integer) function get_size(this)
 
-    class(vector) :: this
-    type(integer) :: get_size
+    class(vector), intent(in) :: this
 
     get_size = this % size
 
   end function get_size
 
   !===================================================================!
-  ! sets the size
+  ! Sets the size of the vector
   !===================================================================!
 
-  subroutine set_size(this, size)
+  pure subroutine set_size(this, size)
 
-    class(vector) :: this
-    type(integer) :: size
+    class(vector), intent(inout) :: this  
+    type(integer), intent(in)    :: size
 
     this % size = size
 

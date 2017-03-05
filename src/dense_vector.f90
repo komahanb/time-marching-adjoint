@@ -1,9 +1,20 @@
 #include "scalar.fpp"
 
+!=====================================================================!
+! Dense vector implementation of vector interface. 
+! 
+! TODO: Unlimited polymorphic entries to support any datatype and
+! block vectors. Currently the vectors are assumed to be of
+! type(scalar)
+! 
+! Author: Komahan Boopathy (komahan@gatech.edu)
+!
+!=====================================================================!
+
 module dense_vector_interface
 
-  use constants, only : WP
-  use vector_interface, only : vector
+  use constants        , only : WP
+  use vector_interface , only : vector
 
   implicit none
   
@@ -29,39 +40,51 @@ module dense_vector_interface
   end interface dense_vector
   
 contains
-
-type(dense_vector) function constructor (size) result (this)
-
-  integer :: size
   
-  ! Set vector dimensions
-  call this % set_size(size)
+  !===================================================================!
+  ! Constructor for dense matrix
+  !===================================================================!
+
+  pure type(dense_vector) function constructor (size) result (this)
+
+    integer, intent(in) :: size
+
+    ! Set vector dimensions
+    call this % set_size(size)
+
+    ! Allocate space
+    allocate(this % vals(this % get_size()))
+
+    ! Zero the entries
+    this % vals = 0.0_WP
+
+  end function constructor
+
+  !===================================================================!
+  ! Add an entry into the vector's specified index
+  !===================================================================!
+
+  pure subroutine add_dense_entry(this, idx, val)
+
+    class(dense_vector), intent(inout) :: this
+    integer            , intent(in)    :: idx
+    type(scalar)       , intent(in)    :: val
+
+    this % vals(idx) = val
+
+  end subroutine add_dense_entry
+
+  !===================================================================!
+  ! Get entry of the vector at the supplied index
+  !===================================================================!
   
-  ! Allocate space
-  allocate(this % vals(this % get_size()))
+  pure type(scalar) function get_dense_entry(this, idx) result(val)
 
-  ! Zero the entries
-  this % vals = 0.0_WP
+    class(dense_vector) :: this
+    type(integer)       :: idx
 
-end function constructor
+    val = this % vals(idx)
 
-subroutine add_dense_entry(this, idx, val)
-
-  class(dense_vector) :: this
-  integer :: idx
-  type(scalar) :: val
-  
-  this % vals(idx) = val
-
-end subroutine add_dense_entry
-
-type(scalar) function get_dense_entry(this, idx) result(val)
-  
-  class(dense_vector) :: this
-  type(integer)       :: idx
-
-  val = this % vals(idx)
-
-end function get_dense_entry
+  end function get_dense_entry
 
 end module dense_vector_interface
