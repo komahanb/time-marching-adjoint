@@ -47,14 +47,14 @@ module matrix_interface
      ! Adding entry into a matrix  
      !----------------------------------------------------------------!
 
-     subroutine add_entry_interface(this, row, col, val)
+     subroutine add_entry_interface(this, row, col, data)
 
        import :: matrix
 
        class(matrix) :: this
        type(integer) :: row
        type(integer) :: col
-       type(scalar)  :: val
+       type(scalar)  :: data
 
      end subroutine add_entry_interface
 

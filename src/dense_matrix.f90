@@ -62,14 +62,14 @@ contains
   ! Adding an entry to a dense matrix
   !=================================================================!
 
-  subroutine add_dense_entry(this, row, col, val)
+  subroutine add_dense_entry(this, row, col, data)
 
     class(dense_matrix) :: this
     type(integer)       :: col
     type(integer)       :: row
-    type(scalar)        :: val
+    type(scalar)        :: data
 
-    this % vals(row, col) = val
+    this % vals(row, col) = data
 
   end subroutine add_dense_entry
 
