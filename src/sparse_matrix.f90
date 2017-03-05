@@ -18,9 +18,9 @@ module sparse_matrix_interface
   ! Specialized matrix type for sparse storage
   type, extends(matrix) :: sparse_matrix
 
-     type(integer), allocatable :: cols(:)
-     type(integer), allocatable :: rows(:)
-     type(scalar) , allocatable :: vals(:)
+     type(integer), allocatable :: indices(:)
+     type(integer), allocatable :: indptr(:)
+     type(scalar) , allocatable :: data(:)
 
    contains
 
@@ -31,7 +31,7 @@ module sparse_matrix_interface
 
   ! Interfaces
   interface sparse_matrix
-    procedure constructor
+     procedure constructor
   end interface sparse_matrix
 
   contains
@@ -57,12 +57,12 @@ module sparse_matrix_interface
     ! Adding an entry to a sparse matrix
     !=================================================================!
 
-    subroutine add_sparse_entry(this, row, col, val)
+    subroutine add_sparse_entry(this, row, col, data)
 
       class(sparse_matrix) :: this
       type(integer)        :: col
       type(integer)        :: row
-      type(scalar)         :: val
+      type(scalar)         :: data
 
       print *, 'Added values to sparse matrix!'
 
