@@ -39,14 +39,13 @@ contains
   !===================================================================!
   ! Initializes an instance of dense matrix
   !===================================================================!
-  
-  function constructor(row_size, col_size) result(this)
-
-    integer            :: col_size
-    integer            :: row_size
-    type(dense_matrix) :: this
     
-    ! Set matrix dimensions
+  pure type(dense_matrix) function constructor(row_size, col_size) &
+       & result(this)
+
+    type(integer), intent(in) :: col_size
+    type(integer), intent(in) :: row_size
+
     call this % set_row_size(row_size)
     call this % set_col_size(col_size) 
 
@@ -55,19 +54,19 @@ contains
 
     ! Zero the entries
     this % vals = 0.0_WP
-    
+
   end function constructor
 
   !=================================================================!
   ! Adding an entry to a dense matrix
   !=================================================================!
 
-  subroutine add_dense_entry(this, row, col, data)
-
-    class(dense_matrix) :: this
-    type(integer)       :: col
-    type(integer)       :: row
-    type(scalar)        :: data
+  pure subroutine add_dense_entry(this, row, col, data)
+    
+    class(dense_matrix), intent(inout) :: this
+    type(integer)      , intent(in)    :: col
+    type(integer)      , intent(in)    :: row
+    type(scalar)       , intent(in)    :: data
 
     this % vals(row, col) = data
 
@@ -77,11 +76,11 @@ contains
   ! Fetch the entry corresponding to the row and column
   !=================================================================!
 
-  type(scalar) function get_dense_entry(this, row, col) result(val)
+  pure type(scalar) function get_dense_entry(this, row, col) result(val)
 
-    class(dense_matrix) :: this
-    type(integer) :: row
-    type(integer) :: col
+    class(dense_matrix), intent(in) :: this
+    type(integer)      , intent(in) :: row
+    type(integer)      , intent(in) :: col
 
     val = this % vals(row, col)
     

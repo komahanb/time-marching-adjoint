@@ -80,8 +80,8 @@ contains
   
   pure type(scalar) function get_dense_entry(this, idx) result(val)
 
-    class(dense_vector) :: this
-    type(integer)       :: idx
+    class(dense_vector), intent(in) :: this
+    type(integer)      , intent(in) :: idx
 
     val = this % vals(idx)
 

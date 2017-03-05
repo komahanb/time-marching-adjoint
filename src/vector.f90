@@ -47,9 +47,9 @@ module vector_interface
 
        import vector
        
-       class(vector) :: this
-       type(integer) :: idx
-       type(scalar)  :: val
+       class(vector) , intent(inout) :: this
+       integer       , intent(in)    :: idx
+       type(scalar)  , intent(in)    :: val
 
      end subroutine add_entry_interface
 
@@ -57,11 +57,10 @@ module vector_interface
 
        import vector
        
-       class(vector) :: this
-       type(integer) :: idx
+       class(vector) , intent(in) :: this
+       type(integer) , intent(in) :: idx
 
-     end function get_entry_interface
-       
+     end function get_entry_interface       
 
   end interface
 

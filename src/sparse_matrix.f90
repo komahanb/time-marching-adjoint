@@ -40,16 +40,16 @@ module sparse_matrix_interface
     ! Initializes an instance of sparse matrix
     !=================================================================!
     
-    function constructor(row_size, col_size) result(this)
+    pure type(sparse_matrix) function constructor(row_size, col_size) &
+         & result(this)
 
-      type(integer)       :: col_size
-      type(integer)       :: row_size
-      type(sparse_matrix) :: this
+      type(integer), intent(in) :: col_size
+      type(integer), intent(in) :: row_size
 
       call this % set_row_size(row_size)
       call this % set_col_size(col_size) 
-
-      stop "SPARSE_MATRIX: Unimplemented"
+      
+      ! stop "SPARSE_MATRIX: Unimplemented"
 
     end function constructor
 
@@ -57,14 +57,14 @@ module sparse_matrix_interface
     ! Adding an entry to a sparse matrix
     !=================================================================!
 
-    subroutine add_sparse_entry(this, row, col, data)
+    pure subroutine add_sparse_entry(this, row, col, data)
 
-      class(sparse_matrix) :: this
-      type(integer)        :: col
-      type(integer)        :: row
-      type(scalar)         :: data
+      class(sparse_matrix), intent(inout) :: this
+      type(integer)       , intent(in)    :: col
+      type(integer)       , intent(in)    :: row
+      type(scalar)        , intent(in)    :: data
 
-      print *, 'Added values to sparse matrix!'
+      !print *, 'Added values to sparse matrix!'
 
     end subroutine add_sparse_entry
 
@@ -72,11 +72,11 @@ module sparse_matrix_interface
     ! Fetch the entry corresponding to the row and column
     !=================================================================!
     
-    type(scalar) function get_sparse_entry(this, row, col)
+    pure type(scalar) function get_sparse_entry(this, row, col)
 
-      class(sparse_matrix) :: this
-      type(integer) :: row
-      type(integer) :: col
+      class(sparse_matrix) , intent(in) :: this
+      type(integer)        , intent(in) :: row
+      type(integer)        , intent(in) :: col
 
     end function get_sparse_entry
     
