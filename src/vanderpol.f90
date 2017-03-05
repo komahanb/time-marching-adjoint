@@ -9,12 +9,15 @@
 
 module vanderpol_system
 
-  use constants, only : WP
-  use vector_interface, only: vector
-  use matrix_interface, only: matrix
-  use dense_vector_interface, only: dense_vector
-  use dense_matrix_interface, only: dense_matrix
-  use time_dependent_physics_interface, only : dynamics
+  use constants                        , only : WP
+  use time_dependent_physics_interface , only : dynamics
+
+  ! Currently will use dense matrix implementaion 
+  use dense_vector_interface           , only : dense_vector
+  use dense_matrix_interface           , only : dense_matrix
+
+  use vector_interface           , only : vector
+  use matrix_interface           , only : matrix
 
   implicit none
 
@@ -42,8 +45,29 @@ module vanderpol_system
 
   end type vanderpol
 
+  ! Interface to construct vanderpol system
+  interface vanderpol
+     procedure constructor
+  end interface vanderpol
+
 contains
  
+  !===================================================================!
+  ! Constructor for dense matrix
+  !===================================================================!
+  
+  pure type(vanderpol) function constructor(mass) result (this)
+
+    type(scalar), intent(in) :: mass
+
+    ! Set time order of vanderpol system
+    call this % set_time_order(1)
+
+    ! Set the oscillator parameter
+    this % m = mass
+
+  end function constructor
+
   !-------------------------------------------------------------------!
   ! Residual assembly at each time step. This is a mandary function
   ! that the user needs to implement to use the integration
@@ -53,18 +77,28 @@ contains
   
   pure subroutine assemble_residual(this, residual, state_vectors)
 
-    class(vanderpol), intent(inout)   :: this
-    class(vector), intent(inout) :: residual
-    class(vector), intent(in)    :: state_vectors(:)
-    
-    select type(state_vectors)
-       class is (dense_vector)
-          !r(1) = udot(1) - u(2)
-          !r(2) = udot(2) - this % m*(1.0_wp-u(1)*u(1))*u(2) + u(1)
-       class default
-    end select
-       
+    class(vanderpol), intent(inout) :: this
+    class(vector)   , intent(inout) :: residual
+    class(vector)   , intent(in)    :: state_vectors(:)
+
+!!$    select type(residual)
+!!$    class is (dense_vector)
+!!$       call assemble_dense_residual( residual % vals )
+!!$    class default
+!!$    end select
+
   end subroutine assemble_residual
+  
+!!$  pure subroutine assemble_dense_residual(R, )
+!!$
+!!$    set_vales: block
+!!$      type(scalar) :: r( residual % get_size() )
+!!$      call residual % set_entry(1, 
+!!$      r(1) = udot(1) - u(2)
+!!$      r(2) = udot(2) - this % m*(1.0_wp-u(1)*u(1))*u(2) + u(1)
+!!$    end block set_vales
+!!$
+!!$  end subroutine assemble_dense_residual
 
   !-------------------------------------------------------------------!
   ! Jacobian assembly at each time step. 
@@ -82,14 +116,10 @@ contains
   
   pure subroutine assemble_jacobian(this, jacobian, state_vectors, coeffs)
     
-    class(vanderpol), intent(inout)   :: this
-    class(matrix),  intent(inout) :: jacobian
-    class(vector),  intent(in)    :: state_vectors(:)
-    type(scalar), intent(in)      :: coeffs(:)
-
-!!$    type(dense_matrix), intent(inout) :: jacobian
-!!$    type(dense_vector), intent(in)    :: state_vectors(:)
-!!$    type(scalar), intent(in)          :: coeffs(:)
+    class(vanderpol) , intent(inout) :: this
+    class(matrix)    , intent(inout) :: jacobian
+    class(vector)    , intent(in)    :: state_vectors(:)
+    type(scalar)     , intent(in)    :: coeffs(:)
     
 !!$    associate( u => state_vectors(1) % vals, &
 !!$         & udot => state_vectors(2) % vals, &
@@ -140,8 +170,8 @@ contains
 
   pure subroutine get_initial_condition(this, state_vectors)
 
-    class(vanderpol), intent(inout)   :: this
-    class(vector), intent(inout) :: state_vectors(:)
+    class(vanderpol) , intent(inout) :: this
+    class(vector)    , intent(inout) :: state_vectors(:)
 
 !!$    associate( u => state_vectors(1) % vals, &
 !!$         & udot => state_vectors(2) % vals )
@@ -154,4 +184,3 @@ contains
   end subroutine get_initial_condition
 
 end module vanderpol_system
-

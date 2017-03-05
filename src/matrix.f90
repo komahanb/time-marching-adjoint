@@ -40,7 +40,6 @@ module matrix_interface
   end type matrix
 
   ! Define interfaces to all abstract procedures
- 
   abstract interface
 
      !----------------------------------------------------------------!     

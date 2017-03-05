@@ -59,10 +59,10 @@ module physics_interface
 
        import :: physics, vector, matrix
 
-       class(physics), intent(inout) :: this
-       class(matrix),  intent(inout) :: jacobian
-       class(vector),  intent(in)    :: state_vectors(:)
-       type(scalar), intent(in)      :: coeffs(:)
+       class(physics) , intent(inout) :: this
+       class(matrix)  , intent(inout) :: jacobian
+       class(vector)  , intent(in)    :: state_vectors(:)
+       type(scalar)   , intent(in)    :: coeffs(:)
 
      end subroutine jacobian_assembly_interface
 
