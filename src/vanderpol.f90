@@ -34,7 +34,7 @@ module vanderpol_system
      ! Define constants and other parameters needed for residual and
      ! jacobian assembly here
 
-     type(scalar) :: m = 1.0_WP
+     type(scalar) :: m
 
    contains
 
@@ -79,13 +79,7 @@ contains
 
     class(vanderpol), intent(inout) :: this
     class(vector)   , intent(inout) :: residual
-    class(vector)   , intent(in)    :: state_vectors(:)
-
-!!$    select type(residual)
-!!$    class is (dense_vector)
-!!$       call assemble_dense_residual( residual % vals )
-!!$    class default
-!!$    end select
+    class(vector)   , intent(in)    :: state_vectors(:)  
 
   end subroutine assemble_residual
   
@@ -172,15 +166,25 @@ contains
 
     class(vanderpol) , intent(inout) :: this
     class(vector)    , intent(inout) :: state_vectors(:)
+    type(scalar)                     :: q(this % num_state_vars)
+    
+    select type(state_vectors)
 
-!!$    associate( u => state_vectors(1) % vals, &
-!!$         & udot => state_vectors(2) % vals )
-!!$
-!!$      u(1) = 2.0_WP
-!!$      u(2) = 0.0_WP
-!!$
-!!$    end associate
+       ! Set initial condition if it is a dense vector
+       class is (dense_vector)
 
+          call state_vectors(1) % add_entry(1, 1.5d0)
+
+!!$          associate(q => state_vectors(1) % vals, &
+!!$               & qdot => state_vectors(2) % vals)
+!!$            q(1) = 1.5d0
+!!$          end associate
+
+       ! Define default behavior
+       class default
+
+    end select
+    
   end subroutine get_initial_condition
 
 end module vanderpol_system
