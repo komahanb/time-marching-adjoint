@@ -40,7 +40,7 @@ GIT_SHA1 = $(shell git log -1 | head -n 1 | awk '{print $$2}')
 #=====================================================================#
 
 ifeq ($(COMPILER),gnu)
-  F90 = gfortran-6
+  F90 = gfortran
   F90FLAGS := -cpp -fbacktrace -std=f2008
   LDFLAGS =
 
