@@ -34,7 +34,8 @@ module vanderpol_system
      ! Define constants and other parameters needed for residual and
      ! jacobian assembly here
 
-     type(scalar) :: m
+     type(scalar) :: m = 1.0_WP
+     type(scalar), allocatable(:) :: u, udot
 
    contains
 
@@ -75,12 +76,14 @@ contains
   ! the solver.
   ! -------------------------------------------------------------------!
   
-  pure subroutine assemble_residual(this, residual, state_vectors)
+  pure subroutine assemble_residual(this, residual)
 
-    class(vanderpol), intent(inout) :: this
-    class(vector)   , intent(inout) :: residual
-    class(vector)   , intent(in)    :: state_vectors(:)  
-
+    class(vanderpol), intent(inout)   :: this
+    type(scalar)    , intent(inout) :: residual(:)
+        
+    residual(1) = udot(1) - u(2)
+    residual(2) = udot(2) - this % m * (1.0_wp-u(1)*u(1))*u(2) + u(1)
+    
   end subroutine assemble_residual
   
 !!$  pure subroutine assemble_dense_residual(R, )

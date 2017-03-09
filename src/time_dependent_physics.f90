@@ -9,9 +9,7 @@
 
 module time_dependent_physics_interface
 
-  use constants         , only : WP
-  use vector_interface  , only : vector
-  use physics_interface , only : physics
+  use physics_interface, only : physics
 
   implicit none
   
@@ -41,9 +39,9 @@ module time_dependent_physics_interface
      ! Supplying the initial condition to march in time
      !----------------------------------------------------------------!
      
-     pure subroutine initial_condition_interface(this, state_vectors)
+     pure subroutine initial_condition_interface(this)
 
-       import :: dynamics, vector
+       import :: dynamics
 
        class(dynamics), intent(inout) :: this
        class(vector)  , intent(inout) :: state_vectors(:)

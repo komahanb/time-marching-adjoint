@@ -9,7 +9,6 @@
 
 module time_independent_physics_interface
 
-  use constants, only : WP
   use physics_interface, only : physics
 
   implicit none

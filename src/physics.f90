@@ -1,4 +1,5 @@
 #include "scalar.fpp"
+
 !=====================================================================!
 ! Module that contains common procedures for any physical system
 ! subject to governing equations
@@ -7,10 +8,6 @@
 !=====================================================================!
 
 module physics_interface
-
-  use constants, only : WP
-  use vector_interface, only : vector
-  use matrix_interface, only : matrix
 
   implicit none
   
@@ -29,42 +26,39 @@ module physics_interface
    contains  
 
      ! Deferred procedures
-     procedure(residual_assembly_interface), deferred :: assemble_residual
-     procedure(jacobian_assembly_interface), deferred :: assemble_jacobian
+     procedure(add_residual_interface), deferred :: add_residual
+     procedure(add_jacobian_interface), deferred :: add_jacobian
 
   end type physics
 
   ! Interfaces to deferred procedures
-  interface
+  abstract interface
 
      !----------------------------------------------------------------!
-     ! Interface for residual assembly at each time step
+     ! Interface for residual assembly
      !----------------------------------------------------------------!
 
-     pure subroutine residual_assembly_interface(this, residual, state_vectors)
+     pure subroutine add_residual_interface(this, residual)
        
-       import :: physics, vector
+       import :: physics
        
        class(physics), intent(inout) :: this
-       class(vector),  intent(inout) :: residual
-       class(vector),  intent(in)    :: state_vectors(:)
+       type(scalar)  , intent(inout) :: residual(:)
        
-     end subroutine residual_assembly_interface
+     end subroutine add_residual_interface
 
      !----------------------------------------------------------------!
-     ! Interface for jacobian assembly at each time step
+     ! Interface for jacobian assembly
      !----------------------------------------------------------------!
      
-     pure subroutine jacobian_assembly_interface(this, jacobian, state_vectors, coeffs)
+     pure subroutine add_jacobian_interface(this, jacobian)
 
-       import :: physics, vector, matrix
+       import :: physics
 
-       class(physics) , intent(inout) :: this
-       class(matrix)  , intent(inout) :: jacobian
-       class(vector)  , intent(in)    :: state_vectors(:)
-       type(scalar)   , intent(in)    :: coeffs(:)
+       class(physics), intent(inout) :: this
+       type(scalar)  , intent(inout) :: jacobian(:,:)
 
-     end subroutine jacobian_assembly_interface
+     end subroutine add_jacobian_interface
 
   end interface
 
