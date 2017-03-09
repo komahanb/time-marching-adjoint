@@ -28,7 +28,7 @@ module time_dependent_physics_interface
      procedure :: set_time_order
 
      ! Deferred procedure to subtypes
-     procedure(initial_condition_interface), deferred :: get_initial_condition
+     procedure(initial_condition_interface), deferred :: set_initial_condition
 
   end type dynamics
 
@@ -44,7 +44,6 @@ module time_dependent_physics_interface
        import :: dynamics
 
        class(dynamics), intent(inout) :: this
-       class(vector)  , intent(inout) :: state_vectors(:)
 
      end subroutine initial_condition_interface
 
@@ -53,7 +52,7 @@ module time_dependent_physics_interface
 contains
   
   !===================================================================!
-  ! Returns the row size
+  ! Returns the highest order of time derivative in the physics
   !===================================================================!
   
   pure type(integer) function get_time_order(this)
@@ -65,7 +64,7 @@ contains
   end function get_time_order
 
   !===================================================================!
-  ! Sets the row size
+  ! Sets the highest order of time derivative in the physics
   !===================================================================!
   
   pure subroutine set_time_order(this, order)

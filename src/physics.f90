@@ -25,6 +25,10 @@ module physics_interface
 
    contains  
 
+     ! Provided procedures
+     procedure :: get_num_state_vars
+     procedure :: set_num_state_vars
+     
      ! Deferred procedures
      procedure(add_residual_interface), deferred :: add_residual
      procedure(add_jacobian_interface), deferred :: add_jacobian
@@ -51,17 +55,43 @@ module physics_interface
      ! Interface for jacobian assembly
      !----------------------------------------------------------------!
      
-     pure subroutine add_jacobian_interface(this, jacobian)
+     pure subroutine add_jacobian_interface(this, jacobian, coeff)
 
        import :: physics
 
        class(physics), intent(inout) :: this
        type(scalar)  , intent(inout) :: jacobian(:,:)
+       type(scalar)  , intent(in)    :: coeff(:)
 
      end subroutine add_jacobian_interface
 
   end interface
 
 contains
+ 
+  !===================================================================!
+  ! Returns the number of state variables in the physical system
+  !===================================================================!
+  
+  pure type(integer) function get_num_state_vars(this)
+
+    class(physics), intent(in) :: this
+
+    get_num_state_vars = this % num_state_vars
+
+  end function get_num_state_vars
+
+  !===================================================================!
+  ! Sets the number of state variables in the physical system
+  !===================================================================!
+  
+  pure subroutine set_num_state_vars(this, num_state_vars)
+
+    class(physics), intent(inout) :: this
+    type(integer)  , intent(in)    :: num_state_vars
+
+    this % num_state_vars  = num_state_vars
+
+  end subroutine set_num_state_vars
 
 end module physics_interface

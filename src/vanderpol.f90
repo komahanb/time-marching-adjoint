@@ -12,13 +12,6 @@ module vanderpol_system
   use constants                        , only : WP
   use time_dependent_physics_interface , only : dynamics
 
-  ! Currently will use dense matrix implementaion 
-  use dense_vector_interface           , only : dense_vector
-  use dense_matrix_interface           , only : dense_matrix
-
-  use vector_interface           , only : vector
-  use matrix_interface           , only : matrix
-
   implicit none
 
   private
@@ -29,75 +22,92 @@ module vanderpol_system
   ! Type that implements vanderpol equations in first order form
   !-------------------------------------------------------------------!
   
-  type, extends(dynamics) :: vanderpol
+  type, extends(dynamics) :: vanderpol_first_order
 
      ! Define constants and other parameters needed for residual and
      ! jacobian assembly here
 
-     type(scalar) :: m = 1.0_WP
-     type(scalar), allocatable(:) :: u, udot
-
+     type(scalar)              :: m
+     type(scalar), allocatable :: q(:), qdot(:)
+     
    contains
 
-     ! Implement deferred procedures from superclass
-     procedure :: assemble_residual
-     procedure :: assemble_jacobian
-     procedure :: get_initial_condition
+     ! Implement deferred procedures from superclasses
+     procedure :: add_residual
+     procedure :: add_jacobian
+     procedure :: set_initial_condition
 
-  end type vanderpol
+     ! Destructor
+     final :: destruct
+
+  end type vanderpol_first_order
 
   ! Interface to construct vanderpol system
   interface vanderpol
-     procedure constructor
+     procedure construct_first_order
   end interface vanderpol
 
 contains
  
   !===================================================================!
-  ! Constructor for dense matrix
+  ! Constructor for vanderpol system
   !===================================================================!
   
-  pure type(vanderpol) function constructor(mass) result (this)
+  pure type(vanderpol_first_order) function construct_first_order(mass) &
+       & result (this)
 
     type(scalar), intent(in) :: mass
 
+    ! Set the number of state variables of the vanderpol system
+    call this % set_num_state_vars(2)
+    
     ! Set time order of vanderpol system
     call this % set_time_order(1)
 
     ! Set the oscillator parameter
     this % m = mass
 
-  end function constructor
+    ! Allocate state variables
+    allocate(this % q   ( this % get_num_state_vars() ))
+    allocate(this % qdot( this % get_num_state_vars() ))
 
-  !-------------------------------------------------------------------!
+    ! Fetch the initial conditions
+    call this % set_initial_condition()    
+    
+  end function construct_first_order
+  
+  !===================================================================!
+  ! Destructor for vanderpol system
+  !===================================================================!
+  
+  pure subroutine destruct(this)
+
+    type(vanderpol_first_order), intent(inout) :: this
+
+    if (allocated(this % q   )) deallocate(this % q   )
+    if (allocated(this % qdot)) deallocate(this % qdot)    
+
+  end subroutine destruct
+  
+  !===================================================================!
   ! Residual assembly at each time step. This is a mandary function
   ! that the user needs to implement to use the integration
   ! scheme. This is where the differential equations are supplied to
   ! the solver.
-  ! -------------------------------------------------------------------!
+  !===================================================================!
   
-  pure subroutine assemble_residual(this, residual)
+  pure subroutine add_residual(this, residual)
 
-    class(vanderpol), intent(inout)   :: this
-    type(scalar)    , intent(inout) :: residual(:)
-        
-    residual(1) = udot(1) - u(2)
-    residual(2) = udot(2) - this % m * (1.0_wp-u(1)*u(1))*u(2) + u(1)
+    class(vanderpol_first_order), intent(inout) :: this
+    type(scalar)                , intent(inout) :: residual(:)
+
+    residual(1) = residual(1) + this % qdot(1) - this % q(2)
+    residual(2) = residual(2) + this % qdot(2) - this % m * (1.0_wp &
+         & - this % q(1) * this % q(1)) * this % q(2) + this % q(1)
     
-  end subroutine assemble_residual
-  
-!!$  pure subroutine assemble_dense_residual(R, )
-!!$
-!!$    set_vales: block
-!!$      type(scalar) :: r( residual % get_size() )
-!!$      call residual % set_entry(1, 
-!!$      r(1) = udot(1) - u(2)
-!!$      r(2) = udot(2) - this % m*(1.0_wp-u(1)*u(1))*u(2) + u(1)
-!!$    end block set_vales
-!!$
-!!$  end subroutine assemble_dense_residual
+  end subroutine add_residual
 
-  !-------------------------------------------------------------------!
+  !===================================================================!
   ! Jacobian assembly at each time step. 
   !
   ! Jacobian is the matrix of partial derivatives. Each row in the
@@ -109,85 +119,74 @@ contains
   ! Note: alpha, beta and gamma are scalars that need to be multiplied
   ! with the partial derivatives DRDQ, DRDudot and DRDuddot
   ! respectively.
-  ! -------------------------------------------------------------------!
+  !===================================================================!
   
-  pure subroutine assemble_jacobian(this, jacobian, state_vectors, coeffs)
-    
-    class(vanderpol) , intent(inout) :: this
-    class(matrix)    , intent(inout) :: jacobian
-    class(vector)    , intent(in)    :: state_vectors(:)
-    type(scalar)     , intent(in)    :: coeffs(:)
-    
-!!$    associate( u => state_vectors(1) % vals, &
-!!$         & udot => state_vectors(2) % vals, &
-!!$         & jac => jacobian % vals, &
-!!$         & alpha => coeffs(1), &
-!!$         & beta => coeffs(2) )
-!!$
-!!$      ! Zero all entries first
-!!$      jac = 0.0_WP
-!!$
-!!$      !-----------------------------------------------------------------!
-!!$      ! Add dR/dQ
-!!$      !-----------------------------------------------------------------!
-!!$
-!!$      ! derivative of first equation
-!!$
-!!$      jac(1,1) = jac(1,1) + alpha*0.0_WP
-!!$      jac(1,2) = jac(1,2) - alpha*1.0_WP
-!!$
-!!$      ! derivative of second equation
-!!$
-!!$      jac(2,1) = jac(2,1) + this % m*alpha*(1.0_WP + 2.0_WP*u(1)*u(2))
-!!$      jac(2,2) = jac(2,2) + this % m*alpha*(u(1)*u(1)-1.0_WP)
-!!$
-!!$      !-----------------------------------------------------------------!
-!!$      ! Add dR/dQDOT
-!!$      !-----------------------------------------------------------------!
-!!$
-!!$      ! derivative of first equation
-!!$
-!!$      jac(1,1) = jac(1,1) + beta*1.0_WP
-!!$      jac(1,2) = jac(1,2) + beta*0.0_WP
-!!$
-!!$      ! derivative of second equation
-!!$
-!!$      jac(2,1) = jac(2,1) + this % m*beta*0.0_WP
-!!$      jac(2,2) = jac(2,2) + this % m*beta*1.0_WP
-!!$
-!!$    end associate
+  pure subroutine add_jacobian(this, jacobian, coeff)
 
-  end subroutine assemble_jacobian
+    class(vanderpol_first_order) , intent(inout) :: this
+    type(scalar)                 , intent(inout) :: jacobian(:,:)
+    type(scalar)                 , intent(in)    :: coeff(:)
+
+    !-----------------------------------------------------------------!
+    ! Add dR/dQ
+    !-----------------------------------------------------------------!
+
+    DRDQ: block
+
+      type(scalar) :: alpha
+
+      alpha = coeff(1)
+
+      ! derivative of first equation
+
+      jacobian(1,1) = jacobian(1,1) + alpha*0.0_WP
+      jacobian(1,2) = jacobian(1,2) - alpha*1.0_WP
+
+      ! derivative of second equation
+
+      jacobian(2,1) = jacobian(2,1) + this % m*alpha*(1.0_WP &
+           & + 2.0_WP*this % q(1)*this % q(2))
+      jacobian(2,2) = jacobian(2,2) + this % m*alpha*(this % q(1)*this % q(1) - 1.0_WP)
+
+    end block DRDQ
+
+    !-----------------------------------------------------------------!
+    ! Add dR/dQDOT
+    !-----------------------------------------------------------------!
+
+    DRDQDOT: block
+
+      type(scalar) :: beta
+
+      beta = coeff(2)
+      
+      ! derivative of first equation
+
+      jacobian(1,1) = jacobian(1,1) + beta*1.0_WP
+      jacobian(1,2) = jacobian(1,2) + beta*0.0_WP
+
+      ! derivative of second equation
+
+      jacobian(2,1) = jacobian(2,1) + this % m*beta*0.0_WP
+      jacobian(2,2) = jacobian(2,2) + this % m*beta*1.0_WP
+
+    end block DRDQDOT
+
+  end subroutine add_jacobian
   
-  !---------------------------------------------------------------------!
+  !===================================================================!
   ! Sets the initial condition for use in the integator. If first order
   ! system just set initial Q, if a second order system set initial Q
   ! and udot
-  !---------------------------------------------------------------------!
+  !===================================================================!  
 
-  pure subroutine get_initial_condition(this, state_vectors)
+  pure subroutine set_initial_condition(this)
 
-    class(vanderpol) , intent(inout) :: this
-    class(vector)    , intent(inout) :: state_vectors(:)
-    type(scalar)                     :: q(this % num_state_vars)
-    
-    select type(state_vectors)
+    class(vanderpol_first_order), intent(inout) :: this
 
-       ! Set initial condition if it is a dense vector
-       class is (dense_vector)
-
-          call state_vectors(1) % add_entry(1, 1.5d0)
-
-!!$          associate(q => state_vectors(1) % vals, &
-!!$               & qdot => state_vectors(2) % vals)
-!!$            q(1) = 1.5d0
-!!$          end associate
-
-       ! Define default behavior
-       class default
-
-    end select
-    
-  end subroutine get_initial_condition
+    this % q(1) = 1.0_WP
+    this % q(2) = 2.0_WP
+      
+  end subroutine set_initial_condition
 
 end module vanderpol_system
