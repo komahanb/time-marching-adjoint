@@ -19,3 +19,11 @@ vanderpol.o: constants.o
 vanderpol.o: time_dependent_physics.o
 vanderpol.o: dense_vector.o
 vanderpol.o: dense_matrix.o
+
+assembler.o: physics.o
+assembler.o: matrix.o
+assembler.o: vector.o
+
+dense_assembler.o: physics.o
+dense_assembler.o: dense_matrix.o
+dense_assembler.o: dense_vector.o
