@@ -5,21 +5,21 @@ variables.o \
 mpi.o \
 matrix.o \
 sparse_matrix.o \
-dense_matrix.o \
+dense_matrix_class.o \
 dense_matrix_test.o \
 vector.o \
-dense_vector.o \
+dense_vector_class.o \
 dense_vector_test.o \
-physics.o \
-static_physics.o \
-dynamic_physics.o \
+physics_interface.o \
+static_physics_interface.o \
+dynamic_physics_interface.o \
 function.o \
 diffusion.o \
 diffusion_matrix.o \
 linear_solver_class.o \
 lapack.o \
 blas.o \
-assembler.o \
+physics_assembler_interface.o \
 dense_assembler.o \
 vanderpol.o \
 main.o

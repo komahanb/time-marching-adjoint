@@ -3,11 +3,11 @@ clock.o: constants.o
 vector.o: 
 matrix.o:
 
-physics.o: constants.o
-physics.o: vector.o
-physics.o: matrix.o
+physics_interface.o: constants.o
+physics_interface.o: vector.o
+physics_interface.o: matrix.o
 
-diffusion.o: physics.o
+diffusion.o: physics_interface.o
 
 variables.o: diffusion.o
 variables.o: clock.o
@@ -16,14 +16,14 @@ mpi.o: constants.o
 mpi.o: variables.o
 
 vanderpol.o: constants.o
-vanderpol.o: time_dependent_physics.o
-vanderpol.o: dense_vector.o
-vanderpol.o: dense_matrix.o
+vanderpol.o: dynamic_physics_interface.o
+vanderpol.o: dense_vector_class.o
+vanderpol.o: dense_matrix_class.o
 
-assembler.o: physics.o
+assembler.o: physics_interface.o
 assembler.o: matrix.o
 assembler.o: vector.o
 
-dense_assembler.o: physics.o
-dense_assembler.o: dense_matrix.o
-dense_assembler.o: dense_vector.o
+dense_assembler.o: physics_interface.o
+dense_assembler.o: dense_matrix_class.o
+dense_assembler.o: dense_vector_class.o
