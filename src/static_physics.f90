@@ -7,7 +7,7 @@
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================!
 
-module time_independent_physics_interface
+module static_physics_interface
 
   use physics_interface, only : physics
 
@@ -25,4 +25,4 @@ module time_independent_physics_interface
   
 contains
   
-end module time_independent_physics_interface
+end module static_physics_interface

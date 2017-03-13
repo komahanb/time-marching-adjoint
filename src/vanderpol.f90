@@ -10,7 +10,7 @@
 module vanderpol_system
 
   use constants                        , only : WP
-  use time_dependent_physics_interface , only : dynamics
+  use dynamic_physics_interface , only : dynamics
 
   implicit none
 

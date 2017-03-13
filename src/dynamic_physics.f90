@@ -7,7 +7,7 @@
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================!
 
-module time_dependent_physics_interface
+module dynamic_physics_interface
 
   use physics_interface, only : physics
 
@@ -76,4 +76,4 @@ contains
 
   end subroutine set_time_order
   
-end module time_dependent_physics_interface
+end module dynamic_physics_interface
