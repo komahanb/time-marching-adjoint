@@ -3,11 +3,11 @@ constants.o \
 clock.o \
 variables.o \
 mpi.o \
-matrix.o \
+matrix_interface.o \
 sparse_matrix.o \
 dense_matrix_class.o \
 dense_matrix_test.o \
-vector.o \
+vector_interface.o \
 dense_vector_class.o \
 dense_vector_test.o \
 physics_interface.o \
@@ -21,6 +21,6 @@ lapack.o \
 blas.o \
 physics_assembler_interface.o \
 dense_assembler.o \
-vanderpol.o \
+vanderpol_dynamics_class.o \
 main.o
 
