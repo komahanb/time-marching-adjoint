@@ -6,7 +6,7 @@
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================!
 
-module dense_matrix_interface
+module dense_matrix_class
 
   use constants, only : WP
   use matrix_interface, only: matrix
@@ -86,4 +86,4 @@ contains
     
   end function get_dense_entry
 
-end module dense_matrix_interface
+end module dense_matrix_class

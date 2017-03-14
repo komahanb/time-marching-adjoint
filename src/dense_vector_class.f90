@@ -11,7 +11,7 @@
 !
 !=====================================================================!
 
-module dense_vector_interface
+module dense_vector_class
 
   use constants        , only : WP
   use vector_interface , only : vector
@@ -87,4 +87,4 @@ contains
 
   end function get_dense_entry
 
-end module dense_vector_interface
+end module dense_vector_class

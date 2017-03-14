@@ -12,8 +12,8 @@ module dense_assembler_class
   use assembler_interface    , only : assembler
   use matrix_interface  , only : matrix
   use vector_interface  , only : vector
-  use dense_matrix_interface , only : dense_matrix
-  use dense_vector_interface , only : dense_vector
+  use dense_matrix_class , only : dense_matrix
+  use dense_vector_class , only : dense_vector
   
   implicit none
   

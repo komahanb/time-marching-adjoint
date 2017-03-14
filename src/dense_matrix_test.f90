@@ -6,7 +6,7 @@
 module dense_matrix_test
 
   use constants, only : WP, TINY, LARGE, PI
-  use dense_matrix_interface
+  use dense_matrix_class
   
 contains
 
