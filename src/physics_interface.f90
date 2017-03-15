@@ -21,13 +21,15 @@ module physics_interface
   
   type, abstract :: physics
 
-     type(integer) :: num_state_vars 
+     type(character(:)), allocatable :: description
+     type(integer)                   :: num_state_vars
+
 
    contains  
 
      ! Provided procedures
-     procedure :: get_num_state_vars
-     procedure :: set_num_state_vars
+     procedure :: get_num_state_vars , set_num_state_vars
+     procedure :: get_description    , set_description
      
      ! Deferred procedures
      procedure(add_residual_interface), deferred :: add_residual
@@ -93,5 +95,30 @@ contains
     this % num_state_vars  = num_state_vars
 
   end subroutine set_num_state_vars
+  
+  !===================================================================!
+  ! Returns the description set for the physical system
+  !===================================================================!
+  
+  pure type(character) function get_description(this)
 
+    class(physics), intent(in) :: this
+
+    get_description = this % description
+
+  end function get_description
+
+  !===================================================================!
+  ! Sets the description for physical system
+  !===================================================================!
+
+  pure subroutine set_description(this, description)
+
+    class(physics), intent(inout) :: this
+    type(character(len=*))  , intent(in)    :: description
+
+    this % description  = trim(description)
+
+  end subroutine set_description
+  
 end module physics_interface
