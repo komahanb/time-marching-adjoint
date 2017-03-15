@@ -33,14 +33,14 @@ LAPACK_DIR = /usr
 # Add git SHA-1 hash
 #=====================================================================#
 
-GIT_SHA1 = $(shell git log -1 | head -n 1 | awk '{print $$2}')
+# GIT_SHA1 = $(shell git log -1 | head -n 1 | awk '{print $$2}')
 
 #=====================================================================#
 # GNU Fortran compiler options
 #=====================================================================#
 
 ifeq ($(COMPILER),gnu)
-  F90 = gfortran-6
+  F90 = gfortran-5
   F90FLAGS := -cpp -fbacktrace -std=f2008
   LDFLAGS =
 
@@ -180,7 +180,7 @@ neat:
 .PHONY: all clean neat distclean 
 
 %.o: %.f90
-	$(F90) $(F90FLAGS) -DGIT_SHA1="\"$(GIT_SHA1)\"" -c $<
+	$(F90) $(F90FLAGS) -c $<
 
 #=====================================================================#
 # Dependencies
