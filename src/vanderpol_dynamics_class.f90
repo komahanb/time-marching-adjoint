@@ -27,7 +27,7 @@ module vanderpol_system
      ! Define constants and other parameters needed for residual and
      ! jacobian assembly here
 
-     type(scalar)              :: m
+     type(scalar)              :: mu
      type(scalar), allocatable :: q(:), qdot(:)
      
    contains
@@ -53,10 +53,10 @@ contains
   ! Constructor for vanderpol system
   !===================================================================!
   
-  pure type(vanderpol_first_order) function construct_first_order(mass) &
+  pure type(vanderpol_first_order) function construct_first_order(mu) &
        & result (this)
 
-    type(scalar), intent(in) :: mass
+    type(scalar), intent(in) :: mu
 
     ! Set the number of state variables of the vanderpol system
     call this % set_num_state_vars(2)
@@ -65,7 +65,7 @@ contains
     call this % set_time_order(1)
 
     ! Set the oscillator parameter
-    this % m = mass
+    this % mu = mu
 
     ! Allocate state variables
     allocate(this % q   ( this % get_num_state_vars() ))
@@ -102,7 +102,7 @@ contains
     type(scalar)                , intent(inout) :: residual(:)
 
     residual(1) = residual(1) + this % qdot(1) - this % q(2)
-    residual(2) = residual(2) + this % qdot(2) - this % m * (1.0_wp &
+    residual(2) = residual(2) + this % qdot(2) - this % mu * (1.0_wp &
          & - this % q(1) * this % q(1)) * this % q(2) + this % q(1)
     
   end subroutine add_residual
@@ -144,9 +144,9 @@ contains
 
       ! derivative of second equation
 
-      jacobian(2,1) = jacobian(2,1) + this % m*alpha*(1.0_WP &
+      jacobian(2,1) = jacobian(2,1) + this % mu*alpha*(1.0_WP &
            & + 2.0_WP*this % q(1)*this % q(2))
-      jacobian(2,2) = jacobian(2,2) + this % m*alpha*(this % q(1)*this % q(1) - 1.0_WP)
+      jacobian(2,2) = jacobian(2,2) + this % mu*alpha*(this % q(1)*this % q(1) - 1.0_WP)
 
     end block DRDQ
 
@@ -167,8 +167,8 @@ contains
 
       ! derivative of second equation
 
-      jacobian(2,1) = jacobian(2,1) + this % m*beta*0.0_WP
-      jacobian(2,2) = jacobian(2,2) + this % m*beta*1.0_WP
+      jacobian(2,1) = jacobian(2,1) + this % mu*beta*0.0_WP
+      jacobian(2,2) = jacobian(2,2) + this % mu*beta*1.0_WP
 
     end block DRDQDOT
 
