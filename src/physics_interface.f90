@@ -44,12 +44,13 @@ module physics_interface
      ! Interface for residual assembly
      !----------------------------------------------------------------!
 
-     pure subroutine add_residual_interface(this, residual)
+     pure subroutine add_residual_interface(this, residual, U)
        
        import :: physics
        
-       class(physics), intent(inout) :: this
-       type(scalar)  , intent(inout) :: residual(:)
+       class(physics) , intent(inout) :: this
+       type(scalar)   , intent(inout) :: residual(:)
+       type(scalar)   , intent(in)    :: U(:,:)
        
      end subroutine add_residual_interface
 
@@ -57,14 +58,15 @@ module physics_interface
      ! Interface for jacobian assembly
      !----------------------------------------------------------------!
      
-     pure subroutine add_jacobian_interface(this, jacobian, coeff)
+     pure subroutine add_jacobian_interface(this, jacobian, coeff, U)
 
        import :: physics
 
-       class(physics), intent(inout) :: this
-       type(scalar)  , intent(inout) :: jacobian(:,:)
-       type(scalar)  , intent(in)    :: coeff(:)
-
+       class(physics) , intent(inout) :: this
+       type(scalar)   , intent(inout) :: jacobian(:,:)
+       type(scalar)   , intent(in)    :: coeff(:)
+       type(scalar)   , intent(in)    :: U(:,:)
+       
      end subroutine add_jacobian_interface
 
   end interface

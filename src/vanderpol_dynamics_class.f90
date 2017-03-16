@@ -9,14 +9,14 @@
 
 module vanderpol_system
 
-  use constants                        , only : WP
+  use constants                 , only : WP
   use dynamic_physics_interface , only : dynamics
 
   implicit none
 
   private
 
-  public :: vanderpol
+  public :: vanderpol_first_order
 
   !-------------------------------------------------------------------!
   ! Type that implements vanderpol equations in first order form
@@ -27,15 +27,14 @@ module vanderpol_system
      ! Define constants and other parameters needed for residual and
      ! jacobian assembly here
 
-     type(scalar)              :: mu
-     type(scalar), allocatable :: q(:), qdot(:)
+     type(scalar) :: mu
      
    contains
 
      ! Implement deferred procedures from superclasses
      procedure :: add_residual
      procedure :: add_jacobian
-     procedure :: set_initial_condition
+     procedure :: get_initial_condition
 
      ! Destructor
      final :: destruct
@@ -43,9 +42,9 @@ module vanderpol_system
   end type vanderpol_first_order
 
   ! Interface to construct vanderpol system
-  interface vanderpol
+  interface vanderpol_first_order
      procedure construct_first_order
-  end interface vanderpol
+  end interface vanderpol_first_order
 
 contains
  
@@ -62,17 +61,10 @@ contains
     call this % set_num_state_vars(2)
     
     ! Set time order of vanderpol system
-    call this % set_time_order(1)
+    call this % set_time_deriv_order(1)
 
     ! Set the oscillator parameter
     this % mu = mu
-
-    ! Allocate state variables
-    allocate(this % q   ( this % get_num_state_vars() ))
-    allocate(this % qdot( this % get_num_state_vars() ))
-
-    ! Fetch the initial conditions
-    call this % set_initial_condition()    
     
   end function construct_first_order
   
@@ -83,10 +75,7 @@ contains
   pure subroutine destruct(this)
 
     type(vanderpol_first_order), intent(inout) :: this
-
-    if (allocated(this % q   )) deallocate(this % q   )
-    if (allocated(this % qdot)) deallocate(this % qdot)    
-
+    
   end subroutine destruct
   
   !===================================================================!
@@ -96,14 +85,17 @@ contains
   ! the solver.
   !===================================================================!
   
-  pure subroutine add_residual(this, residual)
+  pure subroutine add_residual(this, residual, U)
 
     class(vanderpol_first_order), intent(inout) :: this
     type(scalar)                , intent(inout) :: residual(:)
+    type(scalar)                , intent(in)    :: U(:,:)
 
-    residual(1) = residual(1) + this % qdot(1) - this % q(2)
-    residual(2) = residual(2) + this % qdot(2) - this % mu * (1.0_wp &
-         & - this % q(1) * this % q(1)) * this % q(2) + this % q(1)
+    associate( q => U(1,:), qdot => U(2,:), mu => this%mu)
+      residual(1) = residual(1) + qdot(1) - q(2)
+      residual(2) = residual(2) + qdot(2) - this % mu * (1.0_wp &
+           & - q(1) * q(1)) * q(2) + q(1)
+    end associate
     
   end subroutine add_residual
 
@@ -121,72 +113,61 @@ contains
   ! respectively.
   !===================================================================!
   
-  pure subroutine add_jacobian(this, jacobian, coeff)
+  pure subroutine add_jacobian(this, jacobian, coeff, U)
 
     class(vanderpol_first_order) , intent(inout) :: this
     type(scalar)                 , intent(inout) :: jacobian(:,:)
     type(scalar)                 , intent(in)    :: coeff(:)
+    type(scalar)                 , intent(in)    :: U(:,:)
+    
+    associate(q=>U(1,:), qdot=> U(2,:), mu=>this%mu, alpha=>coeff(1), beta=>coeff(2))
 
-    !-----------------------------------------------------------------!
-    ! Add dR/dQ
-    !-----------------------------------------------------------------!
+      DRDQ: block
 
-    DRDQ: block
+        ! derivative of first equation
 
-      type(scalar) :: alpha
+        jacobian(1,1) = jacobian(1,1) + alpha*0.0_WP
+        jacobian(1,2) = jacobian(1,2) - alpha*1.0_WP
 
-      alpha = coeff(1)
+        ! derivative of second equation
 
-      ! derivative of first equation
+        jacobian(2,1) = jacobian(2,1) + mu*alpha*(1.0_WP &
+             & + 2.0_WP*q(1)*q(2))
+        jacobian(2,2) = jacobian(2,2) + mu*alpha*(q(1)*q(1) - 1.0_WP)
 
-      jacobian(1,1) = jacobian(1,1) + alpha*0.0_WP
-      jacobian(1,2) = jacobian(1,2) - alpha*1.0_WP
+      end block DRDQ
 
-      ! derivative of second equation
+      DRDQDOT: block
 
-      jacobian(2,1) = jacobian(2,1) + this % mu*alpha*(1.0_WP &
-           & + 2.0_WP*this % q(1)*this % q(2))
-      jacobian(2,2) = jacobian(2,2) + this % mu*alpha*(this % q(1)*this % q(1) - 1.0_WP)
+        ! derivative of first equation
 
-    end block DRDQ
+        jacobian(1,1) = jacobian(1,1) + beta*1.0_WP
+        jacobian(1,2) = jacobian(1,2) + beta*0.0_WP
 
-    !-----------------------------------------------------------------!
-    ! Add dR/dQDOT
-    !-----------------------------------------------------------------!
+        ! derivative of second equation
 
-    DRDQDOT: block
+        jacobian(2,1) = jacobian(2,1) + mu*beta*0.0_WP
+        jacobian(2,2) = jacobian(2,2) + mu*beta*1.0_WP
 
-      type(scalar) :: beta
+      end block DRDQDOT
 
-      beta = coeff(2)
-      
-      ! derivative of first equation
-
-      jacobian(1,1) = jacobian(1,1) + beta*1.0_WP
-      jacobian(1,2) = jacobian(1,2) + beta*0.0_WP
-
-      ! derivative of second equation
-
-      jacobian(2,1) = jacobian(2,1) + this % mu*beta*0.0_WP
-      jacobian(2,2) = jacobian(2,2) + this % mu*beta*1.0_WP
-
-    end block DRDQDOT
+    end associate
 
   end subroutine add_jacobian
   
   !===================================================================!
   ! Sets the initial condition for use in the integator. If first order
   ! system just set initial Q, if a second order system set initial Q
-  ! and udot
+  ! and qdot
   !===================================================================!  
 
-  pure subroutine set_initial_condition(this)
+  pure subroutine get_initial_condition(this, U)
+    
+    class(vanderpol_first_order), intent(in)  :: this
+    type(scalar)                , intent(out) :: U(:,:)
 
-    class(vanderpol_first_order), intent(inout) :: this
-
-    this % q(1) = 1.0_WP
-    this % q(2) = 2.0_WP
-      
-  end subroutine set_initial_condition
+    U(1,1:2) = [ 1.0_WP, 2.0_WP ]
+    
+  end subroutine get_initial_condition
 
 end module vanderpol_system
