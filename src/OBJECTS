@@ -26,5 +26,7 @@ utils.o \
 lapack.o \
 linear_algebra.o \
 nonlinear.o\
-main.o
+integrator_interface.o\
+adams_bashforth_moulton_class.o\
+test_marching.o
 

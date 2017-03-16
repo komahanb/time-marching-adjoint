@@ -6,9 +6,9 @@
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================!
 
-module integrator_class
+module integrator_interface
 
-  use physics_interface, only : physics
+  use dynamic_physics_interface, only : dynamics
 
   implicit none
 
@@ -21,7 +21,7 @@ module integrator_class
      ! Contains the actual physical system
      !----------------------------------------------------------------!
 
-     class(physics), pointer :: system => null()
+     class(dynamics), pointer :: system => null()
 
      type(scalar)  :: tinit     = 0.0d0 ! initial time
      type(scalar)  :: tfinal    = 1.0d0 ! final time
@@ -54,8 +54,8 @@ module integrator_class
      ! Deferred procedures for subtypes to implement                  !
      !----------------------------------------------------------------!
 
-     procedure(evaluate_states_interface), private, deferred :: evaluate_states
-     procedure(get_state_coeff_interface), private, deferred :: get_state_coeff
+     procedure(evaluate_states_interface), deferred :: evaluate_states
+     procedure(get_state_coeff_interface), deferred :: get_state_coeff
 
      !----------------------------------------------------------------!
      ! Procedures                                                     !
@@ -88,7 +88,7 @@ module integrator_class
 
        import integrator
 
-       class(integrator), intent(inout) :: this
+       class(integrator), intent(in)    :: this
        type(scalar)     , intent(in)    :: uold(:,:,:)  ! previous values of state variables
        type(scalar)     , intent(out)   :: unew(:,:)    ! approximated value at current step
 
@@ -98,17 +98,17 @@ module integrator_class
      ! Retrieve the state approximation coefficients
      !================================================================!
      
-     pure subroutine get_state_coefficients_interface(this, scoeff, int_order, time_deriv_order)
+     pure subroutine get_state_coeff_interface(this, scoeff, int_order, time_deriv_order)
 
        import integrator
 
-       class(integrator) , intent(inout) :: this
-       type(integer)     , intent(in)    :: int_ord(:)  ! order of approximation of the integration
-       type(integer)     , intent(in)    :: deriv_ord   ! order of the differential equation in time
-       type(scalar)      , intent(out)   :: scoeff(:)   ! order of equation + 1
+       class(integrator) , intent(in)    :: this
+       type(integer)     , intent(in)    :: int_order(:)     ! order of approximation of the integration
+       type(integer)     , intent(in)    :: time_deriv_order !  order of the differential equation in time
+       type(scalar)      , intent(out)   :: scoeff(:)        ! order of equation + 1
 
-     end subroutine get_state_coefficients_interface
-
+     end subroutine get_state_coeff_interface
+     
   end interface
 
 contains
@@ -119,7 +119,7 @@ contains
   
   pure subroutine evaluate_time(this, tnew, told, h)
 
-    class(integrator) , intent(inout) :: this
+    class(integrator) , intent(in)    :: this
     type(scalar)      , intent(in)    :: told    ! previous value of time
     type(scalar)      , intent(in)    :: h       ! step size
     type(scalar)      , intent(out)   :: tnew    ! current time value
@@ -141,42 +141,33 @@ contains
   
   pure type(scalar) function get_time_coeff(this)
 
-    class(integrator) , intent(inout) :: this
+    class(integrator) , intent(in) :: this
 
     get_time_coeff = 1.0d0
 
-  end subroutine get_state_coefficients_interface
+  end function get_time_coeff
   
   !===================================================================!
   ! Base class constructor logic
   !===================================================================!
 
-  pure subroutine construct(this, system, tinit, tfinal, h)
+  subroutine construct(this, system, tinit, tfinal, h, implicit)
 
     class(integrator) , intent(inout)         :: this
-    class(physics)    , intent(in)   , target :: system
-    real(dp)          , intent(in)            :: tinit, tfinal
-    real(dp)          , intent(in)            :: h
+    class(dynamics)   , intent(in)   , target :: system
+    type(scalar)      , intent(in)            :: tinit, tfinal
+    type(scalar)      , intent(in)            :: h
+    type(logical)     , intent(in)            :: implicit
     
-    call this % set_physics(system)
-    
-    if (present(tinit)) then
-       this % tinit = tinit
-    end if
-
-    if (present(tfinal)) then
-       this % tfinal = tfinal
-    end if
-
-    if (present(h)) then
-       this % h = h 
-    end if
-    
+    call this % set_physics(system)    
+    this % tinit = tinit
+    this % tfinal = tfinal
+    this % h = h 
+    call this % set_implicit(implicit)
     this % time_deriv_order = system % get_time_deriv_order()
-
     this % num_steps = int((this % tfinal - this % tinit)/this % h) + 1
-    
-    call set_num_variables( system % get_num_vars() )
+
+    call this % set_num_variables( this % system % get_num_state_vars() )
 
     if ( .not. (this % get_num_variables() .gt. 0) ) then
        stop ">> Error: No DOF to march in time. Stopping."
@@ -185,10 +176,10 @@ contains
     allocate(this % time( this % get_num_steps() ))
     this % time = 0.0d0
     this % time(1) = this % tinit
-
+       
     allocate( this % U( &
          & this % get_num_steps(), &
-         & this % time_deriv_order, &
+         & this % time_deriv_order + 1, &
          & this % get_num_variables() &
          & ))
     this % U = 0.0d0
@@ -201,7 +192,7 @@ contains
 
   pure subroutine destruct(this)
 
-    class(integrator) :: this
+    class(integrator), intent(inout) :: this
 
     ! Clear global states and time
     if(allocated(this % U)) deallocate(this % U)
@@ -215,46 +206,29 @@ contains
 
   subroutine write_solution(this, filename)
 
-    class(integrator)                      :: this
-    character(len=*), OPTIONAL, intent(in) :: filename
-    character(len=7), parameter            :: directory = "output/"
-    character(len=32)                      :: path = ""
-    integer                                :: k, j, ierr
+    class(integrator)             :: this
+    character(len=*), intent(in)  :: filename
+    character(len=7), parameter   :: directory = "output/"
+    character(len=:), allocatable :: path
+    character(len=:), allocatable :: new_name
+    integer                       :: k, j, i, ierr
+    integer                       :: nsteps
 
-    path = trim(path)
-
-    if (present(filename)) then
-       path = directory//filename
-    else
-       path = directory//"solution.dat"
-    end if
-
+    ! Open resource
+    path = trim(directory//"solution.dat")
     open(unit=90, file=trim(path), iostat= ierr)
-
     if (ierr .ne. 0) then
        write(*,'("  >> Opening file ", 39A, " failed")') path
        return
     end if
-
-    if (this % time_deriv_order .eq. 2 ) then
-
-       do k = 1, this % num_steps
-          write(90, *)  this % time(k), &
-               & (dble(this % U (k,1,j) ), j=1,this % get_num_variables()  ), &
-               & (dble(this % U (k,2,j) ), j=1,this % get_num_variables()  ), &
-               & (dble(this % U (k,3,j) ), j=1,this % get_num_variables()  )
-       end do
-
-    else
-
-       do k = 1, this % num_steps
-          write(90, *)  this % time(k), &
-               & (dble(this % U (k,1,j) ), j=1,this % get_num_variables()  ), &
-               & (dble(this % U (k,2,j) ), j=1,this % get_num_variables()  )
-       end do
-
-    end if
-
+    
+    ! Write data
+    nsteps = this % get_num_steps()
+    loop_time: do k = 1, nsteps
+       write(90, *)  this % time(k), this % U (k,:,:)
+    end do loop_time
+    
+    ! Close resource
     close(90)
 
   end subroutine write_solution
@@ -265,7 +239,7 @@ contains
 
   pure subroutine integrate( this )
     
-    class(integrator) :: this
+    class(integrator), intent(inout) :: this
     integer           :: k
 
     ! Set states to zero
@@ -273,7 +247,7 @@ contains
     this % time  = 0.0d0
 
     ! Get the initial condition
-    call this % system % get_initial_condition(U(1,:,:))
+    call this % system % get_initial_condition(this % U(1,:,:))
 
     ! March in time
     time: do k = 2, this % num_steps
@@ -396,8 +370,8 @@ contains
 
   pure subroutine set_approximate_jacobian(this, approximate_jacobian)
 
-    class(integrator) :: this
-    type(logical)     :: approximate_jacobian
+    class(integrator), intent(inout) :: this
+    type(logical), intent(in)     :: approximate_jacobian
 
     this % approximate_jacobian = approximate_jacobian
 
@@ -408,11 +382,11 @@ contains
   ! implementation to the mandatory functions assembleResidual and
   ! getInitialStates
   !===================================================================!
+  
+  subroutine set_physics(this, physical_system)
 
-  pure subroutine set_physics(this, physical_system)
-
-    class(integrator)      :: this
-    class(physics), target :: physical_system
+    class(integrator)   :: this
+    class(dynamics), target :: physical_system
 
     this % system => physical_system
 
@@ -424,8 +398,8 @@ contains
 
   pure subroutine set_print_level(this,print_level)
 
-    class(integrator) :: this
-    type(integer)     :: print_level
+    class(integrator), intent(inout) :: this
+    type(integer), intent(in)    :: print_level
 
     this % print_level = print_level
 
@@ -437,9 +411,9 @@ contains
   
   subroutine to_string(this)
     
-    class(integrator), intent(inout) :: this
+    class(integrator), intent(in) :: this
     
-    print '("  >> Physical System     : " ,A10)' , this % system % name
+    print '("  >> Physical System     : " ,A10)' , this % system % get_description()
     print '("  >> Start time          : " ,F8.3)', this % tinit
     print '("  >> End time            : " ,F8.3)', this % tfinal
     print '("  >> Step size           : " ,E9.3)', this % h
@@ -449,4 +423,4 @@ contains
 
   end subroutine to_string
   
-end module integrator_class
+end module integrator_interface

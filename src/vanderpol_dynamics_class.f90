@@ -163,8 +163,8 @@ contains
 
   pure subroutine get_initial_condition(this, U)
     
-    class(vanderpol_first_order), intent(in)  :: this
-    type(scalar)                , intent(out) :: U(:,:)
+    class(vanderpol_first_order), intent(in)    :: this
+    type(scalar)                , intent(inout) :: U(:,:)
 
     U(1,1:2) = [ 1.0_WP, 2.0_WP ]
     

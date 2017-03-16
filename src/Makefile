@@ -1,4 +1,4 @@
-program = diffusion
+program = test_marching
 
 #=====================================================================#
 # Object Files
@@ -40,7 +40,7 @@ LAPACK_DIR = /usr
 #=====================================================================#
 
 ifeq ($(COMPILER),gnu)
-  F90 = gfortran-5
+  F90 = gfortran-6
   F90FLAGS := -cpp -fbacktrace -std=f2008
   LDFLAGS =
 

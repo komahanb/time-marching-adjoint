@@ -44,7 +44,7 @@ module dynamic_physics_interface
        import :: dynamics
 
        class(dynamics), intent(in)  :: this
-       type(scalar)   , intent(out) :: U(:,:)
+       type(scalar)   , intent(inout) :: U(:,:)
 
      end subroutine initial_condition_interface
 
