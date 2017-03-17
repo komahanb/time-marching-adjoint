@@ -13,12 +13,13 @@ include OBJECTS
 COMPILER = gnu
 DEBUG    = yes
 PROFILE  = no
-OPTIMIZE = yes
+OPTIMIZE = no
 MPI      = no
 HDF5     = no
 PETSC    = no
 F2008    = yes
 LAPACK   = yes
+COMPLEX  = no
 
 #=====================================================================#
 # External Library Paths
@@ -42,7 +43,11 @@ LAPACK_DIR = /usr
 ifeq ($(COMPILER),gnu)
   F90 = gfortran-6
   F90FLAGS := -cpp -fbacktrace -std=f2008
-  LDFLAGS =
+
+  # COMPLEX mode
+  ifeq ($(COMPLEX),yes)
+    F90FLAGS += -DUSE_COMPLEX
+  endif
 
   # Disable F2008 STD
   ifeq ($(F2008),no)

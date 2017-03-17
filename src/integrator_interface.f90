@@ -90,7 +90,7 @@ module integrator_interface
 
        class(integrator), intent(in)    :: this
        type(scalar)     , intent(in)    :: uold(:,:,:)  ! previous values of state variables
-       type(scalar)     , intent(out)   :: unew(:,:)    ! approximated value at current step
+       type(scalar)     , intent(inout)   :: unew(:,:)    ! approximated value at current step
 
      end subroutine evaluate_states_interface
 
