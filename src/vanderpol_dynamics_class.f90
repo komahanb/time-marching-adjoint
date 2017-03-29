@@ -92,9 +92,12 @@ contains
     type(scalar)                , intent(in)    :: U(:,:)
 
     associate( q => U(1,:), qdot => U(2,:), mu => this%mu)
+
       residual(1) = residual(1) + qdot(1) - q(2)
-      residual(2) = residual(2) + qdot(2) - this % mu * (1.0_wp &
-           & - q(1) * q(1)) * q(2) + q(1)
+
+      residual(2) = residual(2) + qdot(2) -  mu * (1.0_wp &
+           & - q(1) * q(1)) * q(2) - q(1)
+
     end associate
     
   end subroutine add_residual
@@ -131,8 +134,7 @@ contains
 
         ! derivative of second equation
 
-        jacobian(2,1) = jacobian(2,1) + mu*alpha*(1.0_WP &
-             & + 2.0_WP*q(1)*q(2))
+        jacobian(2,1) = jacobian(2,1) + alpha*(2.0_WP*mu*q(1)*q(2) - 1.0_WP)
         jacobian(2,2) = jacobian(2,2) + mu*alpha*(q(1)*q(1) - 1.0_WP)
 
       end block DRDQ
@@ -146,8 +148,8 @@ contains
 
         ! derivative of second equation
 
-        jacobian(2,1) = jacobian(2,1) + mu*beta*0.0_WP
-        jacobian(2,2) = jacobian(2,2) + mu*beta*1.0_WP
+        jacobian(2,1) = jacobian(2,1) + beta*0.0_WP
+        jacobian(2,2) = jacobian(2,2) + beta*1.0_WP
 
       end block DRDQDOT
 
@@ -166,7 +168,7 @@ contains
     class(vanderpol_first_order), intent(in)    :: this
     type(scalar)                , intent(inout) :: U(:,:)
 
-    U(1,1:2) = [ 1.0_WP, 2.0_WP ]
+    U(1,1:2) = [ 0.2_WP, 0.1_WP ]
     
   end subroutine get_initial_condition
 

@@ -31,8 +31,8 @@ module integrator_interface
      ! Track global time and states
      !----------------------------------------------------------------!
 
-     type(scalar), allocatable :: time (:)     ! time values (steps)
-     type(scalar), allocatable :: U    (:,:,:) ! state varibles (steps, deriv_ord, nvars)
+     type(scalar), allocatable :: time (:) ! time values (steps)
+     type(scalar), allocatable :: U(:,:,:) ! state varibles (steps, deriv_ord, nvars)
 
      !----------------------------------------------------------------!
      ! Variables for managing time marching
@@ -78,18 +78,18 @@ module integrator_interface
   end type integrator
 
   ! Define interfaces to deferred procedures
-  abstract interface
+  interface
 
      !================================================================!
      ! Interface to approximate states using the time marching coeffs
      !================================================================!
      
-     pure subroutine evaluate_states_interface(this, unew, uold)
+     impure subroutine evaluate_states_interface(this, unew, uold)
 
        import integrator
 
-       class(integrator), intent(in)    :: this
-       type(scalar)     , intent(in)    :: uold(:,:,:)  ! previous values of state variables
+       class(integrator), intent(in)      :: this
+       type(scalar)     , intent(in)      :: uold(:,:,:)  ! previous values of state variables
        type(scalar)     , intent(inout)   :: unew(:,:)    ! approximated value at current step
 
      end subroutine evaluate_states_interface
@@ -98,7 +98,7 @@ module integrator_interface
      ! Retrieve the state approximation coefficients
      !================================================================!
      
-     pure subroutine get_state_coeff_interface(this, scoeff, int_order, time_deriv_order)
+     impure subroutine get_state_coeff_interface(this, scoeff, int_order, time_deriv_order)
 
        import integrator
 
@@ -117,7 +117,7 @@ contains
   ! Evaluate the indepedent variable (time)
   !===================================================================!
   
-  pure subroutine evaluate_time(this, tnew, told, h)
+  impure subroutine evaluate_time(this, tnew, told, h)
 
     class(integrator) , intent(in)    :: this
     type(scalar)      , intent(in)    :: told    ! previous value of time
@@ -129,7 +129,7 @@ contains
       type(scalar) :: tcoeff
       
       tcoeff = this % get_time_coeff()
-      tnew = told + tcoeff * h
+      tnew   = told + tcoeff * h
       
     end block advance_time
 
@@ -139,7 +139,7 @@ contains
   ! Retrieve the time approximation coefficient
   !================================================================!
   
-  pure type(scalar) function get_time_coeff(this)
+  impure type(scalar) function get_time_coeff(this)
 
     class(integrator) , intent(in) :: this
 
@@ -190,7 +190,7 @@ contains
   ! Base class destructor
   !======================================================================!
 
-  pure subroutine destruct(this)
+  impure subroutine destruct(this)
 
     class(integrator), intent(inout) :: this
 
@@ -215,7 +215,8 @@ contains
     integer                       :: nsteps
 
     ! Open resource
-    path = trim(directory//"solution.dat")
+    path = trim(filename)
+
     open(unit=90, file=trim(path), iostat= ierr)
     if (ierr .ne. 0) then
        write(*,'("  >> Opening file ", 39A, " failed")') path
@@ -237,10 +238,10 @@ contains
   ! Time integration logic
   !===================================================================!
 
-  pure subroutine integrate( this )
-    
+  impure subroutine integrate( this )    
+  
     class(integrator), intent(inout) :: this
-    integer           :: k
+    integer :: k
 
     ! Set states to zero
     this % U     = 0.0d0
@@ -249,13 +250,19 @@ contains
     ! Get the initial condition
     call this % system % get_initial_condition(this % U(1,:,:))
 
+!    print *, this % U (1, 1, :)
+!    print *, this % U (1, 2, :)
+    
     ! March in time
     time: do k = 2, this % num_steps
 
        call this % evaluate_time(this % time(k), this % time(k-1), this % h)
+!       print *, this % time(k)
 
+!       print *, "going in", this % U(1:k-1,1,:), this % U(1:k-1,2,:)
        call this % evaluate_states(this % U(k,:,:), this % U(1:k-1,:,:))
-             
+!       print *, "coming  ", this % U(k,1,:), this % U(k,2,:)
+
     end do time
 
   end subroutine integrate
@@ -264,7 +271,7 @@ contains
   ! Returns the number of stages per time step
   !===================================================================!
   
-  pure type(integer) function get_num_stages(this)
+  impure type(integer) function get_num_stages(this)
 
     class(integrator), intent(in) :: this
 
@@ -276,7 +283,7 @@ contains
   ! Sets the number of stages per time step
   !===================================================================!
 
-  pure subroutine set_num_stages(this, num_stages)
+  impure subroutine set_num_stages(this, num_stages)
 
     class(integrator), intent(inout) :: this
     type(integer)    , intent(in)    :: num_stages
@@ -289,7 +296,7 @@ contains
   ! Returns the number of steps
   !===================================================================!
 
-  pure type(integer) function get_num_steps(this)
+  impure type(integer) function get_num_steps(this)
 
     class(integrator), intent(in) :: this
 
@@ -301,7 +308,7 @@ contains
   ! Sets the number of steps
   !===================================================================!
 
-  pure subroutine set_num_steps(this, num_steps)
+  impure subroutine set_num_steps(this, num_steps)
 
     class(integrator), intent(inout) :: this
     type(integer)    , intent(in)    :: num_steps
@@ -314,7 +321,7 @@ contains
   ! Returns the number of variables (dof)
   !===================================================================!
 
-  pure type(integer) function get_num_variables(this)
+  impure type(integer) function get_num_variables(this)
 
     class(integrator), intent(in) :: this
 
@@ -326,7 +333,7 @@ contains
   ! Sets the number of variables (dof)
   !===================================================================!
 
-  pure subroutine set_num_variables(this, num_variables)
+  impure subroutine set_num_variables(this, num_variables)
 
     class(integrator), intent(inout) :: this
     type(integer)    , intent(in)    :: num_variables
@@ -339,7 +346,7 @@ contains
   ! See if the scheme is implicit
   !===================================================================!
 
-  pure type(logical) function is_implicit(this)
+  impure type(logical) function is_implicit(this)
 
     class(integrator), intent(in) :: this
 
@@ -351,7 +358,7 @@ contains
   ! Sets the scheme as implicit
   !===================================================================!
   
-  pure subroutine set_implicit(this, implicit)
+  impure subroutine set_implicit(this, implicit)
 
     class(integrator), intent(inout) :: this
     type(logical)    , intent(in)    :: implicit
@@ -368,7 +375,7 @@ contains
   ! in a type that extends PHYSICS.
   !===================================================================!
 
-  pure subroutine set_approximate_jacobian(this, approximate_jacobian)
+  impure subroutine set_approximate_jacobian(this, approximate_jacobian)
 
     class(integrator), intent(inout) :: this
     type(logical), intent(in)     :: approximate_jacobian
@@ -396,7 +403,7 @@ contains
   ! Manages the amount of print
   !===================================================================!
 
-  pure subroutine set_print_level(this,print_level)
+  impure subroutine set_print_level(this,print_level)
 
     class(integrator), intent(inout) :: this
     type(integer), intent(in)    :: print_level

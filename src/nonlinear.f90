@@ -41,19 +41,21 @@ contains
   ! Newton solve for condensed form of equations
   !==================================================================!
   
-  subroutine newton_solve_condensed(system, coeff, t, U, approximate_jac)
+  subroutine newton_solve_condensed(system, coeff, t, Q, approximate_jac)
 
-    class(dynamics) :: system
-    logical, INTENT(IN)  :: approximate_jac
+    class(dynamics)     :: system
+    logical, INTENT(IN) :: approximate_jac
+
     ! Arguments
     type(scalar), intent(in)                  :: coeff(:)
     type(scalar), intent(in)                  :: t
-    type(scalar), intent(inout), dimension(:) :: U(:,:)
-
+    type(scalar), intent(inout), dimension(:) :: Q(:,:)
+   
     ! Norms for tracking progress
-    real(dp)                                  :: abs_res_norm = 0.0d0
-    real(dp)                                  :: rel_res_norm = 0.0d0
-    real(dp)                                  :: init_norm    = 0.0d0
+    real(dp)                                  :: abs_res_norm = 0
+    real(dp)                                  :: rel_res_norm = 0
+    real(dp)                                  :: init_norm    = 0
+
     ! Other Local variables
     type(scalar), allocatable, dimension(:)   :: res, dq
     type(scalar), allocatable, dimension(:,:) :: jac, fd_jac
@@ -62,9 +64,11 @@ contains
     logical                                   :: conv = .false.
 
     type(scalar)                              :: jac_err
+    type(scalar), allocatable                 :: U(:,:)
+
 
     ! find the size of the linear system based on the calling object
-    nvars = size(U(1,:))
+    nvars = size(Q(1,:))
 
     if (nvars .ne. system % get_num_state_vars() ) stop"NVARS"
 
@@ -80,33 +84,39 @@ contains
     newton: do n = 1, max_newton_iters
 
        res = 0.0d0
-       call system % add_residual(res, U)
+       call system % add_residual(res, Q)
 
        ! Get the jacobian matrix
        if ( approximate_jac ) then
 
           ! Compute an approximate Jacobian using finite differences
+          allocate(U, source=Q)
+          print *, U
           call approximate_jacobian(system, jac, coeff, U)
+          deallocate(U)
 
        else
 
           ! Use the user supplied Jacobian implementation
           jac = 0.0d0
-          call system % add_jacobian(jac, coeff, U)
+          call system % add_jacobian(jac, coeff, Q)
 
           ! Check the Jacobian implementation once at the beginning of integration
           if ( jacobian_check .and. n .eq. 1 ) then
 
              ! Compute an approximate Jacobian using finite differences
+             allocate(U, source=Q)
+             print *, U
              call approximate_jacobian(system, fd_jac, coeff, U)
+             deallocate(U)
 
              ! Compare the exact and approximate Jacobians and
              ! complain about the error in Jacobian if there is any
              jac_err = maxval(abs(fd_jac - jac))
-             if ( abs(jac_err) .gt. 1.0d-3 ) then
-                print *, "q     =", U(1,:)
-                print *, "qdot  =", U(2,:)
-                print *, "qddot =", U(3,:)
+             if ( abs(jac_err) .gt. 1.0d-3) then
+                print *, "q     =", Q(1,:)
+                print *, "qdot  =", Q(2,:)
+                print *, "qddot =", Q(3,:)
                 print *, "a,b,c =", coeff
                 print *, "J     =", jac
                 print *, "Jhat  =", fd_jac
@@ -143,12 +153,12 @@ contains
        
        ! Update the solution
        if ( system % get_time_deriv_order() == 2 ) then
-          U(3,:) = U(3,:) + coeff(3) * dq
-          U(2,:) = U(2,:) + coeff(2) * dq
-          U(1,:) = U(1,:) + coeff(1) * dq
+          Q(3,:) = Q(3,:) + coeff(3) * dq
+          Q(2,:) = Q(2,:) + coeff(2) * dq
+          Q(1,:) = Q(1,:) + coeff(1) * dq
        else
-          U(2,:) = U(2,:) + coeff(2) * dq
-          U(1,:) = U(1,:) + coeff(1) * dq          
+          Q(2,:) = Q(2,:) + coeff(2) * dq(:)
+          Q(1,:) = Q(1,:) + coeff(1) * dq(:)       
        end if
        
     end do newton

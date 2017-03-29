@@ -36,11 +36,12 @@ module abm_integrator_class
            
      procedure :: evaluate_states
      procedure :: get_state_coeff
+     procedure :: get_linear_coeff
 
      ! Routines for integration
      procedure, private :: approximateStates
      procedure, private :: getLinearCoeff
-     procedure, private :: getOrder
+     procedure, private :: get_order
 
      ! Destructor
      final :: destroy
@@ -113,7 +114,7 @@ contains
   ! Destructor for the ABM integrator
   !=================================================================!
   
-  pure subroutine destroy(this)
+  impure subroutine destroy(this)
 
     type(ABM), intent(inout) :: this
 
@@ -151,24 +152,6 @@ contains
   end subroutine getLinearCoeff
 
   !===================================================================!
-  ! Returns the order of approximation for the given time step k and
-  ! degree d
-  !===================================================================!
-
-  pure integer function getOrder(this, k)
-
-    class(ABM), intent(in) :: this
-    integer, intent(in)    :: k
-!!$
-!!$    ! Find the order of approximation
-!!$    getOrder = k - 1
-!!$
-!!$    ! Do not let exceed the max order sought
-!!$    if ( getOrder .gt. this % max_abm_order ) getOrder = this % max_abm_order
-
-  end function getOrder
-
-  !===================================================================!
   ! Approximate the state variables at each step using ABM formulae
   !===================================================================!
 
@@ -203,11 +186,28 @@ contains
 
   end subroutine approximateStates
 
-    !================================================================!
+  !===================================================================!
+  ! Returns the order of approximation for the given time step k and
+  ! degree d
+  !===================================================================!
+
+  impure type(integer) function get_order(this, step) result(order)
+    class(ABM), intent(in) :: this
+    type(integer), intent(in) :: step
+
+    order = step - 1
+
+    if (order .gt. this%max_abm_order) order = this % max_abm_order
+
+  end function get_order
+
+  !================================================================!
   ! Interface to approximate states using the time marching coeffs
   !================================================================!
+
+  impure subroutine evaluate_states(this, unew, uold)
   
-  pure subroutine evaluate_states(this, unew, uold)
+    use nonlinear_algebra, only : nonlinear_solve
 
     class(ABM), intent(in)    :: this
     type(scalar)     , intent(in)    :: uold(:,:,:)  ! previous values of state variables
@@ -216,35 +216,82 @@ contains
     type(integer) :: k, i
     type(integer) :: m
     type(scalar) :: scale
-     
+    type(scalar)  , allocatable :: lincoeff(:)        ! order of equation + 1
+
     ! Pull out the number of time steps of states provided and add one
     ! to point to the current time step
     k = size(uold(:,1,1)) + 1
+
+!    pritn *, "k=", k
     
-    associate(q=>uold(1,:,:),qdot=>uold(2,:,:),u=>unew(1,:),udot=>unew(2,:))
+    associate(&
+         & q=>uold(:,1,:),qdot=>uold(:,2,:), &
+         & u=>unew(1,:)  ,udot=>unew(2,:) )
       
       ! Get the order based on the index 'k'
-      ! m = this % get_order(k)
+      m = this % get_order(k)
       
       ! Approximate UDOT
-      udot = qdot(k-1,:)
+      udot = 2.5d0 !qdot(k-1,:)
       
       ! Approximate U
       u = q(k-1,:)
-      do i = 0, m-1
-         scale = this % h * this % A(m,i+1)
+      do i = 1, m
+         scale = this % h * this % A(m,i)
+!         print *, i, scale
          u = u + scale * qdot(k-i,:)
       end do
+      
+      ! Perform a nonlinear solution if this is a implicit method
+      if ( this % is_implicit() ) then
+
+         allocate(lincoeff(this % time_deriv_order + 1))
+
+         call this % get_linear_coeff(lincoeff, m, this % h)
+         
+         call nonlinear_solve(this % system, lincoeff, &
+              & this % h, &
+              & unew, this % approximate_jacobian)
+         
+         deallocate(lincoeff)
+
+      end if
 
     end associate
 
+
   end subroutine evaluate_states
+
+  !================================================================!
+  ! Retrieve the coefficients for linearizing the jacobian
+  !================================================================!
+  
+  impure subroutine get_linear_coeff(this, lincoeff, int_order, h)
+
+    class(ABM)    , intent(in)  :: this
+    type(integer) , intent(in)  :: int_order     ! order of approximation of the integration
+    type(scalar)  , intent(in)  :: h ! step size
+    type(scalar)  , intent(inout) :: lincoeff(:)   ! order of equation + 1
+    type(scalar) :: a
+
+    a = this % A(int_order,1)
+    
+    if (this%time_deriv_order .eq. 1) then
+       lincoeff(1) = a*h
+       lincoeff(2) = 1
+    else if (this%time_deriv_order .eq. 2) then
+       lincoeff(1) = a*a*h*h
+       lincoeff(2) = a*h
+       lincoeff(3) = 1
+    end if
+
+  end subroutine get_linear_coeff
 
   !================================================================!
   ! Retrieve the state approximation coefficients
   !================================================================!
   
-  pure subroutine get_state_coeff(this, scoeff, int_order, time_deriv_order)
+  impure subroutine get_state_coeff(this, scoeff, int_order, time_deriv_order)
 
     class(ABM) , intent(in)    :: this
     type(integer)     , intent(in)    :: int_order(:)     ! order of approximation of the integration
