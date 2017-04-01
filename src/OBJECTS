@@ -23,6 +23,7 @@ physics_assembler_interface.o \
 dense_assembler.o \
 vanderpol_dynamics_class.o \
 spring_dynamics_class.o \
+freefall_dynamics_class.o \
 utils.o \
 lapack.o \
 linear_algebra.o \

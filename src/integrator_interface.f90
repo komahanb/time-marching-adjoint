@@ -23,9 +23,9 @@ module integrator_interface
 
      class(dynamics), pointer :: system => null()
 
-     type(scalar)  :: tinit     = 0.0d0 ! initial time
-     type(scalar)  :: tfinal    = 1.0d0 ! final time
-     type(scalar)  :: h         = 0.1d0 ! default step size
+     type(scalar)  :: tinit
+     type(scalar)  :: tfinal
+     type(scalar)  :: h
 
      !----------------------------------------------------------------!
      ! Track global time and states
@@ -38,24 +38,25 @@ module integrator_interface
      ! Variables for managing time marching
      !----------------------------------------------------------------!
 
-     type(logical) :: implicit             = .true.
-     type(integer) :: num_stages           = 0
-     type(integer) :: num_steps            = 0
-     type(integer) :: num_variables        = 0
-     type(integer) :: time_deriv_order     = 0
-     type(integer) :: print_level          = 0
-     type(logical) :: approximate_jacobian = .false.
+     type(logical) :: implicit
+     type(integer) :: num_stages
+     type(integer) :: num_steps
+     type(integer) :: num_variables
+     type(integer) :: time_deriv_order
+     type(integer) :: print_level
+     type(logical) :: approximate_jacobian
 
    contains
 
      procedure :: construct, destruct
      
+     procedure :: evaluate_time
+
      !----------------------------------------------------------------!
      ! Deferred procedures for subtypes to implement                  !
      !----------------------------------------------------------------!
 
      procedure(evaluate_states_interface), deferred :: evaluate_states
-     procedure(get_state_coeff_interface), deferred :: get_state_coeff
 
      !----------------------------------------------------------------!
      ! Procedures                                                     !
@@ -69,8 +70,6 @@ module integrator_interface
      procedure :: set_print_level
      procedure :: set_approximate_jacobian
      
-     procedure :: get_time_coeff
-     procedure :: evaluate_time
      procedure :: integrate
      procedure :: write_solution
      procedure :: to_string
@@ -88,26 +87,11 @@ module integrator_interface
 
        import integrator
 
-       class(integrator), intent(in)      :: this
-       type(scalar)     , intent(in)      :: uold(:,:,:)  ! previous values of state variables
-       type(scalar)     , intent(inout)   :: unew(:,:)    ! approximated value at current step
+       class(integrator), intent(in)  :: this
+       type(scalar)     , intent(in)  :: uold(:,:,:)  ! previous values of state variables
+       type(scalar)     , intent(out) :: unew(:,:)    ! approximated value at current step
 
      end subroutine evaluate_states_interface
-
-     !================================================================!
-     ! Retrieve the state approximation coefficients
-     !================================================================!
-     
-     impure subroutine get_state_coeff_interface(this, scoeff, int_order, time_deriv_order)
-
-       import integrator
-
-       class(integrator) , intent(in)    :: this
-       type(integer)     , intent(in)    :: int_order(:)     ! order of approximation of the integration
-       type(integer)     , intent(in)    :: time_deriv_order !  order of the differential equation in time
-       type(scalar)      , intent(out)   :: scoeff(:)        ! order of equation + 1
-
-     end subroutine get_state_coeff_interface
      
   end interface
 
@@ -119,34 +103,21 @@ contains
   
   impure subroutine evaluate_time(this, tnew, told, h)
 
-    class(integrator) , intent(in)    :: this
-    type(scalar)      , intent(in)    :: told    ! previous value of time
-    type(scalar)      , intent(in)    :: h       ! step size
-    type(scalar)      , intent(out)   :: tnew    ! current time value
+    class(integrator) , intent(in)  :: this
+    type(scalar)      , intent(in)  :: told    ! previous value of time
+    type(scalar)      , intent(in)  :: h       ! step size
+    type(scalar)      , intent(out) :: tnew    ! current time value
     
     advance_time: block
       
       type(scalar) :: tcoeff
       
-      tcoeff = this % get_time_coeff()
-      tnew   = told + tcoeff * h
+      tnew   = told +  h
       
     end block advance_time
 
   end subroutine evaluate_time
-  
-  !================================================================!
-  ! Retrieve the time approximation coefficient
-  !================================================================!
-  
-  impure type(scalar) function get_time_coeff(this)
-
-    class(integrator) , intent(in) :: this
-
-    get_time_coeff = 1.0d0
-
-  end function get_time_coeff
-  
+    
   !===================================================================!
   ! Base class constructor logic
   !===================================================================!
@@ -160,11 +131,15 @@ contains
     type(logical)     , intent(in)            :: implicit
     
     call this % set_physics(system)    
+
     this % tinit = tinit
     this % tfinal = tfinal
     this % h = h 
+
     call this % set_implicit(implicit)
+
     this % time_deriv_order = system % get_time_deriv_order()
+
     this % num_steps = int((this % tfinal - this % tinit)/this % h) + 1
 
     call this % set_num_variables( this % system % get_num_state_vars() )
@@ -175,7 +150,6 @@ contains
 
     allocate(this % time( this % get_num_steps() ))
     this % time = 0.0d0
-    this % time(1) = this % tinit
        
     allocate( this % U( &
          & this % get_num_steps(), &
@@ -249,19 +223,13 @@ contains
 
     ! Get the initial condition
     call this % system % get_initial_condition(this % U(1,:,:))
-
-!    print *, this % U (1, 1, :)
-!    print *, this % U (1, 2, :)
     
     ! March in time
     time: do k = 2, this % num_steps
 
        call this % evaluate_time(this % time(k), this % time(k-1), this % h)
-!       print *, this % time(k)
 
-!       print *, "going in", this % U(1:k-1,1,:), this % U(1:k-1,2,:)
        call this % evaluate_states(this % U(k,:,:), this % U(1:k-1,:,:))
-!       print *, "coming  ", this % U(k,1,:), this % U(k,2,:)
 
     end do time
 

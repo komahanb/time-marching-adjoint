@@ -8,6 +8,7 @@ program test_time_integration
 
   use vanderpol_system          , only : fvanderpol => vanderpol_first_order
   use spring_dynamics_class     , only : smd
+  use freefall_dynamics_class   , only : freefall
   use dynamic_physics_interface , only : dynamics
 
   implicit none
@@ -15,10 +16,9 @@ program test_time_integration
   class(dynamics), allocatable :: sys
 
   test_vanderpol: block
-!!$    allocate(sys, source = fvanderpol(0.0d0))
-!!$    call test_integrators(sys)
-!!$    deallocate(sys)    
-    allocate(sys, source = smd(2.0d0, 0.0d0, 8.0d0))
+    !allocate(sys, source = smd(2.0d0, 0.0d0, 2.0d0))
+    !allocate(sys, source = fvanderpol(0.0d0))
+    allocate(sys, source = freefall(1.0d0, -10.0d0))
     call test_integrators(sys)
     deallocate(sys)
   end block test_vanderpol
@@ -34,8 +34,8 @@ contains
 
     ! Create the integrator
     abmobj = ABM(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
-         & h=1.0d-3, implicit=.true., max_abm_order=2)
-
+         & h=1.0d-3, implicit=.true., max_abm_order=1)
+    call abmobj % set_approximate_jacobian(.false.)    
     call abmobj % set_print_level(2)
     call abmobj % to_string()
     call abmobj % integrate()

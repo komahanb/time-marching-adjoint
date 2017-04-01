@@ -8,10 +8,10 @@
 module nonlinear_algebra
 
   ! import dependencies
-  use iso_fortran_env     , only : dp => REAL64
-  use linear_algebra      , only : solve
-  use dynamic_physics_interface   , only : dynamics
-  use utils               , only : norm
+  use iso_fortran_env           , only : dp => REAL64
+  use linear_algebra            , only : solve
+  use dynamic_physics_interface , only : dynamics
+  use utils                     , only : norm
 
   ! disable implicit datatypes
   implicit none
@@ -22,8 +22,7 @@ module nonlinear_algebra
 
   integer  :: max_newton_iters     = 15
   logical  :: jacobian_check       = .true.
-  integer  :: print_level          = 0
-
+  integer  :: print_level          = 1
   
   public :: nonlinear_solve
 
@@ -43,7 +42,7 @@ contains
   
   subroutine newton_solve_condensed(system, coeff, t, Q, approximate_jac)
 
-    class(dynamics)     :: system
+    class(dynamics), intent(inout)  :: system
     logical, INTENT(IN) :: approximate_jac
 
     ! Arguments
@@ -60,7 +59,7 @@ contains
     type(scalar), allocatable, dimension(:)   :: res, dq
     type(scalar), allocatable, dimension(:,:) :: jac, fd_jac
 
-    integer                                   :: n, nvars
+    integer                                   :: n, nvars, jj
     logical                                   :: conv = .false.
 
     type(scalar)                              :: jac_err
@@ -91,7 +90,7 @@ contains
 
           ! Compute an approximate Jacobian using finite differences
           allocate(U, source=Q)
-          print *, U
+          jac = 0.0d0
           call approximate_jacobian(system, jac, coeff, U)
           deallocate(U)
 
@@ -106,7 +105,6 @@ contains
 
              ! Compute an approximate Jacobian using finite differences
              allocate(U, source=Q)
-             print *, U
              call approximate_jacobian(system, fd_jac, coeff, U)
              deallocate(U)
 
@@ -121,6 +119,7 @@ contains
                 print *, "J     =", jac
                 print *, "Jhat  =", fd_jac
                 print *, "WARNING: Possible error in jacobian", jac_err
+                stop
              end if
 
              ! Set that the jacobian is checked
@@ -151,16 +150,10 @@ contains
        ! Call LAPACK to solve the linear system
        dq = solve(jac, -res)
        
-       ! Update the solution
-       if ( system % get_time_deriv_order() == 2 ) then
-          Q(3,:) = Q(3,:) + coeff(3) * dq
-          Q(2,:) = Q(2,:) + coeff(2) * dq
-          Q(1,:) = Q(1,:) + coeff(1) * dq
-       else
-          Q(2,:) = Q(2,:) + coeff(2) * dq(:)
-          Q(1,:) = Q(1,:) + coeff(1) * dq(:)       
-       end if
-       
+       forall(jj=1:system%get_time_deriv_order()+1)
+          Q(jj,:) = Q(jj,:) + coeff(jj)*dq
+       end forall
+              
     end do newton
 
     if (print_level .eq. 1) then 

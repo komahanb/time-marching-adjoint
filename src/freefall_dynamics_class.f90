@@ -1,13 +1,14 @@
 #include "scalar.fpp"
 
 !=====================================================================!
-! SPRING MASS DAMPER physics. This is a simple example of setting up a
-! physical system for analysis within the framework.
+! A particle falling freely under gravity physics. This is a simple
+! example of setting up a physical system for analysis within the
+! framework.
 !
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================!
 
-module spring_dynamics_class
+module freefall_dynamics_class
 
   use constants                 , only : WP
   use dynamic_physics_interface , only : dynamics
@@ -16,20 +17,19 @@ module spring_dynamics_class
 
   private
 
-  public :: smd
+  public :: freefall
 
   !-------------------------------------------------------------------!
-  ! Type that implements spring mass damper ODE
+  ! Type that implements freefall mass damper ODE
   !-------------------------------------------------------------------!
   
-  type, extends(dynamics) :: smd
+  type, extends(dynamics) :: freefall
 
      ! Define constants and other parameters needed for residual and
      ! jacobian assembly here
 
-     type(scalar) :: M
-     type(scalar) :: C
-     type(scalar) :: K
+     type(scalar) :: mass
+     type(scalar) :: gravity
      
    contains
 
@@ -40,45 +40,44 @@ module spring_dynamics_class
 
      ! Destructor
      final :: destruct
+     
+  end type freefall
 
-  end type smd
-
-  ! Interface to construct SMD system
-  interface smd
+  ! Interface to construct freefall particle system
+  interface freefall
      procedure construct
-  end interface smd
+  end interface freefall
 
 contains
  
   !===================================================================!
-  ! Constructor for smd system
+  ! Constructor for freefall system
   !===================================================================!
   
-  pure type(smd) function construct(M, C, K) &
+  pure type(freefall) function construct(M, G) &
        & result (this)
 
-    type(scalar), intent(in) :: M, C, K
+    type(scalar), intent(in) :: M, G
 
-    ! Set the number of state variables of SMD system
+    ! Set the number of state variables of FREEFALL system
     call this % set_num_state_vars(1)
     
-    ! Set time order of SMD system
+    ! Set time order of FREEFALL system
     call this % set_time_deriv_order(2)
 
     ! Set the system parameters
-    this % M = M
-    this % C = C
-    this % K = K
+    this % mass = M
+    this % gravity = G
     
   end function construct
   
   !===================================================================!
-  ! Destructor for smd system
+  ! Destructor for freefall system
   !===================================================================!
   
   pure subroutine destruct(this)
 
-    type(smd), intent(inout) :: this
+    type(freefall), intent(inout) :: this
     
   end subroutine destruct
   
@@ -91,14 +90,14 @@ contains
   
   pure subroutine add_residual(this, residual, U)
 
-    class(smd)   , intent(inout) :: this
+    class(freefall)   , intent(inout) :: this
     type(scalar) , intent(inout) :: residual(:)
     type(scalar) , intent(in)    :: U(:,:)
 
     associate( q => U(1,:), qdot => U(2,:), qddot => U(3,:), &
-         & M => this % M, C => this % C, K => this % K)
+         & m => this % mass, g => this % gravity)
       
-      residual = residual + M*qddot + C*qdot + K*q
+      residual = residual + m*qddot - m*g
 
     end associate
     
@@ -120,18 +119,18 @@ contains
   
   pure subroutine add_jacobian(this, jacobian, coeff, U)
 
-    class(smd)   , intent(inout) :: this
+    class(freefall)   , intent(inout) :: this
     type(scalar) , intent(inout) :: jacobian(:,:)
     type(scalar) , intent(in)    :: coeff(:)
     type(scalar) , intent(in)    :: U(:,:)
     
     associate(&
          & q=>U(1,:), qdot=> U(2,:), qddot=> U(3,:), &
-         & M=>this%M, C=>this%C, K=>this%K, &
+         & M=>this%mass, &
          & alpha=>coeff(1), beta=>coeff(2), gamma=>coeff(3)&
          & )
       
-      jacobian = jacobian + alpha*K + beta*C + gamma*M
+      jacobian = jacobian + gamma*M
       
     end associate
 
@@ -145,12 +144,12 @@ contains
 
   pure subroutine get_initial_condition(this, U)
     
-    class(smd)   , intent(in)    :: this
+    class(freefall)   , intent(in)    :: this
     type(scalar) , intent(inout) :: U(:,:)
     
-    U(1,:) = 0.0_WP
-    U(2,:) = 1.0_WP 
+    U(1,:) = 0.0_WP ! position
+    U(2,:) = 1.0_WP ! velocity
     
   end subroutine get_initial_condition
 
-end module spring_dynamics_class
+end module freefall_dynamics_class
