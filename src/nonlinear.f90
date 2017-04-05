@@ -101,7 +101,9 @@ contains
           call system % add_jacobian(jac, coeff, Q)
 
           ! Check the Jacobian implementation once at the beginning of integration
-          if (system % get_time_deriv_order() .le. 2 .and. jacobian_check .and. n .eq. 1 ) then
+          if (   system % get_time_deriv_order() .gt. 0 .and. &
+               & system % get_time_deriv_order() .lt. 3 .and. &
+               & jacobian_check .and. n .eq. 1 ) then
 
              ! Compute an approximate Jacobian using finite differences
              allocate(U, source=Q)
