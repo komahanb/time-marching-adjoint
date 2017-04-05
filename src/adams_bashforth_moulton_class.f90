@@ -225,30 +225,29 @@ contains
 
     else
 
+
        associate( &
             & order => this % get_order(k), &
             & A => this % A(this % get_order(k),:), &
-            & h => this % h, &
-            & q => uold(:,1,:), qdot => uold(:,2,:), qddot => uold(:,3,:), &
-            & u => unew(1,:)  , udot => unew(2,:), uddot => unew(3,:) )
+            & h => this % h)
 
          approx_states: block
 
            ! Approximate UDDOT
-           uddot = 0
+           unew(3,:) = 0
 
            ! Approximate UDOT
-           udot = qdot(k-1,:) + h*A(1)*uddot
+           unew(2,:) = uold(k-1,2,:) + h*A(1)*unew(3,:)
            do i = 2, order
               scale = h*A(i)
-              udot = udot + scale*qddot(k-i,:)
+              unew(2,:) = unew(2,:) + scale*uold(k-i,3,:)
            end do
 
            ! Approximate U
-           u = q(k-1,:) + h*A(1)*udot
+           unew(1,:) = uold(k-1,1,:) + h*A(1)*unew(2,:)
            do i = 2, order
               scale = h*A(i)
-              u = u + scale*qdot(k-i,:)
+              unew(1,:) = unew(1,:) + scale*uold(k-i,2,:)
            end do
 
            ! Perform a nonlinear solution if this is a implicit method
@@ -263,6 +262,47 @@ contains
          end block approx_states
 
        end associate
+
+
+!!$
+!!$       associate( &
+!!$            & order => this % get_order(k), &
+!!$            & A => this % A(this % get_order(k),:), &
+!!$            & h => this % h, &
+!!$            & q => uold(:,1,:), qdot => uold(:,2,:), qddot => uold(:,3,:), &
+!!$            & u => unew(1,:)  , udot => unew(2,:), uddot => unew(3,:) )
+!!$
+!!$         approx_states: block
+!!$
+!!$           ! Approximate UDDOT
+!!$           uddot = 0
+!!$
+!!$           ! Approximate UDOT
+!!$           udot = qdot(k-1,:) + h*A(1)*uddot
+!!$           do i = 2, order
+!!$              scale = h*A(i)
+!!$              udot = udot + scale*qddot(k-i,:)
+!!$           end do
+!!$
+!!$           ! Approximate U
+!!$           u = q(k-1,:) + h*A(1)*udot
+!!$           do i = 2, order
+!!$              scale = h*A(i)
+!!$              u = u + scale*qdot(k-i,:)
+!!$           end do
+!!$
+!!$           ! Perform a nonlinear solution if this is a implicit method
+!!$           if ( this % is_implicit() ) then
+!!$              allocate(lincoeff(this % time_deriv_order + 1))
+!!$              call this % get_linear_coeff(lincoeff, order, h)           
+!!$              call nonlinear_solve(this % system, lincoeff, &
+!!$                   & h, unew, this % approximate_jacobian)
+!!$              deallocate(lincoeff)
+!!$           end if
+!!$
+!!$         end block approx_states
+!!$
+!!$       end associate
 
     end if
 
