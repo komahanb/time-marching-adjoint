@@ -175,138 +175,49 @@ contains
   !================================================================!
 
   impure subroutine evaluate_states(this, unew, uold)
-  
+
     use nonlinear_algebra, only : nonlinear_solve
 
     class(ABM)    , intent(in)  :: this
     type(scalar)  , intent(in)  :: uold(:,:,:)  ! previous values of state variables
     type(scalar)  , intent(out) :: unew(:,:)    ! approximated value at current step    
     type(scalar)  , allocatable :: lincoeff(:)  ! order of equation + 1
-    type(integer) :: k , i
+    type(integer) :: k , i, n
     type(scalar)  :: scale
     
     ! Pull out the number of time steps of states provided and add one
     ! to point to the current time step
     k = size(uold(:,1,1)) + 1
 
-    if ( this % time_deriv_order == 1) then
+    associate( &
+         & p => this % get_order(k), &
+         & A => this % A(this % get_order(k),:), &
+         & h => this % h)
 
-       associate( &
-            & order => this % get_order(k), &
-            & A => this % A(this % get_order(k),:), &
-            & h => this % h, &
-            & q => uold(:,1,:), qdot => uold(:,2,:), &
-            & u => unew(1,:)  , udot => unew(2,:) )
+      ! Assume a value for highest order state
+      unew(this % time_deriv_order+1,:) = 0
 
-         approx_states: block
+      ! Find the lower order states based on ABM formula
+      do n = this % time_deriv_order, 1, -1
+         unew(n,:) = uold(k-1,n,:) + h*A(1)*unew(n+1,:)
+         do i = 2, p
+            scale = h*A(i)
+            unew(n,:) = unew(n,:) + scale*uold(k-i,n+1,:)
+         end do
+      end do
 
-           ! Approximate UDOT
-           udot = 0
+      ! Perform a nonlinear solution if this is a implicit method
+      if ( this % is_implicit() ) then
+         allocate(lincoeff(this % time_deriv_order + 1))
+         call this % get_linear_coeff(lincoeff, p, h)           
+         call nonlinear_solve(this % system, lincoeff, &
+              & h, unew, this % approximate_jacobian)
+         deallocate(lincoeff)
+      end if
 
-           ! Approximate U
-           u = q(k-1,:) + h*A(1)*udot
-           do i = 2, order
-              scale = h*A(i)
-              u = u + scale*qdot(k-i,:)
-           end do
+    end associate
 
-           ! Perform a nonlinear solution if this is a implicit method
-           if ( this % is_implicit() ) then
-              allocate(lincoeff(this % time_deriv_order + 1))
-              call this % get_linear_coeff(lincoeff, order, h)
-              call nonlinear_solve(this % system, lincoeff, &
-                   & h, unew, this % approximate_jacobian)
-              deallocate(lincoeff)
-           end if
-
-         end block approx_states
-
-       end associate
-
-    else
-
-
-       associate( &
-            & order => this % get_order(k), &
-            & A => this % A(this % get_order(k),:), &
-            & h => this % h)
-
-         approx_states: block
-
-           ! Approximate UDDOT
-           unew(3,:) = 0
-
-           ! Approximate UDOT
-           unew(2,:) = uold(k-1,2,:) + h*A(1)*unew(3,:)
-           do i = 2, order
-              scale = h*A(i)
-              unew(2,:) = unew(2,:) + scale*uold(k-i,3,:)
-           end do
-
-           ! Approximate U
-           unew(1,:) = uold(k-1,1,:) + h*A(1)*unew(2,:)
-           do i = 2, order
-              scale = h*A(i)
-              unew(1,:) = unew(1,:) + scale*uold(k-i,2,:)
-           end do
-
-           ! Perform a nonlinear solution if this is a implicit method
-           if ( this % is_implicit() ) then
-              allocate(lincoeff(this % time_deriv_order + 1))
-              call this % get_linear_coeff(lincoeff, order, h)           
-              call nonlinear_solve(this % system, lincoeff, &
-                   & h, unew, this % approximate_jacobian)
-              deallocate(lincoeff)
-           end if
-
-         end block approx_states
-
-       end associate
-
-
-!!$
-!!$       associate( &
-!!$            & order => this % get_order(k), &
-!!$            & A => this % A(this % get_order(k),:), &
-!!$            & h => this % h, &
-!!$            & q => uold(:,1,:), qdot => uold(:,2,:), qddot => uold(:,3,:), &
-!!$            & u => unew(1,:)  , udot => unew(2,:), uddot => unew(3,:) )
-!!$
-!!$         approx_states: block
-!!$
-!!$           ! Approximate UDDOT
-!!$           uddot = 0
-!!$
-!!$           ! Approximate UDOT
-!!$           udot = qdot(k-1,:) + h*A(1)*uddot
-!!$           do i = 2, order
-!!$              scale = h*A(i)
-!!$              udot = udot + scale*qddot(k-i,:)
-!!$           end do
-!!$
-!!$           ! Approximate U
-!!$           u = q(k-1,:) + h*A(1)*udot
-!!$           do i = 2, order
-!!$              scale = h*A(i)
-!!$              u = u + scale*qdot(k-i,:)
-!!$           end do
-!!$
-!!$           ! Perform a nonlinear solution if this is a implicit method
-!!$           if ( this % is_implicit() ) then
-!!$              allocate(lincoeff(this % time_deriv_order + 1))
-!!$              call this % get_linear_coeff(lincoeff, order, h)           
-!!$              call nonlinear_solve(this % system, lincoeff, &
-!!$                   & h, unew, this % approximate_jacobian)
-!!$              deallocate(lincoeff)
-!!$           end if
-!!$
-!!$         end block approx_states
-!!$
-!!$       end associate
-
-    end if
-
-  end subroutine evaluate_states
+end subroutine evaluate_states
 
   !================================================================!
   ! Retrieve the coefficients for linearizing the jacobian
