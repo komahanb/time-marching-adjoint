@@ -22,7 +22,7 @@ module nonlinear_algebra
 
   integer  :: max_newton_iters     = 15
   logical  :: jacobian_check       = .true.
-  integer  :: print_level          = 1
+  integer  :: print_level          = 0
   
   public :: nonlinear_solve
 
