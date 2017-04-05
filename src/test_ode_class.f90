@@ -152,10 +152,13 @@ contains
     
     class(ODE)   , intent(in)    :: this
     type(scalar) , intent(inout) :: U(:,:)
-    
+    type(integer) :: n
+
     ! Mock the initial conditions 
-    U(1,:) = this % A
-    
+    forall(n=1:this%time_deriv_order-1) 
+       U(n,:) = this % A
+    end forall
+
   end subroutine get_initial_condition
 
 end module test_ode_class
