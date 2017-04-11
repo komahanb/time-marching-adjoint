@@ -19,7 +19,7 @@ program test_time_integration
   test_vanderpol: block
     !allocate(sys, source = smd(2.0d0, 0.0d0, 2.0d0))
     !allocate(sys, source = fvanderpol(0.0d0))
-    ! allocate(sys, source = freefall(1.0d0, -10.0d0))
+    !allocate(sys, source = freefall(1.0d0, -10.0d0))
     allocate(sys, source = ODE(A=[2.0d0, 2.0d0, 2.0d0], order=2, nvars=3))
     call test_integrators(sys)
     deallocate(sys)

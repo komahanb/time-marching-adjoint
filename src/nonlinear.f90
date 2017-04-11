@@ -113,7 +113,7 @@ contains
              ! Compare the exact and approximate Jacobians and
              ! complain about the error in Jacobian if there is any
              jac_err = maxval(abs(fd_jac - jac))
-             if ( abs(jac_err) .gt. 1.0d-3) then
+             if ( abs(jac_err) .gt. 1.0d-6) then
                 print *, "q     =", Q(1,:)
                 print *, "qdot  =", Q(2,:)
                 print *, "qddot =", Q(3,:)
@@ -121,7 +121,6 @@ contains
                 print *, "J     =", jac
                 print *, "Jhat  =", fd_jac
                 print *, "WARNING: Possible error in jacobian", jac_err
-                stop
              end if
 
              ! Set that the jacobian is checked
@@ -461,11 +460,11 @@ contains
     type(scalar) , intent(inout) :: jac(:,:)
     type(scalar) , intent(inout)      :: U(:,:)                  ! states
 
-!@    type(scalar) , allocatable, dimension(:)     :: pstate             ! perturbed ates
+!@    type(scalar) , allocatable, dimension(:)     :: pstate           ! perturbed ates
     type(scalar) , allocatable, dimension(:)     :: R, Rtmp            ! original residual and perturbed residual
 
     ! Scalars
-    type(scalar)                                 :: dh = 1.0d-6        ! finite-diff step size
+    type(scalar)                                 :: dh = 1.0d-12       ! finite-diff step size
     type(scalar) , intent(in)                    :: coeff(:)           ! linearization coefficients
     integer                                      :: m                  ! loop variables
     integer :: nvars
