@@ -42,12 +42,10 @@ contains
   
   subroutine newton_solve_condensed(system, coeff, t, Q)
 
-    class(dynamics), intent(inout)  :: system
-
-    ! Arguments
-    type(scalar), intent(in)                  :: coeff(:)
-    type(scalar), intent(in)                  :: t
-    type(scalar), intent(inout), dimension(:) :: Q(:,:)
+    class(dynamics) , intent(inout) :: system
+    type(scalar)    , intent(in)    :: coeff(:)
+    type(scalar)    , intent(in)    :: t
+    type(scalar)    , intent(inout) :: Q(:,:)
    
     ! Norms for tracking progress
     real(dp)                                  :: abs_res_norm = 0
