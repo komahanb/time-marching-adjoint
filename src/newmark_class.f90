@@ -60,9 +60,9 @@ contains
     print *, ">>       Newmark Beta Gamma        << "
     print *, "======================================"
     
-    call this % construct(system, tinit, tfinal, h, implicit)
+    call this % construct(system, tinit, tfinal, h, implicit, 0)
     
-    if ( this % time_deriv_order .ne. 2 ) then
+    if ( this % system % get_time_deriv_order() .ne. 2 ) then
        print *, " Warning: Newmark-Beta-Gamma method works for second" &
             & // " order systems in current form..."
        stop
@@ -87,60 +87,60 @@ contains
   ! Interface to approximate states using the time marching coeffs
   !================================================================!
   
-  impure subroutine evaluate_states(this, unew, uold)
+  impure subroutine evaluate_states(this, t, u)
 
     use nonlinear_algebra, only : nonlinear_solve
 
-    class(newmark) , intent(in)  :: this
-    type(scalar)   , intent(in)  :: uold(:,:,:)  ! previous values of state variables
-    type(scalar)   , intent(out) :: unew(:,:)    ! approximated value at current step    
+    class(newmark) , intent(in)    :: this
+    type(scalar)   , intent(in)    :: t(:)      ! array of time values
+    type(scalar)   , intent(inout) :: u(:,:,:)  ! previous values of state variables
+
     type(scalar)   , allocatable :: lincoeff(:)  ! order of equation + 1
     type(integer) :: k , i, n
     type(scalar)  :: scale
 
     ! Pull out the number of time steps of states provided and add one
     ! to point to the current time step
-    k = size(uold(:,1,1)) + 1
+    k = size(u(:,1,1))
 
     !-----------------------------------------------------------------!
     ! Assume a UDDOT for the next time step
     !-----------------------------------------------------------------!
 
-    unew(3,:) = 0
+    u(k,3,:) = 0.0d0
 
     !-----------------------------------------------------------------!
     ! Approximate UDOT using NBG
     !-----------------------------------------------------------------!
 
-    unew(2,:) = uold(k-1,2,:) 
-
+    u(k,2,:) = u(k-1,2,:) 
+    
     scale = this % h * (1.0d0 - this % GAMMA)
-    unew(2,:) = unew(2,:) + scale*uold(k-1,3,:) 
+    u(k,2,:) = u(k,2,:) + scale*u(k-1,3,:) 
 
     scale = this % h * this % GAMMA
-    unew(2,:) = unew(2,:) + scale*unew(3,:) 
+    u(k,2,:) = u(k,2,:) + scale*u(k,3,:) 
 
     !-----------------------------------------------------------------!
     ! Approximate U using NBG
     !-----------------------------------------------------------------!
 
-    unew(1,:) = uold(k-1,1,:) 
+    u(k,1,:) = u(k-1,1,:) 
 
     scale = this % h
-    unew(1,:) = unew(1,:) + scale*uold(k-1,2,:) 
+    u(k,1,:) = u(k,1,:) + scale*u(k-1,2,:) 
 
     scale = this % h * this % h * (1.0d0 - 2.0d0 * this % BETA )/2.0d0
-    unew(1,:) = unew(1,:) + scale*uold(k-1,3,:) 
+    u(k,1,:) = u(k,1,:) + scale*u(k-1,3,:) 
 
     scale = this % h * this % h * this % BETA 
-    unew(1,:) = unew(1,:) + scale*unew(3,:) 
+    u(k,1,:) = u(k,1,:) + scale*u(k,3,:)
     
     ! Perform a nonlinear solution if this is a implicit method
     if ( this % is_implicit() ) then
-       allocate(lincoeff(this % time_deriv_order + 1))
+       allocate(lincoeff(this % system % get_time_deriv_order() + 1))
        call this % get_linear_coeff(lincoeff, this % h)       
-       call nonlinear_solve(this % system, lincoeff, &
-            & this % h, unew, this % approximate_jacobian)
+       call nonlinear_solve(this % system, lincoeff, this % time(k), u(k,:,:))
        deallocate(lincoeff)
     end if
 

@@ -40,10 +40,9 @@ contains
   ! Newton solve for condensed form of equations
   !==================================================================!
   
-  subroutine newton_solve_condensed(system, coeff, t, Q, approximate_jac)
+  subroutine newton_solve_condensed(system, coeff, t, Q)
 
     class(dynamics), intent(inout)  :: system
-    logical, INTENT(IN) :: approximate_jac
 
     ! Arguments
     type(scalar), intent(in)                  :: coeff(:)
@@ -86,7 +85,7 @@ contains
        call system % add_residual(res, Q)
 
        ! Get the jacobian matrix
-       if ( approximate_jac ) then
+       if ( system % is_approximate_jacobian() ) then
 
           ! Compute an approximate Jacobian using finite differences
           allocate(U, source=Q)
