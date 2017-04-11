@@ -20,7 +20,7 @@ program test_time_integration
     !allocate(sys, source = smd(2.0d0, 0.0d0, 2.0d0))
     !allocate(sys, source = fvanderpol(0.0d0))
     ! allocate(sys, source = freefall(1.0d0, -10.0d0))
-    allocate(sys, source = ODE(A=[2.0d0, 2.0d0], order=2, nvars=2))
+    allocate(sys, source = ODE(A=[2.0d0, 2.0d0, 2.0d0], order=2, nvars=3))
     call test_integrators(sys)
     deallocate(sys)
   end block test_vanderpol
@@ -30,10 +30,12 @@ contains
   subroutine test_integrators( test_system)
 
     use abm_integrator_class     , only : ABM
+    use newmark_integrator_class , only : newmark
 
     class(dynamics), intent(inout) :: test_system    
     type(ABM)                      :: abmobj
-
+    type(newmark)                  :: nbg
+    
     ! Create the integrator
     abmobj = ABM(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
          & h=1.0d-3, implicit=.true., max_abm_order=2)
@@ -43,6 +45,15 @@ contains
     call abmobj % integrate()
     call abmobj % write_solution("abm.dat")
     call abmobj % to_string()
+
+    nbg = newmark(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
+         & h=1.0d-3, implicit=.true., max_order=2)
+    call nbg % set_approximate_jacobian(.false.)    
+    call nbg % set_print_level(2)
+    call nbg % to_string()
+    call nbg % integrate()
+    call nbg % write_solution("nbg.dat")
+    call nbg % to_string()
 
   end subroutine test_integrators
 
