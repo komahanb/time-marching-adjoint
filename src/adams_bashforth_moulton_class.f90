@@ -63,7 +63,7 @@ contains
     print *, ">>   Adams Bashforth Moulton       << "
     print *, "======================================"
 
-    call this % construct(system, tinit, tfinal, h, implicit)
+    call this % construct(system, tinit, tfinal, h, implicit, 0)
 
     !-----------------------------------------------------------------!
     ! Set the order of integration
@@ -118,42 +118,6 @@ contains
 
   end subroutine destroy
 
-
-  !===================================================================!
-  ! Approximate the state variables at each step using ABM formulae
-  !===================================================================!
-
-  subroutine approximateStates( this )
-
-    class(ABM)   :: this
-    integer      :: k, m, i
-    type(scalar) :: scale
-!!$
-!!$    k = this % current_step
-!!$
-!!$    m = this % getOrder(k)
-!!$
-!!$    ! Approximate UDDOT
-!!$    this % uddot(k,:) = this % uddot(k-1,:)
-!!$
-!!$    ! Approximate UDOT
-!!$    this % udot(k,:) = this % udot(k-1,:)
-!!$
-!!$    do i = 0, m-1
-!!$       scale = this % h * this % A(m,i+1)
-!!$       this % udot(k,:) = this % udot(k,:) + scale * this % uddot(k-i,:)
-!!$    end do
-!!$
-!!$    ! Approximate U
-!!$    this % u(k,:) = this % u(k-1,:)
-!!$
-!!$    do i = 0, m-1
-!!$       scale = this % h * this % A(m,i+1)
-!!$       this % u(k,:) = this % u(k,:) + scale * this % udot(k-i,:)
-!!$    end do
-
-  end subroutine approximateStates
-
   !===================================================================!
   ! Returns the order of approximation for the given time step k and
   ! degree d
@@ -174,44 +138,45 @@ contains
   ! Interface to approximate states using the time marching coeffs
   !================================================================!
 
-  impure subroutine evaluate_states(this, unew, uold)
+  impure subroutine evaluate_states(this, t, u)
 
     use nonlinear_algebra, only : nonlinear_solve
 
-    class(ABM)    , intent(in)  :: this
-    type(scalar)  , intent(in)  :: uold(:,:,:)  ! previous values of state variables
-    type(scalar)  , intent(out) :: unew(:,:)    ! approximated value at current step    
+    class(ABM)   , intent(in)    :: this
+    type(scalar) , intent(in)    :: t(:)      ! array of time values
+    type(scalar) , intent(inout) :: u(:,:,:)  ! previous values of state variables
+
     type(scalar)  , allocatable :: lincoeff(:)  ! order of equation + 1
     type(integer) :: k , i, n
     type(scalar)  :: scale
     
     ! Pull out the number of time steps of states provided and add one
     ! to point to the current time step
-    k = size(uold(:,1,1)) + 1
+    k = size(u(:,1,1))
 
     associate( &
          & p => this % get_order(k), &
          & A => this % A(this % get_order(k),:), &
-         & h => this % h)
+         & h => t(k) - t(k-1), &
+         & torder => this % system % get_time_deriv_order())
 
       ! Assume a value for highest order state
-      unew(this % time_deriv_order+1,:) = 0
+      u(k,torder+1,:) = 0
 
       ! Find the lower order states based on ABM formula
-      do n = this % time_deriv_order, 1, -1
-         unew(n,:) = uold(k-1,n,:) + h*A(1)*unew(n+1,:)
-         do i = 2, p
+      do n = torder, 1, -1
+         u(k,n,:) = u(k-1,n,:)! + h*A(1)*u(k,n+1,:)
+         do i = 1, p
             scale = h*A(i)
-            unew(n,:) = unew(n,:) + scale*uold(k-i,n+1,:)
+            u(k,n,:) = u(k,n,:) + scale*u(k+1-i,n+1,:)
          end do
       end do
 
       ! Perform a nonlinear solution if this is a implicit method
       if ( this % is_implicit() ) then
-         allocate(lincoeff(this % time_deriv_order + 1))
+         allocate(lincoeff(torder + 1))
          call this % get_linear_coeff(lincoeff, p, h)           
-         call nonlinear_solve(this % system, lincoeff, &
-              & h, unew, this % approximate_jacobian)
+         call nonlinear_solve(this % system, lincoeff, t(k), u(k,:,:))
          deallocate(lincoeff)
       end if
 
@@ -232,7 +197,7 @@ end subroutine evaluate_states
     type(integer) :: p
     
     associate(&
-         & deriv_order => this % time_deriv_order, &
+         & deriv_order => this % system % get_time_deriv_order(), &
          & a => this % A(int_order,1))
       
       forall(p = 0:deriv_order)

@@ -163,7 +163,10 @@ contains
     ! Clear global states and time
     if(allocated(this % U)) deallocate(this % U)
     if(allocated(this % time)) deallocate(this % time)
-
+    
+    ! Pointer to the sytem
+    nullify(this % system)
+    
   end subroutine destruct
 
   !===================================================================!

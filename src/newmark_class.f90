@@ -97,11 +97,13 @@ contains
 
     type(scalar)   , allocatable :: lincoeff(:)  ! order of equation + 1
     type(integer) :: k , i, n
-    type(scalar)  :: scale
+    type(scalar)  :: scale, h
 
-    ! Pull out the number of time steps of states provided and add one
-    ! to point to the current time step
+    ! Determine the step number
     k = size(u(:,1,1))
+
+    ! Determine the current step size
+    h = t(k) - t(k-1)
 
     !-----------------------------------------------------------------!
     ! Assume a UDDOT for the next time step
@@ -115,10 +117,10 @@ contains
 
     u(k,2,:) = u(k-1,2,:) 
     
-    scale = this % h * (1.0d0 - this % GAMMA)
+    scale = h*(1.0d0 - this % GAMMA)
     u(k,2,:) = u(k,2,:) + scale*u(k-1,3,:) 
 
-    scale = this % h * this % GAMMA
+    scale = h*this % GAMMA
     u(k,2,:) = u(k,2,:) + scale*u(k,3,:) 
 
     !-----------------------------------------------------------------!
@@ -127,19 +129,19 @@ contains
 
     u(k,1,:) = u(k-1,1,:) 
 
-    scale = this % h
+    scale = h
     u(k,1,:) = u(k,1,:) + scale*u(k-1,2,:) 
 
-    scale = this % h * this % h * (1.0d0 - 2.0d0 * this % BETA )/2.0d0
+    scale = h*h*(1.0d0 - 2.0d0 * this % BETA )/2.0d0
     u(k,1,:) = u(k,1,:) + scale*u(k-1,3,:) 
 
-    scale = this % h * this % h * this % BETA 
+    scale = h*h*this % BETA 
     u(k,1,:) = u(k,1,:) + scale*u(k,3,:)
     
     ! Perform a nonlinear solution if this is a implicit method
     if ( this % is_implicit() ) then
        allocate(lincoeff(this % system % get_time_deriv_order() + 1))
-       call this % get_linear_coeff(lincoeff, this % h)       
+       call this % get_linear_coeff(lincoeff, h)       
        call nonlinear_solve(this % system, lincoeff, this % time(k), u(k,:,:))
        deallocate(lincoeff)
     end if
