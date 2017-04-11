@@ -166,16 +166,16 @@ contains
       ! Find the lower order states based on ABM formula
       do n = torder, 1, -1
          u(k,n,:) = u(k-1,n,:)! + h*A(1)*u(k,n+1,:)
-         do i = 1, p
-            scale = h*A(i)
-            u(k,n,:) = u(k,n,:) + scale*u(k+1-i,n+1,:)
+         do i = 0, p-1
+            scale = (t(k-i)-t(k-i-1))*A(i+1)
+            u(k,n,:) = u(k,n,:) + scale*u(k-i,n+1,:)
          end do
       end do
 
       ! Perform a nonlinear solution if this is a implicit method
       if ( this % is_implicit() ) then
          allocate(lincoeff(torder + 1))
-         call this % get_linear_coeff(lincoeff, p, h)           
+         call this % get_linear_coeff(lincoeff, p, h)
          call nonlinear_solve(this % system, lincoeff, t(k), u(k,:,:))
          deallocate(lincoeff)
       end if

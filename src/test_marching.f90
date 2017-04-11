@@ -18,7 +18,7 @@ program test_time_integration
 
   test_vanderpol: block
     !allocate(sys, source = smd(2.0d0, 0.0d0, 2.0d0))
-    !allocate(sys, source = fvanderpol(0.0d0))
+    !allocate(sys, source = fvanderpol(1.0d0))
     !allocate(sys, source = freefall(1.0d0, -10.0d0))
     allocate(sys, source = ODE(A=[2.0d0, 2.0d0, 2.0d0], order=2, nvars=3))
     call sys % set_approximate_jacobian(.false.)    
@@ -39,7 +39,7 @@ contains
     
     ! Create the integrator
     abmobj = ABM(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
-         & h=1.0d-3, implicit=.true., max_abm_order=2)
+         & h=1.0d-3, implicit=.true., max_abm_order=3)
 !    call abmobj % set_print_level(2)
     call abmobj % to_string()
     call abmobj % integrate()
@@ -47,7 +47,7 @@ contains
     call abmobj % to_string()
 
     nbg = newmark(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
-         & h=1.0d-3, implicit=.true., max_order=2)
+         & h=1.0d-3, implicit=.true., max_order=3)
  !   call nbg % set_print_level(2)
     call nbg % to_string()
     call nbg % integrate()
