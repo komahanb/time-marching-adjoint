@@ -165,7 +165,7 @@ contains
 
       ! Find the lower order states based on ABM formula
       do n = torder, 1, -1
-         u(k,n,:) = u(k-1,n,:)! + h*A(1)*u(k,n+1,:)
+         u(k,n,:) = u(k-1,n,:)
          do i = 0, p-1
             scale = (t(k-i)-t(k-i-1))*A(i+1)
             u(k,n,:) = u(k,n,:) + scale*u(k-i,n+1,:)
