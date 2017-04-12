@@ -31,11 +31,18 @@ module runge_kutta_integrator_class
      type(scalar), allocatable :: B(:)
      type(scalar), allocatable :: C(:)
 
+     ! Tracking variables
+     type(integer) :: current_step
+     type(integer) :: current_stage
+
    contains
-           
+     
+     ! Override integration
+     procedure :: integrate => integrate
+
+     ! Helper routines
      procedure :: evaluate_states
      procedure :: get_linear_coeff
-
      procedure :: setup_coeffs
      procedure :: check_coeffs
 
@@ -90,6 +97,44 @@ contains
 
   end function create
   
+  !===================================================================!
+  ! Time integration logic
+  !===================================================================!
+  
+  impure subroutine integrate( this )    
+
+    class(dirk), intent(inout) :: this
+    integer :: k, i
+
+    ! Set states to zero
+    this % U     = 0.0d0
+    this % time  = 0.0d0
+
+    ! Get the initial condition
+    call this % system % get_initial_condition(this % U(1,:,:))
+
+    ! March in time
+    time: do k = 2, this % num_steps
+
+       this % current_step = k
+
+       stage: do i = 1, this % num_stages
+
+          this % current_stage = i
+
+          !call this % evaluate_time(this % time(k), this % time(k-1), this % C(i)*this % h)
+          
+          !call this % evaluate_states(this % time(1:k), this % U(1:k,:,:))
+
+       end do stage
+
+       ! Advance the state to the current step
+       ! call this % timeMarch(this % u, this % udot, this % uddot)
+
+    end do time
+
+  end subroutine integrate
+
   !===================================================================!
   ! Routine that checks if the Butcher Tableau entries are valid for
   ! the chosen number of stages/order

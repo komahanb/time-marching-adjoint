@@ -32,11 +32,13 @@ contains
 
     use abm_integrator_class     , only : ABM
     use newmark_integrator_class , only : newmark
+    use runge_kutta_integrator_class , only : dirk
 
     class(dynamics), intent(inout) :: test_system    
     type(ABM)                      :: abmobj
     type(newmark)                  :: nbg
-    
+    type(dirk) :: dirkobj
+
     ! Create the integrator
     abmobj = ABM(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
          & h=1.0d-3, implicit=.true., max_abm_order=3)
@@ -53,6 +55,14 @@ contains
     call nbg % integrate()
     call nbg % write_solution("nbg.dat")
     call nbg % to_string()
+
+!!$    nbg = newmark(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
+!!$         & h=1.0d-3, implicit=.true., max_order=3)
+!!$ !   call nbg % set_print_level(2)
+!!$    call nbg % to_string()
+!!$    call nbg % integrate()
+!!$    call nbg % write_solution("nbg.dat")
+!!$    call nbg % to_string()
 
   end subroutine test_integrators
 
