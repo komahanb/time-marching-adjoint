@@ -35,16 +35,16 @@ module runge_kutta_integrator_class
      type(integer) :: current_step
      type(integer) :: current_stage
 
-   contains
-     
-     ! Override integration
-     procedure :: integrate => integrate
+   contains     
 
      ! Helper routines
      procedure :: evaluate_states
+     procedure :: evaluate_time
+     
      procedure :: get_linear_coeff
      procedure :: setup_coeffs
      procedure :: check_coeffs
+     procedure :: get_stage_step
 
      ! Destructor
      final :: destroy
@@ -62,12 +62,12 @@ contains
   !===================================================================!
   
   type(dirk) function create(system, tinit, tfinal, h, implicit, &
-       & max_dirk_order) result(this)
+       & max_order) result(this)
 
     class(dynamics)   , intent(in)   , target :: system
     type(scalar)      , intent(in)            :: tinit, tfinal
     type(scalar)      , intent(in)            :: h
-    type(integer)     , intent(in)            :: max_dirk_order
+    type(integer)     , intent(in)            :: max_order
     type(logical)     , intent(in)            :: implicit   
     type(integer) :: num_stages
 
@@ -79,10 +79,10 @@ contains
     ! Set the order of integration
     !-----------------------------------------------------------------!
 
-    this % max_dirk_order = max_dirk_order
+    this % max_dirk_order = max_order
     print '("  >> Max DIRK Order          : ",i4)', this % max_dirk_order
 
-    num_stages = this % max_dirk_order - 1
+    num_stages = this % max_order - 1
     call this % construct(system, tinit, tfinal, h, implicit, num_stages)
 
     allocate( this % A (num_stages, num_stages) )
@@ -98,44 +98,6 @@ contains
   end function create
   
   !===================================================================!
-  ! Time integration logic
-  !===================================================================!
-  
-  impure subroutine integrate( this )    
-
-    class(dirk), intent(inout) :: this
-    integer :: k, i
-
-    ! Set states to zero
-    this % U     = 0.0d0
-    this % time  = 0.0d0
-
-    ! Get the initial condition
-    call this % system % get_initial_condition(this % U(1,:,:))
-
-    ! March in time
-    time: do k = 2, this % num_steps
-
-       this % current_step = k
-
-       stage: do i = 1, this % num_stages
-
-          this % current_stage = i
-
-          !call this % evaluate_time(this % time(k), this % time(k-1), this % C(i)*this % h)
-          
-          !call this % evaluate_states(this % time(1:k), this % U(1:k,:,:))
-
-       end do stage
-
-       ! Advance the state to the current step
-       ! call this % timeMarch(this % u, this % udot, this % uddot)
-
-    end do time
-
-  end subroutine integrate
-
-  !===================================================================!
   ! Routine that checks if the Butcher Tableau entries are valid for
   ! the chosen number of stages/order
   !===================================================================!
@@ -145,7 +107,7 @@ contains
     class(DIRK) :: this
     type(integer) :: i
 
-    do i = 1, this  % num_stages
+    do i = 1, this  % get_num_stages()
        if (abs(this % C(i) - sum(this % A(i,:))) .gt. 0) then
           print *, "WARNING: sum(A(i,j)) != C(i)", i, this % num_stages
        end if
@@ -256,6 +218,42 @@ contains
     if(allocated(this % C)) deallocate(this % C)
 
   end subroutine destroy
+     
+  !===================================================================!
+  ! Evaluate the indepedent variable (time)
+  !===================================================================!
+  
+  impure subroutine evaluate_time(this, tnew, told, h)
+
+    class(integrator) , intent(in)  :: this
+    type(scalar)      , intent(in)  :: told    ! previous value of time
+    type(scalar)      , intent(in)  :: h       ! step size
+    type(scalar)      , intent(out) :: tnew    ! current time value
+
+    ! Determine the step number
+    k = size(told) + 1
+    
+    associate(i=>k % this % get_num_stages())
+
+      advance_time: block
+
+        type(scalar) :: tcoeff
+        
+        if ( i .eq. 0) then
+           ! actual step
+           tcoeff = 1.0d0
+        else
+           ! intermediate step
+           tcoeff = this % C(i)
+        end if
+        
+        tnew   = told +  tcoeff*h
+
+      end block advance_time
+      
+    end associate
+
+  end subroutine evaluate_time
 
   !================================================================!
   ! Interface to approximate states using the time marching coeffs
@@ -374,5 +372,24 @@ impure subroutine get_linear_coeff(this, lincoeff, stage, h)
   end forall
 
 end subroutine get_linear_coeff
+
+!================================================================!
+! Returns the corresponding step and stage numbers from the supplied
+! global index count
+! ================================================================!
+
+subroutine get_step_stage(kk, step, stage)
+
+  class(dirk)   , intent(in)  :: this
+  type(integer) , intent(in)  :: kk
+  type(integer) , intent(out) :: step
+  type(integer) , intent(out) :: stage
+
+  stage = kk%(this%get_num_stages()+1)
+  step = kk/(this%get_num_stages()+1)
+
+  print *, kk, step, stage
+  
+end subroutine get_step_stage
 
 end module runge_kutta_integrator_class

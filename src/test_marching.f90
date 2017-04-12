@@ -56,14 +56,13 @@ contains
     call nbg % write_solution("nbg.dat")
     call nbg % to_string()
 
-!!$    nbg = newmark(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
-!!$         & h=1.0d-3, implicit=.true., max_order=3)
-!!$ !   call nbg % set_print_level(2)
-!!$    call nbg % to_string()
-!!$    call nbg % integrate()
-!!$    call nbg % write_solution("nbg.dat")
-!!$    call nbg % to_string()
-
+    dirkobj = DIRK(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
+         & h=1.0d-3, implicit=.true., max_order=3)
+    call dirkobj % to_string()
+    call dirkobj % integrate()
+    call dirkobj % write_solution("dirk.dat")
+    call dirkobj % to_string()
+    
   end subroutine test_integrators
 
 end program test_time_integration

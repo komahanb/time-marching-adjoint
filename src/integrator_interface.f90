@@ -139,7 +139,7 @@ contains
     
     call this % set_num_steps(int((this % tfinal - this % tinit)/this % h) + 1)
     call this % set_num_stages(num_stages)
-    call this % set_total_num_steps(this % get_num_steps()*(this % get_num_stages+1))
+    call this % set_total_num_steps(this % get_num_steps()*(this % get_num_stages()+1))
     call this % set_implicit(implicit)
 
     ! State and time history
