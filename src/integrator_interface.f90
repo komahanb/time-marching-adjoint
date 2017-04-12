@@ -41,6 +41,7 @@ module integrator_interface
      type(logical) :: implicit
      type(integer) :: num_stages
      type(integer) :: num_steps
+     type(integer) :: total_num_steps
 
      type(logical) :: approximate_jacobian
 
@@ -60,9 +61,11 @@ module integrator_interface
      ! Procedures                                                     !
      !----------------------------------------------------------------!
 
-     procedure :: get_num_stages    , set_num_stages
-     procedure :: get_num_steps     , set_num_steps
-     procedure :: is_implicit       , set_implicit
+     procedure :: get_num_stages      , set_num_stages
+     procedure :: get_num_steps       , set_num_steps
+     procedure :: get_total_num_steps , set_total_num_steps     
+     procedure :: is_implicit         , set_implicit
+     
      procedure :: set_physics
      procedure :: set_approximate_jacobian
      
@@ -132,19 +135,19 @@ contains
 
     this % tinit = tinit
     this % tfinal = tfinal
-    this % h = h 
-    this % num_steps = int((this % tfinal - this % tinit)/this % h) + 1
-
-    this % num_stages = num_stages
-
+    this % h = h
+    
+    call this % set_num_steps(int((this % tfinal - this % tinit)/this % h) + 1)
+    call this % set_num_stages(num_stages)
+    call this % set_total_num_steps(this % get_num_steps()*(this % get_num_stages+1))
     call this % set_implicit(implicit)
 
     ! State and time history
-    allocate(this % time( this % get_num_steps() ))
+    allocate(this % time( this % get_total_num_steps() ))
     this % time = 0.0d0
        
     allocate( this % U( &
-         & this % get_num_steps(), &
+         & this % get_total_num_steps(), &
          & this % system % get_time_deriv_order() + 1, &
          & this % system % get_num_state_vars() &
          & ))
@@ -193,7 +196,7 @@ contains
     end if
     
     ! Write data
-    nsteps = this % get_num_steps()
+    nsteps = this % get_total_num_steps()
     loop_time: do k = 1, nsteps
        write(90, *)  this % time(k), this % U (k,:,:)
     end do loop_time
@@ -220,7 +223,7 @@ contains
     call this % system % get_initial_condition(this % U(1,:,:))
     
     ! March in time
-    time: do k = 2, this % num_steps
+    time: do k = 2, this % get_total_num_steps()
 
        call this % evaluate_time(this % time(k), this % time(k-1), this % h)
 
@@ -279,6 +282,31 @@ contains
     this % num_steps = num_steps
 
   end subroutine set_num_steps
+
+  !===================================================================!
+  ! Returns the total number of steps
+  !===================================================================!
+
+  impure type(integer) function get_total_num_steps(this)
+
+    class(integrator), intent(in) :: this
+
+    get_total_num_steps = this % total_num_steps
+    
+  end function get_total_num_steps
+
+  !===================================================================!
+  ! Sets the total number of steps
+  !===================================================================!
+
+  impure subroutine set_total_num_steps(this, total_num_steps)
+
+    class(integrator), intent(inout) :: this
+    type(integer)    , intent(in)    :: total_num_steps
+    
+    this % total_num_steps = total_num_steps
+    
+  end subroutine set_total_num_steps
 
   !===================================================================!
   ! See if the scheme is implicit
@@ -351,7 +379,7 @@ contains
     print '("  >> Step size           : " ,E9.3)', this % h
     print '("  >> Number of variables : " ,i4)'  , this % system % get_num_state_vars()
     print '("  >> Equation order      : " ,i4)'  , this % system % get_time_deriv_order()
-    print '("  >> Number of steps     : " ,i10)' , this % num_steps
+    print '("  >> Number of steps     : " ,i10)' , this % get_total_num_steps()
 
   end subroutine to_string
   
