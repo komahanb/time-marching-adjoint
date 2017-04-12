@@ -31,10 +31,6 @@ module runge_kutta_integrator_class
      type(scalar), allocatable :: B(:)
      type(scalar), allocatable :: C(:)
 
-     ! Tracking variables
-     type(integer) :: current_step
-     type(integer) :: current_stage
-
    contains     
 
      ! Helper routines
@@ -44,7 +40,6 @@ module runge_kutta_integrator_class
      procedure :: get_linear_coeff
      procedure :: setup_coeffs
      procedure :: check_coeffs
-     procedure :: get_stage_step
 
      ! Destructor
      final :: destroy
@@ -82,7 +77,7 @@ contains
     this % max_dirk_order = max_order
     print '("  >> Max DIRK Order          : ",i4)', this % max_dirk_order
 
-    num_stages = this % max_order - 1
+    num_stages = this % max_dirk_order - 1
     call this % construct(system, tinit, tfinal, h, implicit, num_stages)
 
     allocate( this % A (num_stages, num_stages) )
@@ -225,33 +220,21 @@ contains
   
   impure subroutine evaluate_time(this, tnew, told, h)
 
-    class(integrator) , intent(in)  :: this
+    class(dirk) , intent(in)  :: this
     type(scalar)      , intent(in)  :: told    ! previous value of time
     type(scalar)      , intent(in)  :: h       ! step size
     type(scalar)      , intent(out) :: tnew    ! current time value
+    type(scalar)  :: tcoeff
 
-    ! Determine the step number
-    k = size(told) + 1
-    
-    associate(i=>k % this % get_num_stages())
+    if ( this % current_stage .eq. 0) then
+       ! actual step
+       tcoeff = 1.0d0
+    else
+       ! intermediate step
+       tcoeff = this % C(this % current_stage)
+    end if
 
-      advance_time: block
-
-        type(scalar) :: tcoeff
-        
-        if ( i .eq. 0) then
-           ! actual step
-           tcoeff = 1.0d0
-        else
-           ! intermediate step
-           tcoeff = this % C(i)
-        end if
-        
-        tnew   = told +  tcoeff*h
-
-      end block advance_time
-      
-    end associate
+    tnew   = told +  tcoeff*h
 
   end subroutine evaluate_time
 
@@ -372,24 +355,5 @@ impure subroutine get_linear_coeff(this, lincoeff, stage, h)
   end forall
 
 end subroutine get_linear_coeff
-
-!================================================================!
-! Returns the corresponding step and stage numbers from the supplied
-! global index count
-! ================================================================!
-
-subroutine get_step_stage(kk, step, stage)
-
-  class(dirk)   , intent(in)  :: this
-  type(integer) , intent(in)  :: kk
-  type(integer) , intent(out) :: step
-  type(integer) , intent(out) :: stage
-
-  stage = kk%(this%get_num_stages()+1)
-  step = kk/(this%get_num_stages()+1)
-
-  print *, kk, step, stage
-  
-end subroutine get_step_stage
 
 end module runge_kutta_integrator_class

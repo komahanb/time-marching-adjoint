@@ -42,8 +42,13 @@ module integrator_interface
      type(integer) :: num_stages
      type(integer) :: num_steps
      type(integer) :: total_num_steps
-
      type(logical) :: approximate_jacobian
+
+
+     ! Tracking variables
+     type(integer) :: current_step
+     type(integer) :: current_stage
+
 
    contains
 
@@ -68,9 +73,10 @@ module integrator_interface
      
      procedure :: set_physics
      procedure :: set_approximate_jacobian
-     
+
      procedure :: integrate
      procedure :: write_solution
+     procedure :: get_step_stage
      procedure :: to_string
      
   end type integrator
@@ -225,10 +231,12 @@ contains
     ! March in time
     time: do k = 2, this % get_total_num_steps()
 
+       call this % get_step_stage(k, this % current_step, this % current_stage)
+       
        call this % evaluate_time(this % time(k), this % time(k-1), this % h)
-
+       
        call this % evaluate_states(this % time(1:k), this % U(1:k,:,:))
-
+       
     end do time
 
   end subroutine integrate
@@ -364,6 +372,25 @@ contains
     this % system => physical_system
 
   end subroutine set_physics
+
+  !=====================================================================!
+  ! Returns the corresponding step and stage numbers from the supplied
+  ! global index count
+  !======================================================================!
+  
+  subroutine get_step_stage(this, kk, step, stage)
+
+    class(integrator)   , intent(in)  :: this
+    type(integer) , intent(in)  :: kk
+    type(integer) , intent(out) :: step
+    type(integer) , intent(out) :: stage
+
+    stage = mod(kk,this%get_num_stages()+1)
+    step  = kk/(this%get_num_stages()+1)
+
+    print *, kk, step, stage
+
+  end subroutine get_step_stage
 
   !===================================================================!
   ! Prints important fields of the class
