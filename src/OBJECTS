@@ -32,5 +32,6 @@ nonlinear.o\
 integrator_interface.o\
 adams_bashforth_moulton_class.o\
 newmark_class.o \
+runge_kutta_class.o\
 test_marching.o
 

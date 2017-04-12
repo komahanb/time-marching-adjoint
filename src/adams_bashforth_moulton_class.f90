@@ -41,7 +41,7 @@ module abm_integrator_class
   end type ABM
 
   interface ABM
-     module procedure initialize
+     module procedure create
   end interface ABM
 
 contains
@@ -50,7 +50,7 @@ contains
   ! Initialize the ABM datatype and allocate required variables
   !===================================================================!
   
-  type(abm) function initialize(system, tinit, tfinal, h, implicit, &
+  type(abm) function create(system, tinit, tfinal, h, implicit, &
        & max_abm_order) result(this)
 
     class(dynamics)   , intent(in)   , target :: system
@@ -100,7 +100,7 @@ contains
       end do
     end block sanity_check
 
-  end function initialize
+  end function create
 
   !=================================================================!
   ! Destructor for the ABM integrator

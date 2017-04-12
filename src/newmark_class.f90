@@ -38,7 +38,7 @@ module newmark_integrator_class
   end type newmark
 
   interface newmark
-     module procedure initialize
+     module procedure create
   end interface newmark
 
 contains
@@ -47,7 +47,7 @@ contains
   ! Initialize the newmark datatype and allocate required variables
   !===================================================================!
   
-  type(newmark) function initialize(system, tinit, tfinal, h, implicit, &
+  type(newmark) function create(system, tinit, tfinal, h, implicit, &
        & max_order) result(this)
 
     class(dynamics)   , intent(in)   , target :: system
@@ -68,7 +68,7 @@ contains
        stop
     end if
 
-  end function initialize
+  end function create
 
   !=================================================================!
   ! Destructor for the Newmark integrator
