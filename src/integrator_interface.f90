@@ -145,7 +145,7 @@ contains
     
     call this % set_num_steps(int((this % tfinal - this % tinit)/this % h) + 1)
     call this % set_num_stages(num_stages)
-    call this % set_total_num_steps(this % get_num_steps()*(this % get_num_stages()+1))
+    call this % set_total_num_steps(this % get_num_steps()*(this % get_num_stages()+1) - this % get_num_stages() ) ! the initial step does not have stages
     call this % set_implicit(implicit)
 
     ! State and time history
@@ -385,8 +385,10 @@ contains
     type(integer) , intent(out) :: step
     type(integer) , intent(out) :: stage
 
-    stage = mod(kk,this%get_num_stages()+1)
-    step  = kk/(this%get_num_stages()+1)
+    if ( this % get_num_stages() .eq. 0) return kk
+
+    stage = mod(kk-1,this%get_num_stages()+1)   
+    step  = kk/2 ! - stage*this%get_num_stages() + 2 ! initial offset of 2
 
     print *, kk, step, stage
 
@@ -400,13 +402,15 @@ contains
     
     class(integrator), intent(in) :: this
     
-    print '("  >> Physical System     : " ,A10)' , this % system % get_description()
-    print '("  >> Start time          : " ,F8.3)', this % tinit
-    print '("  >> End time            : " ,F8.3)', this % tfinal
-    print '("  >> Step size           : " ,E9.3)', this % h
-    print '("  >> Number of variables : " ,i4)'  , this % system % get_num_state_vars()
-    print '("  >> Equation order      : " ,i4)'  , this % system % get_time_deriv_order()
-    print '("  >> Number of steps     : " ,i10)' , this % get_total_num_steps()
+    print '("  >> Physical System      : " ,A10)' , this % system % get_description()
+    print '("  >> Start time           : " ,F8.3)', this % tinit
+    print '("  >> End time             : " ,F8.3)', this % tfinal
+    print '("  >> Step size            : " ,E9.3)', this % h
+    print '("  >> Number of variables  : " ,i4)'  , this % system % get_num_state_vars()
+    print '("  >> Equation order       : " ,i4)'  , this % system % get_time_deriv_order()
+    print '("  >> Number of steps      : " ,i10)' , this % get_num_steps()
+    print '("  >> Number of stages     : " ,i10)' , this % get_num_stages()
+    print '("  >> Tot. Number of steps : " ,i10)' , this % get_total_num_steps()
 
   end subroutine to_string
   

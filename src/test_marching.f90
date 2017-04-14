@@ -33,16 +33,16 @@ contains
     use abm_integrator_class     , only : ABM
     use newmark_integrator_class , only : newmark
     use runge_kutta_integrator_class , only : dirk
+    use backward_differences_integrator_class , only : bdf
 
     class(dynamics), intent(inout) :: test_system    
-    type(ABM)                      :: abmobj
-    type(newmark)                  :: nbg
-    type(dirk) :: dirkobj
+    type(ABM)     :: abmobj
+    type(newmark) :: nbg
+    type(dirk)    :: dirkobj
+    type(bdf)     :: bdfobj
 
-    ! Create the integrator
     abmobj = ABM(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
-         & h=1.0d-3, implicit=.true., max_abm_order=3)
-!    call abmobj % set_print_level(2)
+         & h=1.0d-3, implicit=.true., max_order=3)
     call abmobj % to_string()
     call abmobj % integrate()
     call abmobj % write_solution("abm.dat")
@@ -50,18 +50,24 @@ contains
 
     nbg = newmark(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
          & h=1.0d-3, implicit=.true., max_order=3)
- !   call nbg % set_print_level(2)
     call nbg % to_string()
     call nbg % integrate()
     call nbg % write_solution("nbg.dat")
     call nbg % to_string()
-!!$
-!!$    dirkobj = DIRK(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
-!!$         & h=1.0d-3, implicit=.true., max_order=3)
-!!$    call dirkobj % to_string()
-!!$    call dirkobj % integrate()
-!!$    call dirkobj % write_solution("dirk.dat")
-!!$    call dirkobj % to_string()
+
+    bdfobj = BDF(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
+         & h=1.0d-3, implicit=.true., max_order=6)
+    call bdfobj % to_string()
+    call bdfobj % integrate()
+    call bdfobj % write_solution("bdf.dat")
+    call bdfobj % to_string()
+
+    dirkobj = DIRK(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
+         & h=1.0d-3, implicit=.true., max_order=2)
+    call dirkobj % to_string()
+    call dirkobj % integrate()
+    call dirkobj % write_solution("dirk.dat")
+    call dirkobj % to_string()
     
   end subroutine test_integrators
 
