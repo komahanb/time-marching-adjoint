@@ -24,6 +24,7 @@ dense_assembler.o \
 vanderpol_dynamics_class.o \
 spring_dynamics_class.o \
 freefall_dynamics_class.o \
+rigidbody_dynamics_class.o \
 test_ode_class.o \
 utils.o \
 lapack.o \
