@@ -66,7 +66,7 @@ contains
     ! find the size of the linear system based on the calling object
     nvars = size(Q(1,:))
 
-    if (nvars .ne. system % get_num_state_vars() ) stop"NVARS"
+    if (nvars .ne. system % get_num_state_vars() ) stop "NVARS"
 
     if ( .not. allocated(res)    ) allocate( res(nvars)         )
     if ( .not. allocated(dq)     ) allocate( dq(nvars)          )
