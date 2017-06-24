@@ -19,7 +19,7 @@ diffusion_matrix.o \
 linear_solver_class.o \
 lapack.o \
 blas.o \
-physics_assembler_interface.o \
+assembler_interface.o \
 dense_assembler.o \
 vanderpol_dynamics_class.o \
 spring_dynamics_class.o \
