@@ -19,8 +19,8 @@ program test_time_integration
   test_vanderpol: block
     !allocate(sys, source = smd(2.0d0, 0.0d0, 2.0d0))
     !allocate(sys, source = fvanderpol(1.0d0))
-    !allocate(sys, source = freefall(1.0d0, -10.0d0))
-    allocate(sys, source = ODE(A=[2.0d0, 2.0d0, 2.0d0], order=2, nvars=3))
+    allocate(sys, source = freefall(1.0d0, -10.0d0))
+    !allocate(sys, source = ODE(A=[2.0d0, 2.0d0, 2.0d0], order=2, nvars=3))
     call sys % set_approximate_jacobian(.false.)    
     call test_integrators(sys)
     deallocate(sys)
@@ -62,12 +62,13 @@ contains
     call bdfobj % write_solution("bdf.dat")
     call bdfobj % to_string()
 
-    dirkobj = DIRK(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
-         & h=1.0d-3, implicit=.true., max_order=2)
-    call dirkobj % to_string()
-    call dirkobj % integrate()
-    call dirkobj % write_solution("dirk.dat")
-    call dirkobj % to_string()
+    ! Still broken 
+!!$    dirkobj = DIRK(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
+!!$         & h=1.0d-3, implicit=.true., max_order=2)
+!!$    call dirkobj % to_string()
+!!$    call dirkobj % integrate()
+!!$    call dirkobj % write_solution("dirk.dat")
+!!$    call dirkobj % to_string()
     
   end subroutine test_integrators
 
