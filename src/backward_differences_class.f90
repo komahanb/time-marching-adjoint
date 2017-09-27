@@ -166,7 +166,7 @@ contains
       do j = 1, n
          do i = 0, p
             scale = A(i+1)/h !(t(k-i)-t(k-i-1))
-            u(k,n+1,:) = u(k,n+1,:) + scale*u(k-i,n,:)
+            u(k,j+1,:) = u(k,j+1,:) + scale*u(k-i,j,:)
          end do
       end do
 

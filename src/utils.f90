@@ -240,7 +240,7 @@ contains
     type (vector), intent (in) :: a
     real(dp)                   :: norm_vec  
 
-    norm_vec = norm2(a%x) ! sqrt(dot(a,a)), sqrt(a*a)
+    norm_vec = norm2(a%x) ! dsqrt(dot(a,a)), dsqrt(a*a)
 
   end function norm_vec
 
@@ -525,10 +525,10 @@ contains
     complex(dp), dimension(:), intent(in) :: z
     integer :: j, n
 
-    znorm2 = 0
+    znorm2 = 0.0d0
     n = size(z)
     do j = 1, n
-       znorm2 = znorm2 + sqrt(dble(z(j))**2 + aimag(z(j))**2)
+       znorm2 = znorm2 + dsqrt(dble(z(j))**2 + aimag(z(j))**2)
     end do
 
   end function znorm2
