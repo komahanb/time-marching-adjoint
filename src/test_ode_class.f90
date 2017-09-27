@@ -1,8 +1,8 @@
 #include "scalar.fpp"
 
 !=====================================================================!
-! This is a simple example of setting up a physical system for
-! analysis within the framework.
+! This is a simple example of setting up a physical system for time
+! dependent analysis.
 !
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================!
@@ -19,7 +19,7 @@ module test_ode_class
   public :: ODE
 
   !-------------------------------------------------------------------!
-  ! Type that implements a test ODE of supplied order
+  ! Type that implements a test ODE of supplied differential order
   !-------------------------------------------------------------------!
   
   type, extends(dynamics) :: ODE
@@ -62,7 +62,7 @@ contains
     call this % set_num_state_vars(nvars)
     
     ! Set time order of ODE system
-    call this % set_time_deriv_order(order)
+    call this % set_differential_order(order)
 
     ! Set the system parameters
     allocate(this % A, source=A)
@@ -98,7 +98,7 @@ contains
 
       type(integer) :: order
 
-      order = this % get_time_deriv_order()
+      order = this % get_differential_order()
 
       residual(:) = residual(:) + U(order+1,:) - (this % A(:)**order) * U(1,:) 
 
@@ -122,7 +122,7 @@ contains
   
   pure subroutine add_jacobian(this, jacobian, coeff, U)
 
-    class(ODE) , intent(inout) :: this
+    class(ODE)   , intent(inout) :: this
     type(scalar) , intent(inout) :: jacobian(:,:)
     type(scalar) , intent(in)    :: coeff(:)
     type(scalar) , intent(in)    :: U(:,:)
@@ -132,7 +132,7 @@ contains
       type(integer) :: j, nvars, order
       
       nvars = this % get_num_state_vars()
-      order = this % get_time_deriv_order() 
+      order = this % get_differential_order() 
       
       forall(j = 1:nvars)
          jacobian(j,j)=jacobian(j,j) - (this%A(j)**order)*coeff(1) + coeff(order+1)
@@ -152,12 +152,20 @@ contains
     
     class(ODE)   , intent(in)    :: this
     type(scalar) , intent(inout) :: U(:,:)
-    type(integer) :: n
+    
+    init_values: block
 
-    ! Mock the initial conditions 
-    forall(n=1:this%time_deriv_order-1) 
-       U(n,:) = this % A
-    end forall
+      type(integer) :: n    
+      type(integer) :: diff_order
+
+      diff_order = this % get_differential_order()
+
+      ! Mock the initial conditions upto diff_order-1^th derivative
+      forall(n = 1:diff_order-1) 
+         U(n,:) = this % A
+      end forall
+
+    end block init_values
 
   end subroutine get_initial_condition
 

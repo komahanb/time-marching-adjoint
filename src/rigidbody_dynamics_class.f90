@@ -1,9 +1,7 @@
 #include "scalar.fpp"
 
 !=====================================================================!
-! A particle falling freely under gravity physics. This is a simple
-! example of setting up a physical system for analysis within the
-! framework.
+! A class modeling rigid body dynamics.
 !
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================!
@@ -51,7 +49,7 @@ module rigidbody_dynamics_class
      
   end type rigidbody
 
-  ! Interface to construct rigidbody particle system
+  ! Interface to construct rigidbody system
   interface rigidbody
      procedure construct
   end interface rigidbody
@@ -72,7 +70,7 @@ contains
     call this % set_num_state_vars(6)
     
     ! Set time order of RIGIDBODY system
-    call this % set_time_deriv_order(2)
+    call this % set_differential_order(2)
 
     ! Set the object attributes
     this % mass = mass
@@ -106,9 +104,9 @@ contains
   
   pure subroutine add_residual(this, residual, U)
 
-    class(rigidbody), intent(inout) :: this
-    type(scalar), intent(inout) :: residual(:)
-    type(scalar), intent(in)    :: U(:,:)
+    class(rigidbody) , intent(inout) :: this
+    type(scalar)     , intent(inout) :: residual(:)
+    type(scalar)     , intent(in)    :: U(:,:)
 
     associate( q => U(1,:), qdot => U(2,:), qddot => U(3,:), &
          & m => this % mass, &
@@ -163,12 +161,18 @@ contains
     
     class(rigidbody) , intent(in)    :: this
     type(scalar)     , intent(inout) :: U(:,:)
-    
-    U(1,1:3) = this % position ! location (might use displacement)
-    U(1,4:6) = this % orientation ! orientation (might use ang. displacement)
 
-    U(2,1:3) = this % linear_velocity ! velocity
-    U(2,4:6) = this % angular_velocity ! angular velocity
+    ! location (might use displacement)
+    U(1,1:3) = this % position
+    
+    ! orientation (might use ang. displacement)
+    U(1,4:6) = this % orientation 
+
+    ! translational velocity
+    U(2,1:3) = this % linear_velocity
+
+    ! angular velocity
+    U(2,4:6) = this % angular_velocity
         
   end subroutine get_initial_condition
 

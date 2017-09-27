@@ -37,7 +37,7 @@ module runge_kutta_integrator_class
      procedure :: evaluate_states
      procedure :: evaluate_time
      
-     procedure :: get_linear_coeff
+     procedure :: get_linearization_coeff
      procedure :: setup_coeffs
      procedure :: check_coeffs
 
@@ -57,12 +57,12 @@ contains
   !===================================================================!
   
   type(dirk) function create(system, tinit, tfinal, h, implicit, &
-       & max_order) result(this)
+       & accuracy_order) result(this)
 
     class(dynamics)   , intent(in)   , target :: system
     type(scalar)      , intent(in)            :: tinit, tfinal
     type(scalar)      , intent(in)            :: h
-    type(integer)     , intent(in)            :: max_order
+    type(integer)     , intent(in)            :: accuracy_order
     type(logical)     , intent(in)            :: implicit   
     type(integer) :: num_stages
 
@@ -74,7 +74,7 @@ contains
     ! Set the order of integration
     !-----------------------------------------------------------------!
 
-    this % max_dirk_order = max_order
+    this % max_dirk_order = accuracy_order
     print '("  >> Max DIRK Order          : ",i4)', this % max_dirk_order
 
     num_stages = this % max_dirk_order - 1
@@ -281,10 +281,10 @@ contains
 !!$    else
 !!$
 !!$       associate( &
-!!$            & p => this % get_order(k), &
-!!$            & A => this % A(this % get_order(k),:), &
+!!$            & p => this % get_accuracy_order(k), &
+!!$            & A => this % A(this % get_accuracy_order(k),:), &
 !!$            & h => t(k) - t(k-1), &
-!!$            & torder => this % system % get_time_deriv_order())
+!!$            & torder => this % system % get_differential_order())
 !!$
 !!$         ! Assume a value for highest order state
 !!$       u(k,torder+1,:) = 0
@@ -322,7 +322,7 @@ contains
 !!$       ! Perform a nonlinear solution if this is a implicit method
 !!$       if ( this % is_implicit() ) then
 !!$          allocate(lincoeff(torder + 1))
-!!$          call this % get_linear_coeff(lincoeff, p, h)
+!!$          call this % get_linearization_coeff(lincoeff, p, h)
 !!$          call nonlinear_solve(this % system, lincoeff, t(k), u(k,:,:))
 !!$          deallocate(lincoeff)
 !!$       end if
@@ -337,7 +337,7 @@ end subroutine evaluate_states
 ! Retrieve the coefficients for linearizing the jacobian
 !================================================================!
 
-impure subroutine get_linear_coeff(this, lincoeff, stage, h)
+impure subroutine get_linearization_coeff(this, lincoeff, stage, h)
 
   class(DIRK)   , intent(in)    :: this
   type(scalar)  , intent(in)    :: h
@@ -348,12 +348,12 @@ impure subroutine get_linear_coeff(this, lincoeff, stage, h)
   type(integer) :: deriv_order,p
 
   a           = this % A(stage, stage)
-  deriv_order = this % system % get_time_deriv_order()
+  deriv_order = this % system % get_differential_order()
 
   forall(p = 0:deriv_order)
      lincoeff(p+1) = (a*h)**(deriv_order-p)
   end forall
 
-end subroutine get_linear_coeff
+end subroutine get_linearization_coeff
 
 end module runge_kutta_integrator_class

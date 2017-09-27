@@ -66,15 +66,15 @@ contains
     ! find the size of the linear system based on the calling object
     nvars = size(Q(1,:))
 
-    if (nvars .ne. system % get_num_state_vars() ) stop "NVARS"
+    if ( nvars .ne. system % get_num_state_vars() ) stop "NVARS-MISMATCH"
 
-    if ( .not. allocated(res)    ) allocate( res(nvars)         )
-    if ( .not. allocated(dq)     ) allocate( dq(nvars)          )
+    if ( .not. allocated(res)    ) allocate( res(nvars)          )
+    if ( .not. allocated(dq)     ) allocate( dq(nvars)           )
     if ( .not. allocated(jac)    ) allocate( jac(nvars,nvars)    )
     if ( .not. allocated(fd_jac) ) allocate( fd_jac(nvars,nvars) )
 
-    if ( print_level .ge. 1) then
-       write(*,'(A10, 2A12)') "NewtonIter", "|R|", "|R|/|R1|"
+    if ( print_level .ge. 1 ) then
+       write(*,'(A11, 2A12)') "Newton-Iter", "|R|", "|R|/|R1|"
     end if
 
     newton: do n = 1, max_newton_iters
@@ -98,8 +98,8 @@ contains
           call system % add_jacobian(jac, coeff, Q)
 
           ! Check the Jacobian implementation once at the beginning of integration
-          if (   system % get_time_deriv_order() .gt. 0 .and. &
-               & system % get_time_deriv_order() .lt. 3 .and. &
+          if (   system % get_differential_order() .gt. 0 .and. &
+               & system % get_differential_order() .lt. 3 .and. &
                & jacobian_check .and. n .eq. 1 ) then
 
              ! Compute an approximate Jacobian using finite differences
@@ -148,7 +148,7 @@ contains
        ! Call LAPACK to solve the linear system
        dq = solve(jac, -res)
        
-       forall(jj=1:system%get_time_deriv_order()+1)
+       forall(jj=1:system % get_differential_order() + 1)
           Q(jj,:) = Q(jj,:) + coeff(jj)*dq
        end forall
               
@@ -532,7 +532,7 @@ contains
     end associate
 
     ! Second order equations have an extra block to add
-    if (system % get_time_deriv_order() == 2) then
+    if (system % get_differential_order() == 2) then
 
        !-----------------------------------------------------------!
        ! Derivative of R WRT QDDOT: dR/dQDDOT

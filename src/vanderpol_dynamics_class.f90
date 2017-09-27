@@ -61,7 +61,7 @@ contains
     call this % set_num_state_vars(2)
     
     ! Set time order of vanderpol system
-    call this % set_time_deriv_order(1)
+    call this % set_differential_order(1)
 
     ! Set the oscillator parameter
     this % mu = mu

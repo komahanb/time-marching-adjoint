@@ -32,8 +32,8 @@ module abm_integrator_class
    contains
            
      procedure :: evaluate_states
-     procedure :: get_linear_coeff
-     procedure :: get_order
+     procedure :: get_linearization_coeff
+     procedure :: get_accuracy_order
 
      ! Destructor
      final :: destroy
@@ -51,12 +51,12 @@ contains
   !===================================================================!
   
   type(abm) function create(system, tinit, tfinal, h, implicit, &
-       & max_order) result(this)
+       & accuracy_order) result(this)
 
     class(dynamics)   , intent(in)   , target :: system
     type(scalar)      , intent(in)            :: tinit, tfinal
     type(scalar)      , intent(in)            :: h
-    type(integer)     , intent(in)            :: max_order
+    type(integer)     , intent(in)            :: accuracy_order
     type(logical)     , intent(in)            :: implicit   
 
     print *, "======================================"
@@ -69,7 +69,7 @@ contains
     ! Set the order of integration
     !-----------------------------------------------------------------!
 
-    if (max_order .le. this % max_abm_order) this % max_abm_order = max_order
+    if (accuracy_order .le. this % max_abm_order) this % max_abm_order = accuracy_order
     print '("  >> Max ABM Order          : ",i4)', this % max_abm_order
 
     allocate( this % A (this % max_abm_order, this % max_abm_order) )
@@ -123,7 +123,7 @@ contains
   ! degree d
   !===================================================================!
 
-  impure type(integer) function get_order(this, step) result(order)
+  impure type(integer) function get_accuracy_order(this, step) result(order)
 
     class(ABM)   , intent(in) :: this
     type(integer), intent(in) :: step
@@ -132,7 +132,7 @@ contains
 
     if (order .gt. this % max_abm_order) order = this % max_abm_order
 
-  end function get_order
+  end function get_accuracy_order
 
   !================================================================!
   ! Interface to approximate states using the time marching coeffs
@@ -155,10 +155,10 @@ contains
     k = size(u(:,1,1))
 
     associate( &
-         & p => this % get_order(k), &
-         & A => this % A(this % get_order(k),:), &
+         & p => this % get_accuracy_order(k), &
+         & A => this % A(this % get_accuracy_order(k),:), &
          & h => t(k) - t(k-1), &
-         & torder => this % system % get_time_deriv_order())
+         & torder => this % system % get_differential_order())
 
       ! Assume a value for highest order state
       u(k,torder+1,:) = 0
@@ -175,7 +175,7 @@ contains
       ! Perform a nonlinear solution if this is a implicit method
       if ( this % is_implicit() ) then
          allocate(lincoeff(torder + 1))
-         call this % get_linear_coeff(lincoeff, p, h)
+         call this % get_linearization_coeff(lincoeff, p, h)
          call nonlinear_solve(this % system, lincoeff, t(k), u(k,:,:))
          deallocate(lincoeff)
       end if
@@ -188,7 +188,7 @@ end subroutine evaluate_states
   ! Retrieve the coefficients for linearizing the jacobian
   !================================================================!
   
-  impure subroutine get_linear_coeff(this, lincoeff, int_order, h)
+  impure subroutine get_linearization_coeff(this, lincoeff, int_order, h)
 
     class(ABM)    , intent(in)  :: this
     type(integer) , intent(in)  :: int_order     ! order of approximation of the integration
@@ -197,7 +197,7 @@ end subroutine evaluate_states
     type(integer) :: p
     
     associate(&
-         & deriv_order => this % system % get_time_deriv_order(), &
+         & deriv_order => this % system % get_differential_order(), &
          & a => this % A(int_order,1))
       
       forall(p = 0:deriv_order)
@@ -206,6 +206,6 @@ end subroutine evaluate_states
       
     end associate
 
-  end subroutine get_linear_coeff
+  end subroutine get_linearization_coeff
 
 end module abm_integrator_class

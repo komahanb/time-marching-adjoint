@@ -33,8 +33,8 @@ module backward_differences_integrator_class
    contains
            
      procedure :: evaluate_states
-     procedure :: get_linear_coeff
-     procedure :: get_order
+     procedure :: get_linearization_coeff
+     procedure :: get_accuracy_order
 
      ! Destructor
      final :: destroy
@@ -52,25 +52,25 @@ contains
   !===================================================================!
   
   type(bdf) function create(system, tinit, tfinal, h, implicit, &
-       & max_order) result(this)
+       & accuracy_order) result(this)
 
     class(dynamics)   , intent(in)   , target :: system
     type(scalar)      , intent(in)            :: tinit, tfinal
     type(scalar)      , intent(in)            :: h
-    type(integer)     , intent(in)            :: max_order
+    type(integer)     , intent(in)            :: accuracy_order
     type(logical)     , intent(in)            :: implicit   
 
     print *, "======================================"
     print *, ">>   Backward Difference Formulas  << "
     print *, "======================================"
 
-    call this % construct(system, tinit, tfinal, h, implicit, 0)
+    call this % construct(system, tinit, tfinal, h, implicit, num_stages=0)
 
     !-----------------------------------------------------------------!
     ! Set the order of integration
     !-----------------------------------------------------------------!
 
-    if (max_order .le. this % max_bdf_order) this % max_bdf_order = max_order
+    if (accuracy_order .le. this % max_bdf_order) this % max_bdf_order = accuracy_order
     print '("  >> Max BDF Order          : ",i4)', this % max_bdf_order
 
     allocate( this % A (this % max_bdf_order, this % max_bdf_order+1) )
@@ -119,7 +119,7 @@ contains
   ! degree d
   !===================================================================!
 
-  impure type(integer) function get_order(this, step) result(order)
+  impure type(integer) function get_accuracy_order(this, step) result(order)
 
     class(BDF)   , intent(in) :: this
     type(integer), intent(in) :: step
@@ -128,7 +128,7 @@ contains
 
     if (order .gt. this % max_bdf_order) order = this % max_bdf_order
 
-  end function get_order
+  end function get_accuracy_order
 
   !================================================================!
   ! Interface to approximate states using the time marching coeffs
@@ -142,25 +142,28 @@ contains
     type(scalar) , intent(in)    :: t(:)      ! array of time values
     type(scalar) , intent(inout) :: u(:,:,:)  ! previous values of state variables
 
-    type(scalar)  , allocatable :: lincoeff(:)  ! order of equation + 1
-    type(integer) :: k , i, n
-    type(scalar)  :: scale
-    
-    ! Pull out the number of time steps of states provided and add one
-    ! to point to the current time step
-    k = size(u(:,1,1))
+    ! Use BDF formulae to approximate states for the next time step
+    bdf_formulae: block
 
-    associate( &
-         & p => this % get_order(k), &
-         & A => this % A(this % get_order(k),:), &
-         & h => t(k) - t(k-1), &
-         & torder => this % system % get_time_deriv_order())
+      type(scalar), allocatable :: lincoeff(:)  ! order of equation + 1
+      type(integer)             :: k, j, i
+      type(scalar)              :: scale
 
-      ! Assume a value for lowest order state
+      ! Pull out the number of time steps of states provided and add one
+      ! to point to the current time step
+      k = size(u(:,1,1))
+
+      associate( &
+           & p => this % get_accuracy_order(k), &
+           & A => this % A(this % get_accuracy_order(k),:), &
+           & h => t(k) - t(k-1), &
+           & n => this % system % get_differential_order())
+
+        ! Assume a value for lowest order state
       u(k,1,:) = 0
 
       ! Find the higher order states based on BDF formula
-      do n = 1, torder
+      do j = 1, n
          do i = 0, p
             scale = A(i+1)/h !(t(k-i)-t(k-i-1))
             u(k,n+1,:) = u(k,n+1,:) + scale*u(k-i,n,:)
@@ -169,13 +172,15 @@ contains
 
       ! Perform a nonlinear solution if this is a implicit method
       if ( this % is_implicit() ) then
-         allocate(lincoeff(torder + 1))
-         call this % get_linear_coeff(lincoeff, p, h)
-         call nonlinear_solve(this % system, lincoeff, t(k), u(k,:,:))
-         deallocate(lincoeff)
+         allocate(lincoeff(n+1))         
+         call this % get_linearization_coeff(lincoeff, p, h)         
+         call nonlinear_solve(this % system, lincoeff, t(k), u(k,:,:))         
+         deallocate(lincoeff)        
       end if
 
     end associate
+
+  end block bdf_formulae
 
 end subroutine evaluate_states
 
@@ -183,24 +188,29 @@ end subroutine evaluate_states
   ! Retrieve the coefficients for linearizing the jacobian
   !================================================================!
   
-  impure subroutine get_linear_coeff(this, lincoeff, int_order, h)
-
+  impure subroutine get_linearization_coeff(this, lincoeff, int_order, h)
+    
     class(BDF)    , intent(in)  :: this
     type(integer) , intent(in)  :: int_order     ! order of approximation of the integration
-    type(scalar)  , intent(in)  :: h ! step size
-    type(scalar)  , intent(inout) :: lincoeff(:)   ! order of equation + 1   
-    type(integer) :: p
-    
-    associate(&
-         & deriv_order => this % system % get_time_deriv_order(), &
-         & a => this % A(int_order,1))
-      
-      forall(p = 0:deriv_order)
-         lincoeff(p+1) = (a/h)**p
-      end forall
-      
-    end associate
+    type(scalar)  , intent(in)  :: h 
+    type(scalar)  , intent(inout) :: lincoeff(:) ! diff_order+1
 
-  end subroutine get_linear_coeff
+    compute_coeffs: block
+
+      type(integer) :: n
+
+      associate( &
+           & deriv_order => this % system % get_differential_order(), &
+           & a => this % A(int_order,1))
+        
+        forall(n=0:deriv_order)
+           lincoeff(n+1) = (a/h)**n
+        end forall
+        
+      end associate
+      
+    end block compute_coeffs
+    
+  end subroutine get_linearization_coeff
 
 end module backward_differences_integrator_class

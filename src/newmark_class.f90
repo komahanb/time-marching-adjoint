@@ -30,7 +30,7 @@ module newmark_integrator_class
    contains
            
      procedure :: evaluate_states
-     procedure :: get_linear_coeff
+     procedure :: get_linearization_coeff
 
      ! Destructor
      final :: destroy
@@ -48,12 +48,12 @@ contains
   !===================================================================!
   
   type(newmark) function create(system, tinit, tfinal, h, implicit, &
-       & max_order) result(this)
+       & accuracy_order) result(this)
 
     class(dynamics)   , intent(in)   , target :: system
     type(scalar)      , intent(in)            :: tinit, tfinal
     type(scalar)      , intent(in)            :: h
-    type(integer)     , intent(in)            :: max_order
+    type(integer)     , intent(in)            :: accuracy_order
     type(logical)     , intent(in)            :: implicit   
 
     print *, "======================================"
@@ -62,7 +62,7 @@ contains
     
     call this % construct(system, tinit, tfinal, h, implicit, 0)
     
-    if ( this % system % get_time_deriv_order() .ne. 2 ) then
+    if ( this % system % get_differential_order() .ne. 2 ) then
        print *, " Warning: Newmark-Beta-Gamma method works for second" &
             & // " order systems in current form..."
        stop
@@ -140,8 +140,8 @@ contains
     
     ! Perform a nonlinear solution if this is a implicit method
     if ( this % is_implicit() ) then
-       allocate(lincoeff(this % system % get_time_deriv_order() + 1))
-       call this % get_linear_coeff(lincoeff, h)       
+       allocate(lincoeff(this % system % get_differential_order() + 1))
+       call this % get_linearization_coeff(lincoeff, h)       
        call nonlinear_solve(this % system, lincoeff, this % time(k), u(k,:,:))
        deallocate(lincoeff)
     end if
@@ -152,7 +152,7 @@ contains
   ! Retrieve the coefficients for linearizing the jacobian
   !================================================================!
   
-  impure subroutine get_linear_coeff(this, lincoeff, h)
+  impure subroutine get_linearization_coeff(this, lincoeff, h)
 
     class(Newmark) , intent(in)    :: this
     type(scalar)   , intent(in)    :: h ! step size
@@ -162,6 +162,6 @@ contains
     lincoeff(2) = this % GAMMA*h
     lincoeff(3) = 1.0d0
 
-  end subroutine get_linear_coeff
+  end subroutine get_linearization_coeff
 
 end module newmark_integrator_class

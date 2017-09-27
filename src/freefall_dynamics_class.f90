@@ -63,7 +63,7 @@ contains
     call this % set_num_state_vars(1)
     
     ! Set time order of FREEFALL system
-    call this % set_time_deriv_order(2)
+    call this % set_differential_order(2)
 
     ! Set the system parameters
     this % mass = M

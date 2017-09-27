@@ -31,7 +31,7 @@ module integrator_interface
      ! Track global time and states
      !----------------------------------------------------------------!
 
-     type(scalar), allocatable :: time (:) ! time values (steps)
+     type(scalar), allocatable :: time(:)  ! time values (steps)
      type(scalar), allocatable :: U(:,:,:) ! state varibles (steps, deriv_ord, nvars)
 
      !----------------------------------------------------------------!
@@ -154,7 +154,7 @@ contains
        
     allocate( this % U( &
          & this % get_total_num_steps(), &
-         & this % system % get_time_deriv_order() + 1, &
+         & this % system % get_differential_order() + 1, &
          & this % system % get_num_state_vars() &
          & ))
     this % U = 0.0d0
@@ -407,7 +407,7 @@ contains
     print '("  >> End time             : " ,F8.3)', this % tfinal
     print '("  >> Step size            : " ,E9.3)', this % h
     print '("  >> Number of variables  : " ,i4)'  , this % system % get_num_state_vars()
-    print '("  >> Equation order       : " ,i4)'  , this % system % get_time_deriv_order()
+    print '("  >> Equation order       : " ,i4)'  , this % system % get_differential_order()
     print '("  >> Number of steps      : " ,i10)' , this % get_num_steps()
     print '("  >> Number of stages     : " ,i10)' , this % get_num_stages()
     print '("  >> Tot. Number of steps : " ,i10)' , this % get_total_num_steps()

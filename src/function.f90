@@ -1,4 +1,5 @@
 #include "scalar.fpp"
+
 !=====================================================================!
 ! Module that contains common procedures for any function of interest
 ! that the user wishes to implement.
@@ -34,7 +35,7 @@ module function_class
 
      procedure(interface_evaluate), deferred :: getFunctionValue ! function value at t, X, U, Udot, Uddot
      procedure(interface_gradient), deferred :: addFuncDVSens    ! partial derivative
-     procedure(interface_sv_gradient), deferred :: addFuncSVSens    ! partial derivative
+     procedure(interface_statevar_gradient), deferred :: addFuncSVSens    ! partial derivative
      procedure(interface_gradient), deferred :: addDFdU          ! partial derivative
      procedure(interface_gradient), deferred :: addDFdUDot       ! partial derivative
      procedure(interface_gradient), deferred :: addDFdUDDot      ! partial derivative
@@ -80,8 +81,9 @@ module function_class
      ! Interface for evaluating the gradient for t, x, U, Udot, Uddot
      !----------------------------------------------------------------!
      
-     subroutine interface_sv_gradient(this, res, alpha, beta, gamma, &
-          &  time, x, u, udot, uddot)
+     subroutine interface_statevar_gradient(this, res, &
+          & alpha, beta, gamma, &
+          & time, x, u, udot, uddot)
 
        import :: WP
        import :: abstract_function
@@ -92,7 +94,7 @@ module function_class
        type(scalar), intent(in), dimension(:)    :: x, u, udot, uddot
        type(scalar), intent(in)                  :: alpha, beta, gamma
 
-     end subroutine interface_sv_gradient
+     end subroutine interface_statevar_gradient
 
   end interface
   

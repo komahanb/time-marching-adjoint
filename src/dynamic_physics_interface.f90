@@ -19,13 +19,13 @@ module dynamic_physics_interface
   
   type, abstract, extends(physics) :: dynamics
 
-     type(integer) :: time_deriv_order ! order of the differential equation
+     type(integer) :: differential_order ! order of the differential equation
      
    contains
      
      ! Defined procedures
-     procedure :: get_time_deriv_order
-     procedure :: set_time_deriv_order
+     procedure :: get_differential_order
+     procedure :: set_differential_order
 
      ! Deferred procedure to subtypes
      procedure(initial_condition_interface), deferred :: get_initial_condition
@@ -56,25 +56,25 @@ contains
   ! Returns the highest order of time derivative in the physics
   !===================================================================!
   
-  pure type(integer) function get_time_deriv_order(this)
+  pure type(integer) function get_differential_order(this)
 
     class(dynamics), intent(in) :: this
 
-    get_time_deriv_order = this % time_deriv_order
+    get_differential_order = this % differential_order
 
-  end function get_time_deriv_order
+  end function get_differential_order
 
   !===================================================================!
   ! Sets the highest order of time derivative in the physics
   !===================================================================!
   
-  pure subroutine set_time_deriv_order(this, order)
+  pure subroutine set_differential_order(this, order)
 
     class(dynamics), intent(inout) :: this
     type(integer), intent(in)      :: order
 
-    this % time_deriv_order = order
+    this % differential_order = order
 
-  end subroutine set_time_deriv_order
+  end subroutine set_differential_order
   
 end module dynamic_physics_interface

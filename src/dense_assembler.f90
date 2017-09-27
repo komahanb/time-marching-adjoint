@@ -1,4 +1,5 @@
 #include "scalar.fpp"
+
 !=====================================================================!
 ! Module that implements a derived type called 'dense_assembler' which
 ! produces a dense matrix and vector that goes into linear and
@@ -9,11 +10,11 @@
 
 module dense_assembler_class
 
-  use assembler_interface    , only : assembler
-  use matrix_interface  , only : matrix
-  use vector_interface  , only : vector
-  use dense_matrix_class , only : dense_matrix
-  use dense_vector_class , only : dense_vector
+  use assembler_interface , only : assembler
+  use matrix_interface    , only : matrix
+  use vector_interface    , only : vector
+  use dense_matrix_class  , only : dense_matrix
+  use dense_vector_class  , only : dense_vector
   
   implicit none
   

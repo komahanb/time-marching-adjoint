@@ -10,9 +10,9 @@ module linear_solver_class
   implicit none
 
   private
-  public :: linsol
+  public :: linear_solver
 
-  type, abstract :: linsol
+  type, abstract :: linear_solver
 
      ! type options
      private
@@ -28,7 +28,7 @@ module linear_solver_class
 
      ! deferred procedures
 
-  end  type linsol
+  end  type linear_solver
 
 contains
 
@@ -38,7 +38,7 @@ contains
   
   subroutine set_mat_size(this, mat_size) 
 
-    class(linsol) :: this
+    class(linear_solver) :: this
     type(integer) :: mat_size
 
     this % mat_size = mat_size
@@ -51,7 +51,7 @@ contains
   
   function get_mat_size(this)
 
-    class(linsol) :: this
+    class(linear_solver) :: this
     type(integer) :: get_mat_size
 
     get_mat_size = this % mat_size
@@ -66,14 +66,14 @@ end module linear_solver_class
 
 module lapack_class
 
-  use linear_solver_class, only: linsol
+  use linear_solver_class, only: linear_solver
 
   implicit none
 
   private
   public :: lapack
 
-  type, extends(linsol) :: lapack
+  type, extends(linear_solver) :: lapack
      
   end type lapack
   
