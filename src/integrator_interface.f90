@@ -159,6 +159,11 @@ contains
          & ))
     this % U = 0.0d0
 
+    ! Other class variables
+    this % implicit = .true.
+    this % current_step = 0
+    this % current_stage = 0
+
   end subroutine construct
 
   !======================================================================!
@@ -216,7 +221,7 @@ contains
   ! Time integration logic
   !===================================================================!
 
-  impure subroutine integrate( this )    
+  impure subroutine integrate( this )
   
     class(integrator), intent(inout) :: this
     integer :: k
@@ -232,9 +237,11 @@ contains
     time: do k = 2, this % get_total_num_steps()
 
        call this % get_step_stage(k, this % current_step, this % current_stage)
-       
+
        call this % evaluate_time(this % time(k), this % time(k-1), this % h)
-       
+
+       ! Determine the required length of states and time based on the
+       ! order of approximation
        call this % evaluate_states(this % time(1:k), this % U(1:k,:,:))
        
     end do time
@@ -373,25 +380,23 @@ contains
 
   end subroutine set_physics
 
-  !=====================================================================!
+  !===================================================================!
   ! Returns the corresponding step and stage numbers from the supplied
   ! global index count
-  !======================================================================!
+  !===================================================================!
   
-  subroutine get_step_stage(this, kk, step, stage)
+  subroutine get_step_stage(this, index, step, stage)
 
-    class(integrator)   , intent(in)  :: this
-    type(integer) , intent(in)  :: kk
-    type(integer) , intent(out) :: step
-    type(integer) , intent(out) :: stage
+    class(integrator) , intent(in)    :: this
+    type(integer)     , intent(in)    :: index
+    type(integer)     , intent(out) :: step
+    type(integer)     , intent(out) :: stage
 
-    if ( this % get_num_stages() .eq. 0) return kk
+    stage = mod(index-1,this%get_num_stages()+1)
+    step = 1 + (index-1)/(this%get_num_stages()+1)
 
-    stage = mod(kk-1,this%get_num_stages()+1)   
-    step  = kk/2 ! - stage*this%get_num_stages() + 2 ! initial offset of 2
-
-    print *, kk, step, stage
-
+    print *, index, stage, step
+    
   end subroutine get_step_stage
 
   !===================================================================!

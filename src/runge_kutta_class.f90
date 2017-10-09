@@ -10,7 +10,7 @@ module runge_kutta_integrator_class
 
   use integrator_interface      , only : integrator
   use dynamic_physics_interface , only : dynamics
-  use iso_fortran_env           , only : dp => REAL64
+  use constants                 , only : DP, TINY, PI
 
   implicit none
 
@@ -70,12 +70,8 @@ contains
     print *, ">> Diagonally Implicit Runge Kutta << "
     print *, "======================================"
 
-    !-----------------------------------------------------------------!
-    ! Set the order of integration
-    !-----------------------------------------------------------------!
-
     this % max_dirk_order = accuracy_order
-    print '("  >> Max DIRK Order          : ",i4)', this % max_dirk_order
+    print '("  >> Max DIRK Order : ", i4)', this % max_dirk_order
 
     num_stages = this % max_dirk_order - 1
     call this % construct(system, tinit, tfinal, h, implicit, num_stages)
@@ -103,25 +99,24 @@ contains
     type(integer) :: i
 
     do i = 1, this  % get_num_stages()
-       if (abs(this % C(i) - sum(this % A(i,:))) .gt. 0) then
+       if (abs(this % C(i) - sum(this % A(i,:))) .gt. TINY) then
           print *, "WARNING: sum(A(i,j)) != C(i)", i, this % num_stages
        end if
     end do
 
-    if (abs(sum(this % B) - 1.0d0) .gt. 0) then
+    if (abs(sum(this % B) - 1.0d0) .gt. TINY) then
        print *, "WARNING: sum(B) != 1", this % num_stages
     end if
 
   end subroutine check_coeffs
 
- !===================================================================!
+  !===================================================================!
   ! Butcher's tableau for DIRK 
   !===================================================================!
 
   subroutine setup_coeffs(this)
 
     class(DIRK) :: this
-    type(scalar), parameter :: PI = 3.141592653589793_dp
     type(scalar), parameter :: tmp  = 1.0_dp/(2.0_dp*dsqrt(3.0_dp))
     type(scalar), parameter :: half = 1.0_dp/2.0_dp
     type(scalar), parameter :: one  = 1.0_dp
@@ -219,14 +214,14 @@ contains
   !===================================================================!
   
   impure subroutine evaluate_time(this, tnew, told, h)
-
-    class(dirk) , intent(in)  :: this
-    type(scalar)      , intent(in)  :: told    ! previous value of time
-    type(scalar)      , intent(in)  :: h       ! step size
-    type(scalar)      , intent(out) :: tnew    ! current time value
+    
+    class(dirk)  , intent(in)  :: this
+    type(scalar) , intent(in)  :: told    ! previous value of time
+    type(scalar) , intent(in)  :: h       ! step size
+    type(scalar) , intent(out) :: tnew    ! current time value
     type(scalar)  :: tcoeff
 
-    if ( this % current_stage .eq. 0) then
+    if ( this % current_stage .eq. 0 ) then
        ! actual step
        tcoeff = 1.0d0
     else
@@ -234,7 +229,7 @@ contains
        tcoeff = this % C(this % current_stage)
     end if
 
-    tnew   = told +  tcoeff*h
+    tnew = told + tcoeff*h
 
   end subroutine evaluate_time
 
@@ -246,18 +241,52 @@ contains
 
     use nonlinear_algebra, only : nonlinear_solve
 
-    class(DIRK)   , intent(in)    :: this
-    type(scalar) , intent(in)    :: t(:)      ! array of time values
-    type(scalar) , intent(inout) :: u(:,:,:)  ! previous values of state variables
+    class(DIRK) , intent(in)    :: this
+    type(scalar), intent(in)    :: t(:)      ! array of time values
+    type(scalar), intent(inout) :: u(:,:,:)  ! previous values of state variables
 
-    type(scalar)  , allocatable :: lincoeff(:)  ! order of equation + 1
-    type(integer) :: k , i, n
+    type(scalar), allocatable :: lincoeff(:)  ! order of equation + 1
+    type(integer) :: k, i, j
     type(scalar)  :: scale
-!!$
-!!$    ! Pull out the number of time steps of states provided and add one
-!!$    ! to point to the current time step
-!!$    k = size(u(:,1,1))
-!!$
+    
+    ! Pull out the number of time steps of states provided and add one
+    ! to point to the current time step
+    
+    if ( this % current_stage .eq. 0 ) then
+
+       ! Do the stage approximations
+
+    else
+
+       ! Evaluate the time step values
+       idx = size(u(:,1,1))
+       
+       k = this % current_step
+       i = this % current_stage
+       
+       kold = k - this % current_stage
+
+       ! Assume a value for highest order state
+       u(knew,torder+1,:) = 0.0d0
+
+       ! Find the lower order states based on ABM formula
+       do n = torder, 1, -1
+          u(idx,n,:) = u(kold,n,:)
+          do j = 0, i
+             u(idx,n,:) = u(idx,n,:) + this%h*u(idx-j,n+1,:)
+          end do
+       end do
+
+       ! Perform a nonlinear solution if this is a implicit method
+       if ( this % is_implicit() ) then
+          allocate(lincoeff(torder + 1))
+          call this % get_linearization_coeff(lincoeff, p, h)
+          call nonlinear_solve(this % system, lincoeff, t(idx), u(idx,:,:))
+          deallocate(lincoeff)
+       end if
+
+    end if
+    
 !!$    if (.not. stage_solve) then
 !!$
 !!$       ! March q to next time step
@@ -345,13 +374,13 @@ impure subroutine get_linearization_coeff(this, lincoeff, stage, h)
   type(integer) , intent(in)    :: stage
 
   type(scalar)  :: a
-  type(integer) :: deriv_order,p
+  type(integer) :: deriv_order, n
 
-  a           = this % A(stage, stage)
+  a = this % A(stage, stage)
   deriv_order = this % system % get_differential_order()
 
-  forall(p = 0:deriv_order)
-     lincoeff(p+1) = (a*h)**(deriv_order-p)
+  forall(n=0:deriv_order)
+     lincoeff(n+1) = (a*h)**(deriv_order-n)
   end forall
 
 end subroutine get_linearization_coeff

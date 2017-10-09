@@ -26,7 +26,7 @@ module abm_integrator_class
      private
 
      ! ABM variables
-     type(integer)             :: max_abm_order = 6
+     type(integer) :: max_abm_order = 6
      type(scalar), allocatable :: A(:,:)
 
    contains
@@ -50,8 +50,7 @@ contains
   ! Initialize the ABM datatype and allocate required variables
   !===================================================================!
   
-  type(abm) function create(system, tinit, tfinal, h, implicit, &
-       & accuracy_order) result(this)
+  type(abm) function create(system, tinit, tfinal, h, implicit, accuracy_order) result(this)
 
     class(dynamics)   , intent(in)   , target :: system
     type(scalar)      , intent(in)            :: tinit, tfinal
@@ -154,14 +153,14 @@ contains
     ! to point to the current time step
     k = size(u(:,1,1))
 
-    associate( &
+    associate(&
          & p => this % get_accuracy_order(k), &
          & A => this % A(this % get_accuracy_order(k),:), &
          & h => t(k) - t(k-1), &
          & torder => this % system % get_differential_order())
 
       ! Assume a value for highest order state
-      u(k,torder+1,:) = 0
+      u(k,torder+1,:) = 0.0d0
 
       ! Find the lower order states based on ABM formula
       do n = torder, 1, -1

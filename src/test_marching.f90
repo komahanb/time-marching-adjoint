@@ -40,7 +40,15 @@ contains
     type(newmark) :: nbg
     type(dirk)    :: dirkobj
     type(bdf)     :: bdfobj
+ 
+    dirkobj = DIRK(system = test_system, tinit=0.0d0, tfinal = 10.0d-3, &
+         & h=1.0d-3, implicit=.true., accuracy_order=3)
+    call dirkobj % integrate()
+    call dirkobj % write_solution("dirk.dat")
+    call dirkobj % to_string()
 
+    stop
+    
     abmobj = ABM(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
          & h=1.0d-3, implicit=.true., accuracy_order=3)
     call abmobj % to_string()
@@ -60,15 +68,7 @@ contains
     call bdfobj % to_string()
     call bdfobj % integrate()
     call bdfobj % write_solution("bdf.dat")
-    call bdfobj % to_string()
-
-    ! Still broken 
-    dirkobj = DIRK(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
-         & h=1.0d-3, implicit=.true., accuracy_order=2)
-    call dirkobj % to_string()
-    call dirkobj % integrate()
-    call dirkobj % write_solution("dirk.dat")
-    call dirkobj % to_string()
+    call bdfobj % to_string()   
     
   end subroutine test_integrators
 

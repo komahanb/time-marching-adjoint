@@ -151,7 +151,7 @@ contains
 
       ! Pull out the number of time steps of states provided and add one
       ! to point to the current time step
-      k = size(u(:,1,1))
+      k = this % current_step !size(u(:,1,1))
 
       associate( &
            & p => this % get_accuracy_order(k), &
@@ -160,7 +160,7 @@ contains
            & n => this % system % get_differential_order())
 
         ! Assume a value for lowest order state
-      u(k,1,:) = 0
+      u(k,1,:) = 0.0d0
 
       ! Find the higher order states based on BDF formula
       do j = 1, n
