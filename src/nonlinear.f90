@@ -9,7 +9,7 @@ module nonlinear_algebra
 
   ! import dependencies
   use iso_fortran_env           , only : dp => REAL64
-  use linear_algebra            , only : solve
+  use linear_algebra            , only : linsolve => solve
   use dynamic_physics_interface , only : dynamics
   use utils                     , only : norm
 
@@ -24,15 +24,15 @@ module nonlinear_algebra
   logical  :: jacobian_check       = .true.
   integer  :: print_level          = 0
   
-  public :: nonlinear_solve
+  public :: solve
 
   !-------------------------------------------------------------------!
   ! Interface for nonlinear solution problems
   !-------------------------------------------------------------------!
 
-  interface nonlinear_solve
+  interface solve
      module procedure newton_solve_condensed
-  end interface nonlinear_solve
+  end interface solve
 
 contains
 
@@ -146,7 +146,7 @@ contains
        end if
 
        ! Call LAPACK to solve the linear system
-       dq = solve(jac, -res)
+       dq = linsolve(jac, -res)
        
        forall(jj=1:system % get_differential_order() + 1)
           Q(jj,:) = Q(jj,:) + coeff(jj)*dq

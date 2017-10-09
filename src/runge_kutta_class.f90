@@ -24,7 +24,7 @@ module runge_kutta_integrator_class
   type, extends(integrator) :: DIRK
 
      ! DIRK variables
-     type(integer)             :: max_dirk_order = 4
+     type(integer)             :: max_order = 4
 
      ! DIRK Coefficients
      type(scalar), allocatable :: A(:,:)
@@ -34,10 +34,9 @@ module runge_kutta_integrator_class
    contains     
 
      ! Helper routines
-     procedure :: evaluate_states
-     procedure :: evaluate_time
-     
+     procedure :: step    
      procedure :: get_linearization_coeff
+     procedure :: get_bandwidth
      procedure :: setup_coeffs
      procedure :: check_coeffs
 
@@ -70,10 +69,10 @@ contains
     print *, ">> Diagonally Implicit Runge Kutta << "
     print *, "======================================"
 
-    this % max_dirk_order = accuracy_order
-    print '("  >> Max DIRK Order : ", i4)', this % max_dirk_order
+    this % max_order = accuracy_order
+    print '("  >> Max DIRK Order : ", i4)', this % max_order
 
-    num_stages = this % max_dirk_order - 1
+    num_stages = this % max_order - 1
     call this % construct(system, tinit, tfinal, h, implicit, num_stages)
 
     allocate( this % A (num_stages, num_stages) )
@@ -88,6 +87,24 @@ contains
 
   end function create
   
+  !===================================================================!
+  ! Returns the order of approximation for the given time step k and
+  ! degree d
+  !===================================================================!
+  
+  pure type(integer) function get_bandwidth(this, time_index) result(order)
+
+    class(DIRK)  , intent(in) :: this
+    type(integer), intent(in) :: time_index
+
+    if ( this % current_stage .eq. 0 ) then 
+       order = this % num_stages + 1 ! all stages + current 
+    else 
+       order = this % current_stage
+    end if
+
+  end function get_bandwidth
+
   !===================================================================!
   ! Routine that checks if the Butcher Tableau entries are valid for
   ! the chosen number of stages/order
@@ -209,172 +226,95 @@ contains
 
   end subroutine destroy
      
-  !===================================================================!
-  ! Evaluate the indepedent variable (time)
-  !===================================================================!
-  
-  impure subroutine evaluate_time(this, tnew, told, h)
-    
-    class(dirk)  , intent(in)  :: this
-    type(scalar) , intent(in)  :: told    ! previous value of time
-    type(scalar) , intent(in)  :: h       ! step size
-    type(scalar) , intent(out) :: tnew    ! current time value
-    type(scalar)  :: tcoeff
-
-    if ( this % current_stage .eq. 0 ) then
-       ! actual step
-       tcoeff = 1.0d0
-    else
-       ! intermediate step
-       tcoeff = this % C(this % current_stage)
-    end if
-
-    tnew = told + tcoeff*h
-
-  end subroutine evaluate_time
-
   !================================================================!
-  ! Interface to approximate states using the time marching coeffs
-  !================================================================!
+  ! Take a time step using the supplied time step and order of
+  ! accuracy
+  ! ================================================================!
 
-  impure subroutine evaluate_states(this, t, u)
+  impure subroutine step(this, t, u, h, p, ierr)
 
-    use nonlinear_algebra, only : nonlinear_solve
+    use nonlinear_algebra, only : solve
 
-    class(DIRK) , intent(in)    :: this
-    type(scalar), intent(in)    :: t(:)      ! array of time values
-    type(scalar), intent(inout) :: u(:,:,:)  ! previous values of state variables
+    ! Argument variables
+    class(DIRK)  , intent(inout) :: this
+    type(scalar) , intent(inout) :: t(:)
+    type(scalar) , intent(inout) :: u(:,:,:)
+    type(integer), intent(in)    :: p
+    type(scalar) , intent(in)    :: h
+    type(integer), intent(out)   :: ierr
 
+    ! Local variables
     type(scalar), allocatable :: lincoeff(:)  ! order of equation + 1
-    type(integer) :: k, i, j
+    type(integer) :: torder, n, j, idx
     type(scalar)  :: scale
     
-    ! Pull out the number of time steps of states provided and add one
-    ! to point to the current time step
-    
+    ! Determine remaining paramters needed
+    idx = size(u(:,1,1))
+    torder = this % system % get_differential_order()
+
     if ( this % current_stage .eq. 0 ) then
 
-       ! Do the stage approximations
+       ! Advance the time to next step
+       t(idx) = t(1) + h
+       
+       ! Highest time derivative
+       do j = 1, this % num_stages
+          u(idx,torder+1,:) = u(idx,torder+1,:) + this % B(j) * u(idx-j,torder+1,:)
+       end do
 
+       ! Find the lower order derivatives
+       do n = torder, 1, -1
+          u(idx,n,:) = u(1,n,:)
+          do j = 1, this % num_stages
+             scale = h * this % B(j)
+             u(idx,n,:) = u(idx,n,:) + scale*u(idx-j,n+1,:)
+          end do
+       end do
+       
     else
-
-       ! Evaluate the time step values
-       idx = size(u(:,1,1))
        
-       k = this % current_step
-       i = this % current_stage
-       
-       kold = k - this % current_stage
+       ! Find the new independent coordinate (time)
+       t(idx) = t(1) + h * this % C(this % current_stage)
 
        ! Assume a value for highest order state
-       u(knew,torder+1,:) = 0.0d0
+       u(idx,torder+1,:) = 0.0d0
 
-       ! Find the lower order states based on ABM formula
+       ! Find the lower order states based on DIRK formula
        do n = torder, 1, -1
-          u(idx,n,:) = u(kold,n,:)
-          do j = 0, i
-             u(idx,n,:) = u(idx,n,:) + this%h*u(idx-j,n+1,:)
+          u(idx,n,:) = u(1,n,:)
+          do j = 1, this % current_stage
+             scale = h * this % A(this % current_stage,j)
+             u(idx,n,:) = u(idx,n,:) + scale*u(idx-j+1,n+1,:)
           end do
        end do
 
        ! Perform a nonlinear solution if this is a implicit method
        if ( this % is_implicit() ) then
           allocate(lincoeff(torder + 1))
-          call this % get_linearization_coeff(lincoeff, p, h)
-          call nonlinear_solve(this % system, lincoeff, t(idx), u(idx,:,:))
+          call this % get_linearization_coeff(lincoeff, h)
+          call solve(this % system, lincoeff, t(idx), u(idx,:,:))
           deallocate(lincoeff)
        end if
 
     end if
-    
-!!$    if (.not. stage_solve) then
-!!$
-!!$       ! March q to next time step
-!!$       forall(m=1:this%nsvars)
-!!$          q(k,m) = q(k-1,m) + this % h*sum(this % B(1:this%num_stages) &
-!!$               &* this % QDOT(k, 1:this%num_stages, m))
-!!$       end forall
-!!$
-!!$       ! March qdot
-!!$       forall(m=1:this%nsvars)
-!!$          qdot(k,m) = qdot(k-1,m) + this % h*sum(this % B(1:this%num_stages) &
-!!$               &* this % QDDOT(k, 1:this%num_stages, m))
-!!$       end forall
-!!$
-!!$       ! March qddot
-!!$       forall(m=1:this%nsvars)
-!!$          qddot(k,m) = sum(this % B(1:this%num_stages) &
-!!$               &* this % QDDOT(k,1:this%num_stages,m))
-!!$       end forall
-!!$
-!!$    else
-!!$
-!!$       associate( &
-!!$            & p => this % get_accuracy_order(k), &
-!!$            & A => this % A(this % get_accuracy_order(k),:), &
-!!$            & h => t(k) - t(k-1), &
-!!$            & torder => this % system % get_differential_order())
-!!$
-!!$         ! Assume a value for highest order state
-!!$       u(k,torder+1,:) = 0
-!!$
-!!$       ! Find the lower order states based on DIRK formula
-!!$       do n = torder, 1, -1
-!!$          u(k,n,:) = u(k-1,n,:)
-!!$          do i = 1, this % num_stages
-!!$             scale = (t(k-i)-t(k-i-1))*A(i+1)
-!!$             u(k,n,:) = u(k,n,:) + scale*u(k-i,n+1,:)
-!!$          end do
-!!$       end do
-!!$
-!!$       ! guess qddot
-!!$       if (i .eq. 1) then ! copy previous global state
-!!$          this % QDDOT(k,i,:) = this % UDDOT(k-1,:)
-!!$       else ! copy previous local state
-!!$          this % QDDOT(k,i,:) = this % QDDOT(k,i-1,:)
-!!$       end if
-!!$
-!!$       ! compute the stage velocity states for the guessed QDDOT
-!!$       forall(m = 1 : this % nsvars)
-!!$          this % QDOT(k,i,m) = this % udot(k-1,m) &
-!!$               & + this % h*sum(this % A(i,:)&
-!!$               & * this % QDDOT(k,:, m))
-!!$       end forall
-!!$
-!!$       ! compute the stage states for the guessed QDDOT
-!!$       forall(m = 1 : this % nsvars)
-!!$          this % Q(k,i,m) = this % u(k-1,m) &
-!!$               & + this % h*sum(this % A(i,:)*this % QDOT(k,:, m))
-!!$       end forall
-!!$
-!!$
-!!$       ! Perform a nonlinear solution if this is a implicit method
-!!$       if ( this % is_implicit() ) then
-!!$          allocate(lincoeff(torder + 1))
-!!$          call this % get_linearization_coeff(lincoeff, p, h)
-!!$          call nonlinear_solve(this % system, lincoeff, t(k), u(k,:,:))
-!!$          deallocate(lincoeff)
-!!$       end if
-!!$
-!!$     end associate
-!!$
-!!$  end if
 
-end subroutine evaluate_states
+  end subroutine step
 
 !================================================================!
 ! Retrieve the coefficients for linearizing the jacobian
 !================================================================!
 
-impure subroutine get_linearization_coeff(this, lincoeff, stage, h)
+impure subroutine get_linearization_coeff(this, lincoeff, h)
 
   class(DIRK)   , intent(in)    :: this
   type(scalar)  , intent(in)    :: h
   type(scalar)  , intent(inout) :: lincoeff(:)
-  type(integer) , intent(in)    :: stage
+  type(integer)  :: stage
 
   type(scalar)  :: a
   type(integer) :: deriv_order, n
+
+  stage  = this % current_stage
 
   a = this % A(stage, stage)
   deriv_order = this % system % get_differential_order()

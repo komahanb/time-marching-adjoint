@@ -62,7 +62,7 @@ module integrator_interface
      !----------------------------------------------------------------!
 
      procedure(step_interface), deferred :: step
-     procedure(get_accuracy_order_interface), deferred :: get_accuracy_order
+     procedure(get_bandwidth_interface), deferred :: get_bandwidth
 
      !----------------------------------------------------------------!
      ! Procedures                                                     !
@@ -100,14 +100,14 @@ module integrator_interface
 
      end subroutine step_interface
           
-     pure type(integer) function get_accuracy_order_interface(this, time_index) result(order)
+     pure type(integer) function get_bandwidth_interface(this, time_index) result(order)
 
        import integrator
 
        class(integrator), intent(in) :: this
        type(integer)    , intent(in) :: time_index
 
-     end function get_accuracy_order_interface
+     end function get_bandwidth_interface
      
   end interface
 
@@ -249,8 +249,8 @@ contains
 
        call this % get_step_stage(k, this % current_step, this % current_stage)
 
-       p = this % get_accuracy_order(k)
-       
+       p = this % get_bandwidth(k)
+
        call this % step( this % time(k-p:k) , &
             & this % U(k-p:k,:,:), &
             & this % h, &

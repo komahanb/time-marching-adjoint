@@ -31,7 +31,7 @@ module newmark_integrator_class
            
      procedure :: step
      procedure :: get_linearization_coeff
-     procedure :: get_accuracy_order
+     procedure :: get_bandwidth
   
      ! Destructor
      final :: destroy
@@ -89,14 +89,14 @@ contains
   ! degree d
   !===================================================================!
   
-  pure type(integer) function get_accuracy_order(this, time_index) result(order)
+  pure type(integer) function get_bandwidth(this, time_index) result(order)
 
     class(newmark) , intent(in) :: this
     type(integer), intent(in) :: time_index
 
     order = 1
 
-  end function get_accuracy_order
+  end function get_bandwidth
 
  !================================================================!
   ! Take a time step using the supplied time step and order of

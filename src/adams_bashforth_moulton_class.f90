@@ -26,14 +26,14 @@ module abm_integrator_class
      private
 
      ! ABM variables
-     type(integer) :: max_abm_order = 6
+     type(integer) :: max_order = 6
      type(scalar), allocatable :: A(:,:)
 
    contains
            
      procedure :: get_linearization_coeff
      procedure :: step
-     procedure :: get_accuracy_order
+     procedure :: get_bandwidth
 
      ! Destructor
      final :: destroy
@@ -64,35 +64,23 @@ contains
 
     call this % construct(system, tinit, tfinal, h, implicit, 0)
 
-    !-----------------------------------------------------------------!
-    ! Set the order of integration
-    !-----------------------------------------------------------------!
-
-    if (accuracy_order .le. this % max_abm_order) this % max_abm_order = accuracy_order
-    print '("  >> Max ABM Order          : ",i4)', this % max_abm_order
-
-    allocate( this % A (this % max_abm_order, this % max_abm_order) )
-    this % A = 0.0d0 
+    if (accuracy_order .le. this % max_order) this % max_order = accuracy_order
+    print '("  >> Max ABM Order          : ",i4)', this % max_order
 
     ! Set the coefficients
-    if ( this % max_abm_order .eq. 1 ) then       
-       this % A(1,1:1) = (/ 1.0d0 /)
-    else if ( this % max_abm_order .eq. 2 ) then
-       this % A(1,1:1) = (/ 1.0d0 /)
-       this % A(2,1:2) = (/ 1.0d0/2.0d0, 1.0d0/2.0d0 /)
-    else if ( this % max_abm_order .eq. 3 ) then
-       this % A(1,1:1) = (/ 1.0d0 /)
-       this % A(2,1:2) = (/ 1.0d0/2.0d0, 1.0d0/2.0d0 /)
-       this % A(3,1:3) = (/ 5.0d0/12.0d0, 8.0d0/12.0d0, -1.0d0/12.0d0 /)
-    else 
-       print *,  "Wrong max_abm_order:", this % max_abm_order
-       stop
-    end if
+    allocate( this % A (this % max_order, this % max_order) )
+    this % A = 0.0d0
+    if ( this % max_order .ge. 1 ) this % A(1,1:1) = [1.0d0]
+    if ( this % max_order .ge. 2 ) this % A(2,1:2) = [1.0d0, 1.0d0]/2.0d0
+    if ( this % max_order .ge. 3 ) this % A(3,1:3) = [5.0d0, 8.0d0, -1.0d0]/12.0d0
+    if ( this % max_order .ge. 4 ) this % A(4,1:4) = [9.0d0, 19.0d0, -5.0d0, 1.0d0]/24.0d0
+    if ( this % max_order .ge. 5 ) this % A(5,1:5) = [251.0d0, 646.0d0, -264.0d0, 106.0d0, -19.0d0]/720.0d0
+    if ( this % max_order .ge. 6 ) this % A(6,1:6) = [475.0d0, 1427.0d0, -798.0d0, 482.0d0, -173.0d0, 27.0d0]/1440.0d0
 
     ! Sanity check on ABM coeffs
     sanity_check: block
       type(integer) :: j
-      do j = 1, this % max_abm_order
+      do j = 1, this % max_order
          if ( real(sum(this % A(j,1:j)) - 1.0d0) .gt. 0.00001 ) then
             stop "Error in ABM Coeff"
          end if
@@ -122,16 +110,16 @@ contains
   ! degree d
   !===================================================================!
 
-  pure type(integer) function get_accuracy_order(this, time_index) result(order)
+  pure type(integer) function get_bandwidth(this, time_index) result(order)
 
     class(ABM)   , intent(in) :: this
     type(integer), intent(in) :: time_index
 
     order = time_index - 1
 
-    if (order .gt. this % max_abm_order) order = this % max_abm_order
+    if (order .gt. this % max_order) order = this % max_order
 
-  end function get_accuracy_order
+  end function get_bandwidth
 
   !================================================================!
   ! Take a time step using the supplied time step and order of

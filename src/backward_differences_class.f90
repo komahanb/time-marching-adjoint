@@ -27,14 +27,14 @@ module backward_differences_integrator_class
      private
 
      ! BDF variables
-     type(integer)             :: max_bdf_order = 6
+     type(integer)             :: max_order = 6
      type(scalar), allocatable :: A(:,:)
 
    contains
            
      procedure :: step
      procedure :: get_linearization_coeff
-     procedure :: get_accuracy_order
+     procedure :: get_bandwidth
 
      ! Destructor
      final :: destroy
@@ -70,25 +70,25 @@ contains
     ! Set the order of integration
     !-----------------------------------------------------------------!
 
-    if (accuracy_order .le. this % max_bdf_order) this % max_bdf_order = accuracy_order
-    print '("  >> Max BDF Order          : ",i4)', this % max_bdf_order
+    if (accuracy_order .le. this % max_order) this % max_order = accuracy_order
+    print '("  >> Max BDF Order          : ",i4)', this % max_order
 
-    allocate( this % A (this % max_bdf_order, this % max_bdf_order+1) )
+    allocate( this % A (this % max_order, this % max_order+1) )
     this % A = 0.0d0 
 
     ! Set the coefficients
     ! http://www.scholarpedia.org/article/Backward_differentiation_formulas
-    if ( this % max_bdf_order .ge. 1 ) this % A(1,1:2) = [1.0d0, -1.0d0]
-    if ( this % max_bdf_order .ge. 2 ) this % A(2,1:3) = [3.0d0, -4.0d0, 1.0d0]/2.0d0
-    if ( this % max_bdf_order .ge. 3 ) this % A(3,1:4) = [11.0d0, -18.0d0, 9.0d0, -2.0d0]/6.0d0
-    if ( this % max_bdf_order .ge. 4 ) this % A(4,1:5) = [25.0d0, -48.0d0, 36.0d0, -16.0d0, 3.0d0]/12.0d0
-    if ( this % max_bdf_order .ge. 5 ) this % A(5,1:6) = [137.0d0, -300.0d0, 300.0d0, -200.0d0, 75.0d0, -12.0d0]/60.0d0
-    if ( this % max_bdf_order .ge. 6 ) this % A(6,1:7) = [147.0d0, -360.0d0, 450.0d0, -400.0d0, 225.0d0, -72.0d0, 10.0d0]/60.0d0
+    if ( this % max_order .ge. 1 ) this % A(1,1:2) = [1.0d0, -1.0d0]
+    if ( this % max_order .ge. 2 ) this % A(2,1:3) = [3.0d0, -4.0d0, 1.0d0]/2.0d0
+    if ( this % max_order .ge. 3 ) this % A(3,1:4) = [11.0d0, -18.0d0, 9.0d0, -2.0d0]/6.0d0
+    if ( this % max_order .ge. 4 ) this % A(4,1:5) = [25.0d0, -48.0d0, 36.0d0, -16.0d0, 3.0d0]/12.0d0
+    if ( this % max_order .ge. 5 ) this % A(5,1:6) = [137.0d0, -300.0d0, 300.0d0, -200.0d0, 75.0d0, -12.0d0]/60.0d0
+    if ( this % max_order .ge. 6 ) this % A(6,1:7) = [147.0d0, -360.0d0, 450.0d0, -400.0d0, 225.0d0, -72.0d0, 10.0d0]/60.0d0
 
     ! Sanity check on BDF coeffs
     sanity_check: block
       type(integer) :: j
-      do j = 1, this % max_bdf_order
+      do j = 1, this % max_order
          if (abs(sum(real_part(this % A(j,1:j+1)))) .gt. 1.0d-15 ) then
             print *, "Error in BDF Coeff for order ", abs(sum(real_part(this % A(j,1:j+1)))), j
             stop
@@ -119,16 +119,16 @@ contains
   ! degree d
   !===================================================================!
 
-  pure type(integer) function get_accuracy_order(this, time_index) result(order)
+  pure type(integer) function get_bandwidth(this, time_index) result(order)
 
     class(BDF)   , intent(in) :: this
     type(integer), intent(in) :: time_index
 
     order = time_index - 1
 
-    if (order .gt. this % max_bdf_order) order = this % max_bdf_order
+    if (order .gt. this % max_order) order = this % max_order
 
-  end function get_accuracy_order
+  end function get_bandwidth
 
   !================================================================!
   ! Take a time step using the supplied time step and order of
