@@ -1,8 +1,8 @@
 #include "scalar.fpp"
 
 !=====================================================================!
-! Adams Bashworth Moulton Integration Module for first and second
-! order systems with adjoint derivative capabilities.
+! Adams Bashworth Moulton Integration Module for n-th order
+! differential systems.
 !
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================! 
@@ -137,33 +137,35 @@ contains
   ! Interface to approximate states using the time marching coeffs
   !================================================================!
 
-  impure subroutine evaluate_states(this, t, u)
+  impure subroutine evaluate_states(this, order_of_accuracy, t, u)
 
     use nonlinear_algebra, only : nonlinear_solve
 
     class(ABM)   , intent(in)    :: this
+    type(integer), intent(in)    :: order_of_accuracy
     type(scalar) , intent(in)    :: t(:)      ! array of time values
     type(scalar) , intent(inout) :: u(:,:,:)  ! previous values of state variables
-
+    
     type(scalar)  , allocatable :: lincoeff(:)  ! order of equation + 1
     type(integer) :: k , i, n
     type(scalar)  :: scale
     
     ! Pull out the number of time steps of states provided and add one
     ! to point to the current time step
-    k = size(u(:,1,1))
+    ! k = size(u(:,1,1))
+
+    k = this % current_step
 
     associate(&
-         & p => this % get_accuracy_order(k), &
-         & A => this % A(this % get_accuracy_order(k),:), &
-         & h => t(k) - t(k-1), &
-         & torder => this % system % get_differential_order())
+         & p => order_of_accuracy, &
+         & A => this % A(order_of_accuracy,:), &
+         & dorder => this % system % get_differential_order())
 
       ! Assume a value for highest order state
-      u(k,torder+1,:) = 0.0d0
+      u(k,dorder+1,:) = 0.0d0
 
       ! Find the lower order states based on ABM formula
-      do n = torder, 1, -1
+      do n = dorder, 1, -1
          u(k,n,:) = u(k-1,n,:)
          do i = 0, p-1
             scale = (t(k-i)-t(k-i-1))*A(i+1)
@@ -173,8 +175,8 @@ contains
 
       ! Perform a nonlinear solution if this is a implicit method
       if ( this % is_implicit() ) then
-         allocate(lincoeff(torder + 1))
-         call this % get_linearization_coeff(lincoeff, p, h)
+         allocate(lincoeff(dorder + 1))
+         call this % get_linearization_coeff(lincoeff, p, t(k) - t(k-1))
          call nonlinear_solve(this % system, lincoeff, t(k), u(k,:,:))
          deallocate(lincoeff)
       end if

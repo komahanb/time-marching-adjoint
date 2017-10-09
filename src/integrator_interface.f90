@@ -1,7 +1,8 @@
 #include "scalar.fpp"
 
 !=====================================================================!
-! Parent class for integration schemes to extend.
+! Parent class for solving n-th order differential equations. Specific
+! integrators extend this class.
 !
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================!
@@ -88,13 +89,14 @@ module integrator_interface
      ! Interface to approximate states using the time marching coeffs
      !================================================================!
      
-     impure subroutine evaluate_states_interface(this, t, u)
+     impure subroutine evaluate_states_interface(this, order_of_accuracy, t, u)
 
        import integrator
 
        class(integrator), intent(in)    :: this
+       type(integer)    , intent(in)    :: order_of_accuracy
        type(scalar)     , intent(in)    :: t(:)      ! array of time values
-       type(scalar)     , intent(inout) :: u(:,:,:)  ! previous values of state variables
+       type(scalar)     , intent(inout) :: u(:,:,:)  ! array of state variables
 
      end subroutine evaluate_states_interface
      
@@ -224,11 +226,11 @@ contains
   impure subroutine integrate( this )
   
     class(integrator), intent(inout) :: this
-    integer :: k
+    integer :: k, p
 
     ! Set states to zero
-    this % U     = 0.0d0
-    this % time  = 0.0d0
+    this % U = 0.0d0
+    this % time = 0.0d0
 
     ! Get the initial condition
     call this % system % get_initial_condition(this % U(1,:,:))
@@ -239,10 +241,9 @@ contains
        call this % get_step_stage(k, this % current_step, this % current_stage)
 
        call this % evaluate_time(this % time(k), this % time(k-1), this % h)
-
-       ! Determine the required length of states and time based on the
-       ! order of approximation
-       call this % evaluate_states(this % time(1:k), this % U(1:k,:,:))
+       
+       p = this % get_accuracy_order(k)
+       call this % evaluate_states(this % time(k-p:k), this % U(k-p:k,:,:), order)
        
     end do time
 
