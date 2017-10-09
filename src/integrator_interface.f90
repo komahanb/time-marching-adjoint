@@ -55,8 +55,6 @@ module integrator_interface
 
      procedure :: construct, destruct
 
-     procedure :: evaluate_time
-
      !----------------------------------------------------------------!
      ! Deferred procedures for subtypes to implement                  !
      !----------------------------------------------------------------!
@@ -113,27 +111,6 @@ module integrator_interface
 
 contains
    
-  !===================================================================!
-  ! Evaluate the indepedent variable (time)
-  !===================================================================!
-  
-  impure subroutine evaluate_time(this, tnew, told, h)
-
-    class(integrator) , intent(in)  :: this
-    type(scalar)      , intent(in)  :: told    ! previous value of time
-    type(scalar)      , intent(in)  :: h       ! step size
-    type(scalar)      , intent(out) :: tnew    ! current time value
-    
-    advance_time: block
-      
-      type(scalar) :: tcoeff
-      
-      tnew   = told +  h
-      
-    end block advance_time
-
-  end subroutine evaluate_time
-    
   !===================================================================!
   ! Base class constructor logic
   !===================================================================!
