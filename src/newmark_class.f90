@@ -29,9 +29,10 @@ module newmark_integrator_class
 
    contains
            
-     procedure :: evaluate_states
+     procedure :: step
      procedure :: get_linearization_coeff
-
+     procedure :: get_accuracy_order
+  
      ! Destructor
      final :: destroy
      
@@ -83,27 +84,48 @@ contains
 
   end subroutine destroy
 
-  !================================================================!
-  ! Interface to approximate states using the time marching coeffs
-  !================================================================!
+  !===================================================================!
+  ! Returns the order of approximation for the given time step k and
+  ! degree d
+  !===================================================================!
   
-  impure subroutine evaluate_states(this, t, u)
+  pure type(integer) function get_accuracy_order(this, time_index) result(order)
 
-    use nonlinear_algebra, only : nonlinear_solve
+    class(newmark) , intent(in) :: this
+    type(integer), intent(in) :: time_index
 
-    class(newmark) , intent(in)    :: this
-    type(scalar)   , intent(in)    :: t(:)      ! array of time values
-    type(scalar)   , intent(inout) :: u(:,:,:)  ! previous values of state variables
+    order = 1
 
-    type(scalar)   , allocatable :: lincoeff(:)  ! order of equation + 1
-    type(integer) :: k , i, n
-    type(scalar)  :: scale, h
+  end function get_accuracy_order
 
-    ! Determine the step number
+ !================================================================!
+  ! Take a time step using the supplied time step and order of
+  ! accuracy
+  ! ================================================================!
+
+  impure subroutine step(this, t, u, h, p, ierr)
+
+    use nonlinear_algebra, only : solve
+
+    ! Argument variables
+    class(newmark) , intent(inout) :: this
+    type(scalar)   , intent(inout) :: t(:)
+    type(scalar)   , intent(inout) :: u(:,:,:)
+    type(integer)  , intent(in)    :: p
+    type(scalar)   , intent(in)    :: h
+    type(integer)  , intent(out)   :: ierr
+
+    ! Local variables
+    type(scalar), allocatable :: lincoeff(:)  ! order of equation + 1
+    type(integer) :: torder, n, i, k
+    type(scalar)  :: scale
+    
+    ! Determine remaining paramters needed
     k = size(u(:,1,1))
+    torder = this % system % get_differential_order()
 
-    ! Determine the current step size
-    h = t(k) - t(k-1)
+    ! Advance the time to next step
+    t(k) = t(k-1) + h
 
     !-----------------------------------------------------------------!
     ! Assume a UDDOT for the next time step
@@ -137,24 +159,25 @@ contains
 
     scale = h*h*this % BETA 
     u(k,1,:) = u(k,1,:) + scale*u(k,3,:)
-    
+
     ! Perform a nonlinear solution if this is a implicit method
     if ( this % is_implicit() ) then
-       allocate(lincoeff(this % system % get_differential_order() + 1))
-       call this % get_linearization_coeff(lincoeff, h)       
-       call nonlinear_solve(this % system, lincoeff, this % time(k), u(k,:,:))
-       deallocate(lincoeff)
+       allocate(lincoeff(torder+1))         
+       call this % get_linearization_coeff(lincoeff, p, h)
+       call solve(this % system, lincoeff, t(k), u(k,:,:))
+       deallocate(lincoeff)        
     end if
 
-  end subroutine evaluate_states
+  end subroutine step
 
   !================================================================!
   ! Retrieve the coefficients for linearizing the jacobian
   !================================================================!
   
-  impure subroutine get_linearization_coeff(this, lincoeff, h)
+  impure subroutine get_linearization_coeff(this, lincoeff, p, h)
 
     class(Newmark) , intent(in)    :: this
+    type(integer)  , intent(in)    :: p ! newmark order of approx
     type(scalar)   , intent(in)    :: h ! step size
     type(scalar)   , intent(inout) :: lincoeff(:)   ! order of equation + 1   
    

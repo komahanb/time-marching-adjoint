@@ -32,7 +32,7 @@ module backward_differences_integrator_class
 
    contains
            
-     procedure :: evaluate_states
+     procedure :: step
      procedure :: get_linearization_coeff
      procedure :: get_accuracy_order
 
@@ -119,70 +119,66 @@ contains
   ! degree d
   !===================================================================!
 
-  impure type(integer) function get_accuracy_order(this, step) result(order)
+  pure type(integer) function get_accuracy_order(this, time_index) result(order)
 
     class(BDF)   , intent(in) :: this
-    type(integer), intent(in) :: step
+    type(integer), intent(in) :: time_index
 
-    order = step - 1
+    order = time_index - 1
 
     if (order .gt. this % max_bdf_order) order = this % max_bdf_order
 
   end function get_accuracy_order
 
   !================================================================!
-  ! Interface to approximate states using the time marching coeffs
-  !================================================================!
+  ! Take a time step using the supplied time step and order of
+  ! accuracy
+  ! ================================================================!
 
-  impure subroutine evaluate_states(this, t, u)
+  impure subroutine step(this, t, u, h, p, ierr)
 
-    use nonlinear_algebra, only : nonlinear_solve
+    use nonlinear_algebra, only : solve
 
-    class(BDF)   , intent(in)    :: this
-    type(scalar) , intent(in)    :: t(:)      ! array of time values
-    type(scalar) , intent(inout) :: u(:,:,:)  ! previous values of state variables
+    ! Argument variables
+    class(BDF)   , intent(inout) :: this
+    type(scalar) , intent(inout) :: t(:)
+    type(scalar) , intent(inout) :: u(:,:,:)
+    type(integer), intent(in)    :: p
+    type(scalar) , intent(in)    :: h
+    type(integer), intent(out)   :: ierr
 
-    ! Use BDF formulae to approximate states for the next time step
-    bdf_formulae: block
+    ! Local variables
+    type(scalar), allocatable :: lincoeff(:)  ! order of equation + 1
+    type(integer) :: torder, n, i, k
+    type(scalar)  :: scale
+    
+    ! Determine remaining paramters needed
+    k = size(u(:,1,1))
+    torder = this % system % get_differential_order()
 
-      type(scalar), allocatable :: lincoeff(:)  ! order of equation + 1
-      type(integer)             :: k, j, i
-      type(scalar)              :: scale
+    ! Advance the time to next step
+    t(k) = t(k-1) + h
 
-      ! Pull out the number of time steps of states provided and add one
-      ! to point to the current time step
-      k = this % current_step !size(u(:,1,1))
+    ! Assume a value for lowest order state
+    u(k,1,:) = 0.0d0
 
-      associate( &
-           & p => this % get_accuracy_order(k), &
-           & A => this % A(this % get_accuracy_order(k),:), &
-           & h => t(k) - t(k-1), &
-           & n => this % system % get_differential_order())
+    ! Find the higher order states based on BDF formula
+    do n = 1, torder
+       do i = 0, p
+          scale = this % A(p,i+1)/h !(t(k-i)-t(k-i-1))
+          u(k,n+1,:) = u(k,n+1,:) + scale*u(k-i,n,:)
+       end do
+    end do
 
-        ! Assume a value for lowest order state
-      u(k,1,:) = 0.0d0
+    ! Perform a nonlinear solution if this is a implicit method
+    if ( this % is_implicit() ) then
+       allocate(lincoeff(torder+1))         
+       call this % get_linearization_coeff(lincoeff, p, h)         
+       call solve(this % system, lincoeff, t(k), u(k,:,:))
+       deallocate(lincoeff)        
+    end if
 
-      ! Find the higher order states based on BDF formula
-      do j = 1, n
-         do i = 0, p
-            scale = A(i+1)/h !(t(k-i)-t(k-i-1))
-            u(k,j+1,:) = u(k,j+1,:) + scale*u(k-i,j,:)
-         end do
-      end do
-
-      ! Perform a nonlinear solution if this is a implicit method
-      if ( this % is_implicit() ) then
-         allocate(lincoeff(n+1))         
-         call this % get_linearization_coeff(lincoeff, p, h)         
-         call nonlinear_solve(this % system, lincoeff, t(k), u(k,:,:))         
-         deallocate(lincoeff)        
-      end if
-
-    end associate
-
-  end block bdf_formulae
-
-end subroutine evaluate_states
+  end subroutine step
 
   !================================================================!
   ! Retrieve the coefficients for linearizing the jacobian

@@ -31,8 +31,8 @@ module abm_integrator_class
 
    contains
            
-     procedure :: evaluate_states
      procedure :: get_linearization_coeff
+     procedure :: step
      procedure :: get_accuracy_order
 
      ! Destructor
@@ -122,68 +122,67 @@ contains
   ! degree d
   !===================================================================!
 
-  impure type(integer) function get_accuracy_order(this, step) result(order)
+  pure type(integer) function get_accuracy_order(this, time_index) result(order)
 
     class(ABM)   , intent(in) :: this
-    type(integer), intent(in) :: step
+    type(integer), intent(in) :: time_index
 
-    order = step - 1
+    order = time_index - 1
 
     if (order .gt. this % max_abm_order) order = this % max_abm_order
 
   end function get_accuracy_order
 
   !================================================================!
-  ! Interface to approximate states using the time marching coeffs
-  !================================================================!
+  ! Take a time step using the supplied time step and order of
+  ! accuracy
+  ! ================================================================!
 
-  impure subroutine evaluate_states(this, order_of_accuracy, t, u)
+  impure subroutine step(this, t, u, h, p, ierr)
 
-    use nonlinear_algebra, only : nonlinear_solve
+    use nonlinear_algebra, only : solve
 
-    class(ABM)   , intent(in)    :: this
-    type(integer), intent(in)    :: order_of_accuracy
-    type(scalar) , intent(in)    :: t(:)      ! array of time values
-    type(scalar) , intent(inout) :: u(:,:,:)  ! previous values of state variables
-    
-    type(scalar)  , allocatable :: lincoeff(:)  ! order of equation + 1
-    type(integer) :: k , i, n
+    ! Argument variables
+    class(ABM)   , intent(inout) :: this
+    type(scalar) , intent(inout) :: t(:)
+    type(scalar) , intent(inout) :: u(:,:,:)
+    type(integer), intent(in)    :: p
+    type(scalar) , intent(in)    :: h
+    type(integer), intent(out)   :: ierr
+
+    ! Local variables
+    type(scalar), allocatable :: lincoeff(:)  ! order of equation + 1
+    type(integer) :: torder, n, i, k
     type(scalar)  :: scale
     
-    ! Pull out the number of time steps of states provided and add one
-    ! to point to the current time step
-    ! k = size(u(:,1,1))
+    ! Determine remaining paramters needed
+    k = size(u(:,1,1))
+    torder = this % system % get_differential_order()
 
-    k = this % current_step
+    ! Advance the time to next step
+    t(k) = t(k-1) + h
 
-    associate(&
-         & p => order_of_accuracy, &
-         & A => this % A(order_of_accuracy,:), &
-         & dorder => this % system % get_differential_order())
+    ! Assume a value for highest order state
+    u(k,torder+1,:) = 0.0d0
 
-      ! Assume a value for highest order state
-      u(k,dorder+1,:) = 0.0d0
+    ! Find the lower order states based on ABM formula
+    do n = torder, 1, -1
+       u(k,n,:) = u(k-1,n,:)
+       do i = 0, p-1
+          scale = h*this % A(p,i+1) !(t(k-i)-t(k-i-1))
+          u(k,n,:) = u(k,n,:) + scale*u(k-i,n+1,:)
+       end do
+    end do
 
-      ! Find the lower order states based on ABM formula
-      do n = dorder, 1, -1
-         u(k,n,:) = u(k-1,n,:)
-         do i = 0, p-1
-            scale = (t(k-i)-t(k-i-1))*A(i+1)
-            u(k,n,:) = u(k,n,:) + scale*u(k-i,n+1,:)
-         end do
-      end do
+    ! Perform a nonlinear solution if this is a implicit method
+    if ( this % is_implicit() ) then
+       allocate(lincoeff(torder+1))         
+       call this % get_linearization_coeff(lincoeff, p, h)         
+       call solve(this % system, lincoeff, t(k), u(k,:,:))
+       deallocate(lincoeff)        
+    end if
 
-      ! Perform a nonlinear solution if this is a implicit method
-      if ( this % is_implicit() ) then
-         allocate(lincoeff(dorder + 1))
-         call this % get_linearization_coeff(lincoeff, p, t(k) - t(k-1))
-         call nonlinear_solve(this % system, lincoeff, t(k), u(k,:,:))
-         deallocate(lincoeff)
-      end if
-
-    end associate
-
-end subroutine evaluate_states
+  end subroutine step
 
   !================================================================!
   ! Retrieve the coefficients for linearizing the jacobian

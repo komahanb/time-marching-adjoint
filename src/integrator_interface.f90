@@ -61,7 +61,8 @@ module integrator_interface
      ! Deferred procedures for subtypes to implement                  !
      !----------------------------------------------------------------!
 
-     procedure(evaluate_states_interface), deferred :: evaluate_states
+     procedure(step_interface), deferred :: step
+     procedure(get_accuracy_order_interface), deferred :: get_accuracy_order
 
      !----------------------------------------------------------------!
      ! Procedures                                                     !
@@ -85,20 +86,28 @@ module integrator_interface
   ! Define interfaces to deferred procedures
   interface
 
-     !================================================================!
-     ! Interface to approximate states using the time marching coeffs
-     !================================================================!
-     
-     impure subroutine evaluate_states_interface(this, order_of_accuracy, t, u)
+     impure subroutine step_interface(this, t, u, h, p, ierr)
 
        import integrator
 
-       class(integrator), intent(in)    :: this
-       type(integer)    , intent(in)    :: order_of_accuracy
-       type(scalar)     , intent(in)    :: t(:)      ! array of time values
-       type(scalar)     , intent(inout) :: u(:,:,:)  ! array of state variables
+       ! Argument variables
+       class(integrator) , intent(inout) :: this
+       type(scalar)      , intent(inout) :: t(:)
+       type(scalar)      , intent(inout) :: u(:,:,:)
+       type(integer)     , intent(in)    :: p
+       type(scalar)      , intent(in)    :: h
+       type(integer)     , intent(out)   :: ierr
 
-     end subroutine evaluate_states_interface
+     end subroutine step_interface
+          
+     pure type(integer) function get_accuracy_order_interface(this, time_index) result(order)
+
+       import integrator
+
+       class(integrator), intent(in) :: this
+       type(integer)    , intent(in) :: time_index
+
+     end function get_accuracy_order_interface
      
   end interface
 
@@ -227,7 +236,7 @@ contains
   
     class(integrator), intent(inout) :: this
     integer :: k, p
-
+    integer :: ierr
     ! Set states to zero
     this % U = 0.0d0
     this % time = 0.0d0
@@ -240,11 +249,14 @@ contains
 
        call this % get_step_stage(k, this % current_step, this % current_stage)
 
-       call this % evaluate_time(this % time(k), this % time(k-1), this % h)
-       
        p = this % get_accuracy_order(k)
-       call this % evaluate_states(this % time(k-p:k), this % U(k-p:k,:,:), order)
        
+       call this % step( this % time(k-p:k) , &
+            & this % U(k-p:k,:,:), &
+            & this % h, &
+            & p, &
+            & ierr )       
+
     end do time
 
   end subroutine integrate
@@ -396,7 +408,7 @@ contains
     stage = mod(index-1,this%get_num_stages()+1)
     step = 1 + (index-1)/(this%get_num_stages()+1)
 
-    print *, index, stage, step
+    !print *, index, stage, step
     
   end subroutine get_step_stage
 
