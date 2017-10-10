@@ -9,9 +9,10 @@ module mpi_wrapper
   use constants, only: LOG_UNIT
   use variables, only: idproc, numproc, master, mpierr
 
-#if defined USE_COMPLEX
+#if defined MPI
   use mpi
 #endif
+
   implicit none
   
   private
@@ -54,6 +55,7 @@ contains
   !-------------------------------------------------------------------!
 
   subroutine MPI_STOP_ALL()
+
 #if defined MPI
     ! Make sure all procs are here
     call MPI_Barrier(MPI_COMM_WORLD, mpierr)
@@ -67,6 +69,7 @@ contains
        stop 'MPI Finalize error'
     endif
 #endif
+
   end subroutine MPI_STOP_ALL
 
 end module mpi_wrapper
