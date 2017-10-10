@@ -22,7 +22,7 @@ module integrator_interface
      ! Contains the actual physical system
      !----------------------------------------------------------------!
 
-     class(dynamics), pointer :: system => null()
+     class(dynamics), allocatable :: system
 
      type(scalar)  :: tinit
      type(scalar)  :: tfinal
@@ -165,9 +165,7 @@ contains
     ! Clear global states and time
     if(allocated(this % U)) deallocate(this % U)
     if(allocated(this % time)) deallocate(this % time)
-    
-    ! Pointer to the sytem
-    nullify(this % system)
+    if(allocated(this % system)) deallocate(this % system)
     
   end subroutine destruct
 
@@ -363,10 +361,10 @@ contains
   
   subroutine set_physics(this, physical_system)
 
-    class(integrator)   :: this
-    class(dynamics), target :: physical_system
+    class(integrator) :: this
+    class(dynamics) :: physical_system
 
-    this % system => physical_system
+    allocate(this % system, source = physical_system)
 
   end subroutine set_physics
 

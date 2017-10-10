@@ -30,7 +30,7 @@ contains
 
   subroutine test_integrators(test_system)
 
-    use abm_integrator_class     , only : ABM
+    use abm_integrator_class , only : ABM
     use newmark_integrator_class , only : newmark
     use runge_kutta_integrator_class , only : dirk
     use backward_differences_integrator_class , only : bdf
