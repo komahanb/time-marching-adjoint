@@ -17,8 +17,8 @@ program test_time_integration
   class(dynamics), allocatable :: sys
 
   test_vanderpol: block
-    !allocate(sys, source = smd(2.0d0, 0.0d0, 2.0d0))
-    allocate(sys, source = fvanderpol(1.0d0))
+    allocate(sys, source = smd(2.0d0, 0.0d0, 2.0d0))
+    !allocate(sys, source = fvanderpol(1.0d0))
     !allocate(sys, source = freefall(1.0d0, -10.0d0))
     !allocate(sys, source = ODE(A=[2.0d0, 2.0d0, 2.0d0], order=4, nvars=3))
     call sys % set_approximate_jacobian(.false.)    
@@ -44,26 +44,26 @@ contains
     abmobj = ABM(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
          & h=1.0d-3, implicit=.true., accuracy_order=6)
     call abmobj % to_string()
-    call abmobj % integrate()
+    call abmobj % solve()
     call abmobj % write_solution("abm.dat")
 
     dirkobj = DIRK(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
          & h=1.0d-3, implicit=.true., accuracy_order=4)
     call dirkobj % to_string()
-    call dirkobj % integrate()
+    call dirkobj % solve()
     call dirkobj % write_solution("dirk.dat")
     
     bdfobj = BDF(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
          & h=1.0d-3, implicit=.true., accuracy_order=6)
     call bdfobj % to_string()
-    call bdfobj % integrate()
+    call bdfobj % solve()
     call bdfobj % write_solution("bdf.dat")
     
     if ( test_system % get_differential_order() .eq. 2 ) then
        nbg = newmark(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
             & h=1.0d-3, implicit=.true., accuracy_order=2)
        call nbg % to_string()
-       call nbg % integrate()
+       call nbg % solve()
        call nbg % write_solution("nbg.dat")
     end if    
 

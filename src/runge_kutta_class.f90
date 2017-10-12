@@ -92,15 +92,21 @@ contains
   ! degree d
   !===================================================================!
   
-  pure type(integer) function get_bandwidth(this, time_index) result(order)
+  pure type(integer) function get_bandwidth(this, time_index) result(width)
 
     class(DIRK)  , intent(in) :: this
     type(integer), intent(in) :: time_index
 
-    if ( this % current_stage .eq. 0 ) then 
-       order = this % num_stages + 1 ! all stages + current 
+    integer :: stage, step
+    
+    ! Identify the step and stage index based on the global time index
+    stage = mod(time_index-1,this%get_num_stages()+1)
+    step = 1 + (time_index-1)/(this%get_num_stages()+1)
+
+    if ( stage .eq. 0 ) then 
+       width = this % num_stages + 1 ! all stages + current 
     else 
-       order = this % current_stage
+       width = stage
     end if
 
   end function get_bandwidth
@@ -247,12 +253,16 @@ contains
     type(scalar), allocatable :: lincoeff(:)  ! order of equation + 1
     type(integer) :: torder, n, j, idx
     type(scalar)  :: scale
-    
+    type(integer) :: stage_num
+
+    ! Determined the step and stage based on the bandwidth
+    stage_num = mod(p,this%get_num_stages()+1)
+
     ! Determine remaining paramters needed
     idx = size(u(:,1,1))
     torder = this % system % get_differential_order()
 
-    if ( this % current_stage .eq. 0 ) then
+    if ( stage_num .eq. 0 ) then
 
        ! Advance the time to next step
        t(idx) = t(1) + h
@@ -274,7 +284,7 @@ contains
     else
        
        ! Find the new independent coordinate (time)
-       t(idx) = t(1) + h * this % C(this % current_stage)
+       t(idx) = t(1) + h * this % C(stage_num)
 
        ! Assume a value for highest order state
        u(idx,torder+1,:) = 0.0d0
@@ -282,8 +292,8 @@ contains
        ! Find the lower order states based on DIRK formula
        do n = torder, 1, -1
           u(idx,n,:) = u(1,n,:)
-          do j = 1, this % current_stage
-             scale = h * this % A(this % current_stage,j)
+          do j = 1, stage_num
+             scale = h * this % A(stage_num,j)
              u(idx,n,:) = u(idx,n,:) + scale*u(idx-j+1,n+1,:)
           end do
        end do
@@ -291,7 +301,7 @@ contains
        ! Perform a nonlinear solution if this is a implicit method
        if ( this % is_implicit() ) then
           allocate(lincoeff(torder + 1))
-          call this % get_linearization_coeff(lincoeff, h)
+          call this % get_linearization_coeff(stage_num, h, lincoeff)
           call solve(this % system, lincoeff, t(idx), u(idx,:,:))
           deallocate(lincoeff)
        end if
@@ -304,19 +314,16 @@ contains
 ! Retrieve the coefficients for linearizing the jacobian
 !================================================================!
 
-impure subroutine get_linearization_coeff(this, lincoeff, h)
+impure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
 
   class(DIRK)   , intent(in)    :: this
+  type(integer) , intent(in)    :: cindex
   type(scalar)  , intent(in)    :: h
   type(scalar)  , intent(inout) :: lincoeff(:)
-  type(integer)  :: stage
-
   type(scalar)  :: a
   type(integer) :: deriv_order, n
 
-  stage  = this % current_stage
-
-  a = this % A(stage, stage)
+  a = this % A(cindex, cindex)
   deriv_order = this % system % get_differential_order()
 
   forall(n=0:deriv_order)

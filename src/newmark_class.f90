@@ -89,12 +89,12 @@ contains
   ! degree d
   !===================================================================!
   
-  pure type(integer) function get_bandwidth(this, time_index) result(order)
+  pure type(integer) function get_bandwidth(this, time_index) result(width)
 
     class(newmark) , intent(in) :: this
     type(integer), intent(in) :: time_index
 
-    order = 1
+    width = 1
 
   end function get_bandwidth
 
@@ -163,7 +163,7 @@ contains
     ! Perform a nonlinear solution if this is a implicit method
     if ( this % is_implicit() ) then
        allocate(lincoeff(torder+1))         
-       call this % get_linearization_coeff(lincoeff, p, h)
+       call this % get_linearization_coeff(p, h, lincoeff)
        call solve(this % system, lincoeff, t(k), u(k,:,:))
        deallocate(lincoeff)        
     end if
@@ -174,12 +174,12 @@ contains
   ! Retrieve the coefficients for linearizing the jacobian
   !================================================================!
   
-  impure subroutine get_linearization_coeff(this, lincoeff, p, h)
+  impure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
 
     class(Newmark) , intent(in)    :: this
-    type(integer)  , intent(in)    :: p ! newmark order of approx
-    type(scalar)   , intent(in)    :: h ! step size
-    type(scalar)   , intent(inout) :: lincoeff(:)   ! order of equation + 1   
+    type(integer)  , intent(in)    :: cindex
+    type(scalar)   , intent(in)    :: h
+    type(scalar)   , intent(inout) :: lincoeff(:)
    
     lincoeff(1) = this % BETA*h*h
     lincoeff(2) = this % GAMMA*h

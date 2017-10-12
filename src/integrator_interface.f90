@@ -45,12 +45,6 @@ module integrator_interface
      type(integer) :: total_num_steps
      type(logical) :: approximate_jacobian
 
-
-     ! Tracking variables
-     type(integer) :: current_step
-     type(integer) :: current_stage
-
-
    contains
 
      procedure :: construct, destruct
@@ -74,9 +68,8 @@ module integrator_interface
      procedure :: set_physics
      procedure :: set_approximate_jacobian
 
-     procedure :: integrate
+     procedure :: solve
      procedure :: write_solution
-     procedure :: get_step_stage
      procedure :: to_string
      
   end type integrator
@@ -88,7 +81,6 @@ module integrator_interface
 
        import integrator
 
-       ! Argument variables
        class(integrator) , intent(inout) :: this
        type(scalar)      , intent(inout) :: t(:)
        type(scalar)      , intent(inout) :: u(:,:,:)
@@ -97,8 +89,8 @@ module integrator_interface
        type(integer)     , intent(out)   :: ierr
 
      end subroutine step_interface
-          
-     pure type(integer) function get_bandwidth_interface(this, time_index) result(order)
+
+     pure type(integer) function get_bandwidth_interface(this, time_index) result(width)
 
        import integrator
 
@@ -106,6 +98,17 @@ module integrator_interface
        type(integer)    , intent(in) :: time_index
 
      end function get_bandwidth_interface
+
+     pure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
+
+       import integrator
+
+       class(integrator) , intent(in)    :: this
+       type(integer)     , intent(in)    :: cindex
+       type(scalar)      , intent(in)    :: h
+       type(scalar)      , intent(inout) :: lincoeff(:)
+
+     end subroutine get_linearization_coeff
      
   end interface
 
@@ -149,8 +152,6 @@ contains
 
     ! Other class variables
     this % implicit = .true.
-    this % current_step = 0
-    this % current_stage = 0
 
   end subroutine construct
 
@@ -207,11 +208,12 @@ contains
   ! Time integration logic
   !===================================================================!
 
-  impure subroutine integrate( this )
+  impure subroutine solve( this )
   
     class(integrator), intent(inout) :: this
     integer :: k, p
     integer :: ierr
+    
     ! Set states to zero
     this % U = 0.0d0
     this % time = 0.0d0
@@ -222,25 +224,23 @@ contains
     ! March in time
     time: do k = 2, this % get_total_num_steps()
 
-       call this % get_step_stage(k, this % current_step, this % current_stage)
-
        p = this % get_bandwidth(k)
 
-       call this % step( this % time(k-p:k) , &
+       call this % step(this % time(k-p:k) , &
             & this % U(k-p:k,:,:), &
             & this % h, &
             & p, &
-            & ierr )       
+            & ierr)   
 
     end do time
 
-  end subroutine integrate
+  end subroutine solve
   
   !===================================================================!
   ! Returns the number of stages per time step
   !===================================================================!
   
-  impure type(integer) function get_num_stages(this)
+  pure type(integer) function get_num_stages(this)
 
     class(integrator), intent(in) :: this
 
@@ -252,7 +252,7 @@ contains
   ! Sets the number of stages per time step
   !===================================================================!
 
-  impure subroutine set_num_stages(this, num_stages)
+  pure subroutine set_num_stages(this, num_stages)
 
     class(integrator), intent(inout) :: this
     type(integer)    , intent(in)    :: num_stages
@@ -367,25 +367,6 @@ contains
     allocate(this % system, source = physical_system)
 
   end subroutine set_physics
-
-  !===================================================================!
-  ! Returns the corresponding step and stage numbers from the supplied
-  ! global index count
-  !===================================================================!
-  
-  subroutine get_step_stage(this, index, step, stage)
-
-    class(integrator) , intent(in)    :: this
-    type(integer)     , intent(in)    :: index
-    type(integer)     , intent(out) :: step
-    type(integer)     , intent(out) :: stage
-
-    stage = mod(index-1,this%get_num_stages()+1)
-    step = 1 + (index-1)/(this%get_num_stages()+1)
-
-    !print *, index, stage, step
-    
-  end subroutine get_step_stage
 
   !===================================================================!
   ! Prints important fields of the class

@@ -119,14 +119,14 @@ contains
   ! degree d
   !===================================================================!
 
-  pure type(integer) function get_bandwidth(this, time_index) result(order)
+  pure type(integer) function get_bandwidth(this, time_index) result(width)
 
     class(BDF)   , intent(in) :: this
     type(integer), intent(in) :: time_index
 
-    order = time_index - 1
+    width = time_index - 1
 
-    if (order .gt. this % max_order) order = this % max_order
+    if (width .gt. this % max_order) width = this % max_order
 
   end function get_bandwidth
 
@@ -173,7 +173,7 @@ contains
     ! Perform a nonlinear solution if this is a implicit method
     if ( this % is_implicit() ) then
        allocate(lincoeff(torder+1))         
-       call this % get_linearization_coeff(lincoeff, p, h)         
+       call this % get_linearization_coeff(p, h, lincoeff)
        call solve(this % system, lincoeff, t(k), u(k,:,:))
        deallocate(lincoeff)        
     end if
@@ -184,29 +184,25 @@ contains
   ! Retrieve the coefficients for linearizing the jacobian
   !================================================================!
   
-  impure subroutine get_linearization_coeff(this, lincoeff, int_order, h)
+  impure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
+
+    class(BDF)    , intent(in)    :: this
+    type(integer) , intent(in)    :: cindex
+    type(scalar)  , intent(in)    :: h
+    type(scalar)  , intent(inout) :: lincoeff(:)
+
+    type(integer) :: n
     
-    class(BDF)    , intent(in)  :: this
-    type(integer) , intent(in)  :: int_order     ! order of approximation of the integration
-    type(scalar)  , intent(in)  :: h 
-    type(scalar)  , intent(inout) :: lincoeff(:) ! diff_order+1
+    associate( &
+         & deriv_order => this % system % get_differential_order(), &
+         & a => this % A(cindex,1))
 
-    compute_coeffs: block
+    forall(n=0:deriv_order)
+       lincoeff(n+1) = (a/h)**n
+    end forall
 
-      type(integer) :: n
+  end associate
 
-      associate( &
-           & deriv_order => this % system % get_differential_order(), &
-           & a => this % A(int_order,1))
-        
-        forall(n=0:deriv_order)
-           lincoeff(n+1) = (a/h)**n
-        end forall
-        
-      end associate
-      
-    end block compute_coeffs
-    
-  end subroutine get_linearization_coeff
+end subroutine get_linearization_coeff
 
 end module backward_differences_integrator_class

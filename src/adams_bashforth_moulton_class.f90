@@ -110,14 +110,14 @@ contains
   ! degree d
   !===================================================================!
 
-  pure type(integer) function get_bandwidth(this, time_index) result(order)
+  pure type(integer) function get_bandwidth(this, time_index) result(width)
 
     class(ABM)   , intent(in) :: this
     type(integer), intent(in) :: time_index
 
-    order = time_index - 1
+    width = time_index - 1
 
-    if (order .gt. this % max_order) order = this % max_order
+    if (width .gt. this % max_order) width = this % max_order
 
   end function get_bandwidth
 
@@ -165,7 +165,7 @@ contains
     ! Perform a nonlinear solution if this is a implicit method
     if ( this % is_implicit() ) then
        allocate(lincoeff(torder+1))         
-       call this % get_linearization_coeff(lincoeff, p, h)         
+       call this % get_linearization_coeff(p, h, lincoeff)
        call solve(this % system, lincoeff, t(k), u(k,:,:))
        deallocate(lincoeff)        
     end if
@@ -176,17 +176,17 @@ contains
   ! Retrieve the coefficients for linearizing the jacobian
   !================================================================!
   
-  impure subroutine get_linearization_coeff(this, lincoeff, int_order, h)
+  impure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
 
-    class(ABM)    , intent(in)  :: this
-    type(integer) , intent(in)  :: int_order     ! order of approximation of the integration
-    type(scalar)  , intent(in)  :: h ! step size
-    type(scalar)  , intent(inout) :: lincoeff(:)   ! order of equation + 1   
-    type(integer) :: p
+    class(ABM)    , intent(in)    :: this
+    type(integer) , intent(in)    :: cindex
+    type(scalar)  , intent(in)    :: h 
+    type(scalar)  , intent(inout) :: lincoeff(:)
+    type(integer)                 :: p
     
     associate(&
          & deriv_order => this % system % get_differential_order(), &
-         & a => this % A(int_order,1))
+         & a => this % A(cindex,1))
       
       forall(p = 0:deriv_order)
          lincoeff(p+1) = (a*h)**(deriv_order-p)
