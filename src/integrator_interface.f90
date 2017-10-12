@@ -18,56 +18,25 @@ module integrator_interface
 
   type, abstract :: integrator
 
-     !----------------------------------------------------------------!
-     ! Contains the actual physical system
-     !----------------------------------------------------------------!
-
      class(dynamics), allocatable :: system
-
-     type(scalar)  :: tinit
-     type(scalar)  :: tfinal
-     type(scalar)  :: h
-
-     !----------------------------------------------------------------!
-     ! Track global time and states
-     !----------------------------------------------------------------!
-
-     type(scalar), allocatable :: time(:)  ! time values (steps)
-     type(scalar), allocatable :: U(:,:,:) ! state varibles (steps, deriv_ord, nvars)
-
-     !----------------------------------------------------------------!
-     ! Variables for managing time marching
-     !----------------------------------------------------------------!
-
-     type(logical) :: implicit
-     type(integer) :: num_stages
-     type(integer) :: num_steps
-     type(integer) :: total_num_steps
+     type(scalar)                 :: tinit
+     type(scalar)                 :: tfinal
+     type(scalar)                 :: h
+     type(logical)                :: implicit
+     type(integer)                :: num_stages
+     type(integer)                :: num_time_steps
+     type(integer)                :: total_num_steps
+     type(scalar), allocatable    :: time(:)  ! time values (steps)
+     type(scalar), allocatable    :: U(:,:,:) ! state varibles (steps, deriv_ord, nvars)
 
    contains
 
-     procedure :: construct, destruct
-
-     !----------------------------------------------------------------!
-     ! Deferred procedures for subtypes to implement                  !
-     !----------------------------------------------------------------!
-
-     procedure(step_interface), deferred :: step
+     procedure                                    :: construct, destruct
+     procedure                                    :: solve
+     procedure(step_interface), deferred          :: step
      procedure(get_bandwidth_interface), deferred :: get_bandwidth
-
-     !----------------------------------------------------------------!
-     ! Procedures                                                     !
-     !----------------------------------------------------------------!
-
-     procedure :: get_num_stages      , set_num_stages
-     procedure :: get_num_steps       , set_num_steps
-     procedure :: get_total_num_steps , set_total_num_steps     
-     procedure :: is_implicit         , set_implicit     
-     procedure :: set_physics
-
-     procedure :: solve
-     procedure :: write_solution
-     procedure :: to_string
+     procedure                                    :: write_solution
+     procedure                                    :: to_string 
      
   end type integrator
 
@@ -117,24 +86,23 @@ contains
 
   subroutine construct(this, system, tinit, tfinal, h, implicit, num_stages)
 
-    class(integrator) , intent(inout)         :: this
-    class(dynamics)   , intent(in)   , target :: system
-    type(scalar)      , intent(in)            :: tinit, tfinal
-    type(scalar)      , intent(in)            :: h
-    type(logical)     , intent(in)            :: implicit
-    type(integer)     , intent(in)            :: num_stages
+    class(integrator) , intent(inout) :: this
+    class(dynamics)   , intent(in)    :: system
+    type(scalar)      , intent(in)    :: tinit, tfinal
+    type(scalar)      , intent(in)    :: h
+    type(logical)     , intent(in)    :: implicit
+    type(integer)     , intent(in)    :: num_stages
 
     ! Set parameters
-    call this % set_physics(system)    
-
-    this % tinit = tinit
-    this % tfinal = tfinal
-    this % h = h
-    
-    call this % set_num_steps(int((this % tfinal - this % tinit)/this % h) + 1)
-    call this % set_num_stages(num_stages)
-    call this % set_total_num_steps(this % get_num_steps()*(this % get_num_stages()+1) - this % get_num_stages() ) ! the initial step does not have stages
-    call this % set_implicit(implicit)
+    allocate(this % system, source = system)
+    this % tinit           = tinit
+    this % tfinal          = tfinal
+    this % h               = h    
+    this % num_time_steps  = int((this % tfinal - this % tinit)/this % h) + 1
+    this % num_stages      = num_stages
+    this % total_num_steps = this % num_time_steps*(this % num_stages+1) &
+         & - this % num_stages ! the initial step does not have stages
+    this % implicit        = implicit
 
   end subroutine construct
 
@@ -165,7 +133,6 @@ contains
     character(len=:), allocatable :: path
     character(len=:), allocatable :: new_name
     integer                       :: k, j, i, ierr
-    integer                       :: nsteps
 
     ! Open resource
     path = trim(filename)
@@ -177,8 +144,7 @@ contains
     end if
     
     ! Write data
-    nsteps = this % get_total_num_steps()
-    loop_time: do k = 1, nsteps
+    loop_time: do k = 1, this % total_num_steps
        write(90, *)  this % time(k), this % U (k,:,:)
     end do loop_time
     
@@ -202,11 +168,11 @@ contains
     if (allocated(this % time)) deallocate(this%time)
     if (allocated(this % U)) deallocate(this%U)
     
-    allocate(this % time( this % get_total_num_steps() ))
+    allocate(this % time(this % total_num_steps))
     this % time = 0.0d0
     
     allocate( this % U( &
-         & this % get_total_num_steps(), &
+         & this % total_num_steps, &
          & this % system % get_differential_order() + 1, &
          & this % system % get_num_state_vars() &
          & ))
@@ -216,7 +182,7 @@ contains
     call this % system % get_initial_condition(this % U(1,:,:))
     
     ! March in time
-    time: do k = 2, this % get_total_num_steps()
+    time: do k = 2, this % total_num_steps
 
        p = this % get_bandwidth(k)
 
@@ -231,121 +197,6 @@ contains
   end subroutine solve
   
   !===================================================================!
-  ! Returns the number of stages per time step
-  !===================================================================!
-  
-  pure type(integer) function get_num_stages(this)
-
-    class(integrator), intent(in) :: this
-
-    get_num_stages = this % num_stages
-
-  end function get_num_stages
-
-  !===================================================================!
-  ! Sets the number of stages per time step
-  !===================================================================!
-
-  pure subroutine set_num_stages(this, num_stages)
-
-    class(integrator), intent(inout) :: this
-    type(integer)    , intent(in)    :: num_stages
-
-    this % num_stages = num_stages
-
-  end subroutine set_num_stages
-
-  !===================================================================!
-  ! Returns the number of steps
-  !===================================================================!
-
-  pure type(integer) function get_num_steps(this)
-
-    class(integrator), intent(in) :: this
-
-    get_num_steps = this % num_steps
-
-  end function get_num_steps
-
-  !===================================================================!
-  ! Sets the number of steps
-  !===================================================================!
-
-  pure subroutine set_num_steps(this, num_steps)
-
-    class(integrator), intent(inout) :: this
-    type(integer)    , intent(in)    :: num_steps
-
-    this % num_steps = num_steps
-
-  end subroutine set_num_steps
-
-  !===================================================================!
-  ! Returns the total number of steps
-  !===================================================================!
-
-  pure type(integer) function get_total_num_steps(this)
-
-    class(integrator), intent(in) :: this
-
-    get_total_num_steps = this % total_num_steps
-    
-  end function get_total_num_steps
-
-  !===================================================================!
-  ! Sets the total number of steps
-  !===================================================================!
-
-  pure subroutine set_total_num_steps(this, total_num_steps)
-
-    class(integrator), intent(inout) :: this
-    type(integer)    , intent(in)    :: total_num_steps
-    
-    this % total_num_steps = total_num_steps
-    
-  end subroutine set_total_num_steps
-
-  !===================================================================!
-  ! See if the scheme is implicit
-  !===================================================================!
-
-  pure type(logical) function is_implicit(this)
-
-    class(integrator), intent(in) :: this
-
-    is_implicit = this % implicit
-
-  end function is_implicit
-  
-  !===================================================================!
-  ! Sets the scheme as implicit
-  !===================================================================!
-  
-  pure subroutine set_implicit(this, implicit)
-
-    class(integrator), intent(inout) :: this
-    type(logical)    , intent(in)    :: implicit
-
-    this % implicit = implicit
-
-  end subroutine set_implicit
-
-  !===================================================================!
-  ! Set ANY physical system that extends the type PHYSICS and provides
-  ! implementation to the mandatory functions assembleResidual and
-  ! getInitialStates
-  !===================================================================!
-  
-  subroutine set_physics(this, physical_system)
-
-    class(integrator) :: this
-    class(dynamics) :: physical_system
-
-    allocate(this % system, source = physical_system)
-
-  end subroutine set_physics
-
-  !===================================================================!
   ! Prints important fields of the class
   !===================================================================!
   
@@ -354,14 +205,14 @@ contains
     class(integrator), intent(in) :: this
     
     print '("  >> Physical System      : " ,A10)' , this % system % get_description()
+    print '("  >> Num state variables  : " ,i4)'  , this % system % get_num_state_vars()
+    print '("  >> Equation order       : " ,i4)'  , this % system % get_differential_order()
     print '("  >> Start time           : " ,F8.3)', this % tinit
     print '("  >> End time             : " ,F8.3)', this % tfinal
     print '("  >> Step size            : " ,E9.3)', this % h
-    print '("  >> Number of variables  : " ,i4)'  , this % system % get_num_state_vars()
-    print '("  >> Equation order       : " ,i4)'  , this % system % get_differential_order()
-    print '("  >> Number of steps      : " ,i10)' , this % get_num_steps()
-    print '("  >> Number of stages     : " ,i10)' , this % get_num_stages()
-    print '("  >> Tot. Number of steps : " ,i10)' , this % get_total_num_steps()
+    print '("  >> Number of time steps : " ,i10)' , this % num_time_steps
+    print '("  >> Number of stages     : " ,i10)' , this % num_stages
+    print '("  >> Tot. Number of steps : " ,i10)' , this % total_num_steps
 
   end subroutine to_string
   

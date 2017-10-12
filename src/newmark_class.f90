@@ -161,7 +161,7 @@ contains
     u(k,1,:) = u(k,1,:) + scale*u(k,3,:)
 
     ! Perform a nonlinear solution if this is a implicit method
-    if ( this % is_implicit() ) then
+    if ( this % implicit ) then
        allocate(lincoeff(torder+1))         
        call this % get_linearization_coeff(p, h, lincoeff)
        call solve(this % system, lincoeff, t(k), u(k,:,:))

@@ -100,8 +100,8 @@ contains
     integer :: stage, step
     
     ! Identify the step and stage index based on the global time index
-    stage = mod(time_index-1,this%get_num_stages()+1)
-    step = 1 + (time_index-1)/(this%get_num_stages()+1)
+    stage = mod(time_index-1,this % num_stages+1)
+    step = 1 + (time_index-1)/(this % num_stages+1)
 
     if ( stage .eq. 0 ) then 
        width = this % num_stages + 1 ! all stages + current 
@@ -121,7 +121,7 @@ contains
     class(DIRK) :: this
     type(integer) :: i
 
-    do i = 1, this  % get_num_stages()
+    do i = 1, this  % num_stages
        if (abs(this % C(i) - sum(this % A(i,:))) .gt. TINY) then
           print *, "WARNING: sum(A(i,j)) != C(i)", i, this % num_stages
        end if
@@ -256,7 +256,7 @@ contains
     type(integer) :: stage_num
 
     ! Determined the step and stage based on the bandwidth
-    stage_num = mod(p,this%get_num_stages()+1)
+    stage_num = mod(p,this % num_stages+1)
 
     ! Determine remaining paramters needed
     idx = size(u(:,1,1))
@@ -299,7 +299,7 @@ contains
        end do
 
        ! Perform a nonlinear solution if this is a implicit method
-       if ( this % is_implicit() ) then
+       if ( this % implicit ) then
           allocate(lincoeff(torder + 1))
           call this % get_linearization_coeff(stage_num, h, lincoeff)
           call solve(this % system, lincoeff, t(idx), u(idx,:,:))
