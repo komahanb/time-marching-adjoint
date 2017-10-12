@@ -93,7 +93,7 @@ contains
   ! Destructor for the ABM integrator
   !=================================================================!
   
-  impure subroutine destroy(this)
+  pure subroutine destroy(this)
 
     type(ABM), intent(inout) :: this
 
@@ -176,7 +176,7 @@ contains
   ! Retrieve the coefficients for linearizing the jacobian
   !================================================================!
   
-  impure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
+  pure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
 
     class(ABM)    , intent(in)    :: this
     type(integer) , intent(in)    :: cindex

@@ -159,7 +159,7 @@ contains
   ! Base class destructor
   !======================================================================!
 
-  impure subroutine destruct(this)
+  pure subroutine destruct(this)
 
     class(integrator), intent(inout) :: this
 
@@ -211,6 +211,7 @@ contains
   impure subroutine solve( this )
   
     class(integrator), intent(inout) :: this
+    
     integer :: k, p
     integer :: ierr
     
@@ -265,7 +266,7 @@ contains
   ! Returns the number of steps
   !===================================================================!
 
-  impure type(integer) function get_num_steps(this)
+  pure type(integer) function get_num_steps(this)
 
     class(integrator), intent(in) :: this
 
@@ -277,7 +278,7 @@ contains
   ! Sets the number of steps
   !===================================================================!
 
-  impure subroutine set_num_steps(this, num_steps)
+  pure subroutine set_num_steps(this, num_steps)
 
     class(integrator), intent(inout) :: this
     type(integer)    , intent(in)    :: num_steps
@@ -290,7 +291,7 @@ contains
   ! Returns the total number of steps
   !===================================================================!
 
-  impure type(integer) function get_total_num_steps(this)
+  pure type(integer) function get_total_num_steps(this)
 
     class(integrator), intent(in) :: this
 
@@ -302,7 +303,7 @@ contains
   ! Sets the total number of steps
   !===================================================================!
 
-  impure subroutine set_total_num_steps(this, total_num_steps)
+  pure subroutine set_total_num_steps(this, total_num_steps)
 
     class(integrator), intent(inout) :: this
     type(integer)    , intent(in)    :: total_num_steps
@@ -315,7 +316,7 @@ contains
   ! See if the scheme is implicit
   !===================================================================!
 
-  impure type(logical) function is_implicit(this)
+  pure type(logical) function is_implicit(this)
 
     class(integrator), intent(in) :: this
 
@@ -327,7 +328,7 @@ contains
   ! Sets the scheme as implicit
   !===================================================================!
   
-  impure subroutine set_implicit(this, implicit)
+  pure subroutine set_implicit(this, implicit)
 
     class(integrator), intent(inout) :: this
     type(logical)    , intent(in)    :: implicit

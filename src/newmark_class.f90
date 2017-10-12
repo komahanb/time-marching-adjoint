@@ -75,7 +75,7 @@ contains
   ! Destructor for the Newmark integrator
   !=================================================================!
   
-  impure subroutine destroy(this)
+  pure subroutine destroy(this)
 
     type(newmark), intent(inout) :: this
 
@@ -97,8 +97,8 @@ contains
     width = 1
 
   end function get_bandwidth
-
- !================================================================!
+  
+  !================================================================!
   ! Take a time step using the supplied time step and order of
   ! accuracy
   ! ================================================================!
@@ -174,7 +174,7 @@ contains
   ! Retrieve the coefficients for linearizing the jacobian
   !================================================================!
   
-  impure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
+  pure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
 
     class(Newmark) , intent(in)    :: this
     type(integer)  , intent(in)    :: cindex

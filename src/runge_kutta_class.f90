@@ -218,7 +218,7 @@ contains
   ! Destructor for the DIRK integrator
   !=================================================================!
   
-  impure subroutine destroy(this)
+  pure subroutine destroy(this)
 
     type(DIRK), intent(inout) :: this
 
@@ -314,7 +314,7 @@ contains
 ! Retrieve the coefficients for linearizing the jacobian
 !================================================================!
 
-impure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
+pure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
 
   class(DIRK)   , intent(in)    :: this
   type(integer) , intent(in)    :: cindex

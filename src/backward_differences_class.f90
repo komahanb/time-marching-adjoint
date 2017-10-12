@@ -102,7 +102,7 @@ contains
   ! Destructor for the BDF integrator
   !=================================================================!
   
-  impure subroutine destroy(this)
+  pure subroutine destroy(this)
 
     type(BDF), intent(inout) :: this
 
@@ -184,7 +184,7 @@ contains
   ! Retrieve the coefficients for linearizing the jacobian
   !================================================================!
   
-  impure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
+  pure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
 
     class(BDF)    , intent(in)    :: this
     type(integer) , intent(in)    :: cindex
