@@ -10,7 +10,8 @@
 module integrator_interface
 
   use dynamic_physics_interface, only : dynamics
-
+  use dynamic_analysis_interface, only : dynamic_analysis
+  
   implicit none
 
   private
@@ -20,9 +21,8 @@ module integrator_interface
   ! Define the type
   !-------------------------------------------------------------------!
   
-  type, abstract :: integrator
+  type, abstract, extends(dynamic_analysis) :: integrator
 
-     class(dynamics), allocatable :: system
      type(scalar)                 :: tinit
      type(scalar)                 :: tfinal
      type(scalar)                 :: h
@@ -30,8 +30,6 @@ module integrator_interface
      type(integer)                :: num_stages
      type(integer)                :: num_time_steps
      type(integer)                :: total_num_steps
-     type(scalar), allocatable    :: time(:)  ! time values (steps)
-     type(scalar), allocatable    :: U(:,:,:) ! state varibles (steps, deriv_ord, nvars)
 
    contains
 

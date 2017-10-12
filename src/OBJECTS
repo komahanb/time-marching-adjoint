@@ -13,6 +13,9 @@ dense_vector_test.o \
 physics_interface.o \
 static_physics_interface.o \
 dynamic_physics_interface.o \
+analysis_interface.o \
+static_analysis_interface.o \
+dynamic_analysis_interface.o \
 function.o \
 diffusion.o \
 diffusion_matrix.o \
