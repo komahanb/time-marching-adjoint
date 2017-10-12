@@ -43,7 +43,6 @@ module integrator_interface
      type(integer) :: num_stages
      type(integer) :: num_steps
      type(integer) :: total_num_steps
-     type(logical) :: approximate_jacobian
 
    contains
 
@@ -63,10 +62,8 @@ module integrator_interface
      procedure :: get_num_stages      , set_num_stages
      procedure :: get_num_steps       , set_num_steps
      procedure :: get_total_num_steps , set_total_num_steps     
-     procedure :: is_implicit         , set_implicit
-     
+     procedure :: is_implicit         , set_implicit     
      procedure :: set_physics
-     procedure :: set_approximate_jacobian
 
      procedure :: solve
      procedure :: write_solution
@@ -139,20 +136,6 @@ contains
     call this % set_total_num_steps(this % get_num_steps()*(this % get_num_stages()+1) - this % get_num_stages() ) ! the initial step does not have stages
     call this % set_implicit(implicit)
 
-    ! State and time history
-    allocate(this % time( this % get_total_num_steps() ))
-    this % time = 0.0d0
-       
-    allocate( this % U( &
-         & this % get_total_num_steps(), &
-         & this % system % get_differential_order() + 1, &
-         & this % system % get_num_state_vars() &
-         & ))
-    this % U = 0.0d0
-
-    ! Other class variables
-    this % implicit = .true.
-
   end subroutine construct
 
   !======================================================================!
@@ -215,9 +198,19 @@ contains
     integer :: k, p
     integer :: ierr
     
-    ! Set states to zero
-    this % U = 0.0d0
+    ! State and time history
+    if (allocated(this % time)) deallocate(this%time)
+    if (allocated(this % U)) deallocate(this%U)
+    
+    allocate(this % time( this % get_total_num_steps() ))
     this % time = 0.0d0
+    
+    allocate( this % U( &
+         & this % get_total_num_steps(), &
+         & this % system % get_differential_order() + 1, &
+         & this % system % get_num_state_vars() &
+         & ))
+    this % U = 0.0d0   
 
     ! Get the initial condition
     call this % system % get_initial_condition(this % U(1,:,:))
@@ -234,7 +227,7 @@ contains
             & ierr)   
 
     end do time
-
+    
   end subroutine solve
   
   !===================================================================!
@@ -336,23 +329,6 @@ contains
     this % implicit = implicit
 
   end subroutine set_implicit
-
-  !===================================================================!
-  ! Setter that can be used to set the method in which jacobian needs
-  ! to be computed. Setting this to .true. would make the code use
-  ! finite differences, this is enabled by default too. If set to
-  ! .false. the expects to provide implementation in assembleJacobian
-  ! in a type that extends PHYSICS.
-  !===================================================================!
-
-  pure subroutine set_approximate_jacobian(this, approximate_jacobian)
-
-    class(integrator), intent(inout) :: this
-    type(logical), intent(in)     :: approximate_jacobian
-
-    this % approximate_jacobian = approximate_jacobian
-
-  end subroutine set_approximate_jacobian
 
   !===================================================================!
   ! Set ANY physical system that extends the type PHYSICS and provides
