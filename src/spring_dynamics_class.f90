@@ -59,6 +59,8 @@ contains
 
     type(scalar), intent(in) :: M, C, K
 
+    call this % set_description('S M D')
+    
     ! Set the number of state variables of SMD system
     call this % set_num_state_vars(1)
     

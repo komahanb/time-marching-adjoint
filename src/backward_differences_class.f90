@@ -71,7 +71,7 @@ contains
     !-----------------------------------------------------------------!
 
     if (accuracy_order .le. this % max_order) this % max_order = accuracy_order
-    print '("  >> Max BDF Order          : ",i4)', this % max_order
+    print '("  >> Max BDF Order        : ",i4)', this % max_order
 
     allocate( this % A (this % max_order, this % max_order+1) )
     this % A = 0.0d0 

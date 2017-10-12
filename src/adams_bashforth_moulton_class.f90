@@ -65,7 +65,7 @@ contains
     call this % construct(system, tinit, tfinal, h, implicit, 0)
 
     if (accuracy_order .le. this % max_order) this % max_order = accuracy_order
-    print '("  >> Max ABM Order          : ",i4)', this % max_order
+    print '("  >> Max ABM Order        : ",i4)', this % max_order
 
     ! Set the coefficients
     allocate( this % A (this % max_order, this % max_order) )

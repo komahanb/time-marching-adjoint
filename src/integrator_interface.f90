@@ -16,6 +16,10 @@ module integrator_interface
   private
   public ::  integrator
 
+  !-------------------------------------------------------------------!
+  ! Define the type
+  !-------------------------------------------------------------------!
+  
   type, abstract :: integrator
 
      class(dynamics), allocatable :: system
@@ -40,7 +44,10 @@ module integrator_interface
      
   end type integrator
 
+  !-------------------------------------------------------------------!
   ! Define interfaces to deferred procedures
+  !-------------------------------------------------------------------!
+  
   interface
 
      impure subroutine step_interface(this, t, u, h, p, ierr)
@@ -64,17 +71,6 @@ module integrator_interface
        type(integer)    , intent(in) :: time_index
 
      end function get_bandwidth_interface
-
-     pure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
-
-       import integrator
-
-       class(integrator) , intent(in)    :: this
-       type(integer)     , intent(in)    :: cindex
-       type(scalar)      , intent(in)    :: h
-       type(scalar)      , intent(inout) :: lincoeff(:)
-
-     end subroutine get_linearization_coeff
      
   end interface
 
@@ -98,18 +94,17 @@ contains
     this % tinit           = tinit
     this % tfinal          = tfinal
     this % h               = h    
-    this % num_time_steps  = int((this % tfinal - this % tinit)/this % h) + 1
+    this % num_time_steps  = floor((this % tfinal - this % tinit)/this % h) + 1
     this % num_stages      = num_stages
-    this % total_num_steps = this % num_time_steps*(this % num_stages+1) &
-         & - this % num_stages ! the initial step does not have stages
+    this % total_num_steps = this % num_time_steps*(this % num_stages+1) - this % num_stages ! the initial step does not have stages
     this % implicit        = implicit
 
   end subroutine construct
 
-  !======================================================================!
+  !===================================================================!
   ! Base class destructor
-  !======================================================================!
-
+  !===================================================================!
+  
   pure subroutine destruct(this)
 
     class(integrator), intent(inout) :: this

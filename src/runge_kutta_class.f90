@@ -70,7 +70,7 @@ contains
     print *, "======================================"
 
     this % max_order = accuracy_order
-    print '("  >> Max DIRK Order : ", i4)', this % max_order
+    print '("  >> Max DIRK Order       : ", i4)', this % max_order
 
     num_stages = this % max_order - 1
     call this % construct(system, tinit, tfinal, h, implicit, num_stages)

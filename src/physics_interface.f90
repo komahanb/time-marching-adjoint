@@ -21,9 +21,9 @@ module physics_interface
   
   type, abstract :: physics
 
-     type(character(:)), allocatable :: description
-     type(integer)                   :: num_state_vars
-     type(logical)                   :: approximate_jacobian
+     type(character(len=:)), allocatable :: description
+     type(integer)                       :: num_state_vars
+     type(logical)                       :: approximate_jacobian
 
    contains  
 
@@ -118,9 +118,9 @@ contains
   pure subroutine set_description(this, description)
 
     class(physics), intent(inout) :: this
-    type(character(len=*))  , intent(in)    :: description
-
-    this % description  = trim(description)
+    type(character(len=*)), intent(in)    :: description
+    
+    allocate(this % description, source = trim(description))
 
   end subroutine set_description
 
