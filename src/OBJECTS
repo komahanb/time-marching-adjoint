@@ -13,6 +13,8 @@ dense_vector_test.o \
 physics_interface.o \
 static_physics_interface.o \
 dynamic_physics_interface.o \
+function_interface.o \
+static_function_interface.o \
 analysis_interface.o \
 static_analysis_interface.o \
 dynamic_analysis_interface.o \
