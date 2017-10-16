@@ -24,7 +24,7 @@ module nonlinear_algebra
   logical  :: jacobian_check       = .true.
   integer  :: print_level          = 0
   
-  public :: solve
+  public :: solve, approximate_jacobian
 
   !-------------------------------------------------------------------!
   ! Interface for nonlinear solution problems
