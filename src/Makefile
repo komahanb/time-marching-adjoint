@@ -41,7 +41,7 @@ LAPACK_DIR = /usr
 #=====================================================================#
 
 ifeq ($(COMPILER),gnu)
-  F90 = gfortran-7
+  F90 = gfortran-6
   F90FLAGS := -cpp -fbacktrace
 
   # COMPLEX mode

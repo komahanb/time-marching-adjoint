@@ -10,7 +10,7 @@
 module integrator_interface
 
   use dynamic_physics_interface, only : dynamics
-  use dynamic_analysis_interface, only : dynamic_analysis
+  !use dynamic_analysis_interface, only : dynamic_analysis
   
   implicit none
 
@@ -21,8 +21,11 @@ module integrator_interface
   ! Define the type
   !-------------------------------------------------------------------!
   
-  type, abstract, extends(dynamic_analysis) :: integrator
+  type, abstract :: integrator !, extends(dynamic_analysis)
 
+     class(dynamics), allocatable :: system
+     type(scalar)   , allocatable :: time(:)  ! time values (steps)
+     type(scalar)   , allocatable :: U(:,:,:) ! state varibles (steps, deriv_ord, nvars)
      type(scalar)                 :: tinit
      type(scalar)                 :: tfinal
      type(scalar)                 :: h
