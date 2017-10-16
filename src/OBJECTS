@@ -42,5 +42,4 @@ newmark_class.o \
 runge_kutta_class.o\
 backward_differences_class.o\
 adjoint_integrator.o\
-test_adjoint.o
-
+test_marching.o 

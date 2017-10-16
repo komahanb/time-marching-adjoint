@@ -30,7 +30,6 @@ module physics_interface
      ! Provided procedures
      procedure :: get_num_state_vars      , set_num_state_vars
      procedure :: get_description         , set_description
-     procedure :: is_approximate_jacobian , set_approximate_jacobian
      
      ! Deferred procedures
      procedure(add_residual_interface), deferred :: add_residual
@@ -124,30 +123,4 @@ contains
 
   end subroutine set_description
 
-  !===================================================================!
-  ! If the user does not provide the jacobian implementations, this
-  ! needs to be set .true.
-  !===================================================================!
-  
-  pure subroutine set_approximate_jacobian(this, approximate_jacobian)
-
-    class(physics), intent(inout) :: this
-    type(logical), intent(in)     :: approximate_jacobian
-
-    this % approximate_jacobian = approximate_jacobian
-
-  end subroutine set_approximate_jacobian
-
-  !===================================================================!
-  ! Whether FD/CSD approximation of jacobian turned on
-  !===================================================================!
-  
-  pure type(logical) function is_approximate_jacobian(this)
-
-    class(physics), intent(in) :: this
-
-    is_approximate_jacobian = this % approximate_jacobian
-
-  end function is_approximate_jacobian
-  
 end module physics_interface
