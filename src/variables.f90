@@ -6,7 +6,7 @@
 
 module variables
 
-  use diffusion_class, only: diffusion
+  !use diffusion_class, only: diffusion
   use clock_class, only: clock
 
   implicit none
@@ -16,7 +16,7 @@ module variables
   save
 
   ! Main object
-  type(diffusion) :: physics
+  !type(diffusion) :: physics
 
   ! Timing objects
   type(clock) :: clock_tot   ! clock for whole calculation
