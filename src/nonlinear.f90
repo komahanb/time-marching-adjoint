@@ -21,7 +21,6 @@ module nonlinear_algebra
   real(dp) :: rel_res_tol          = 1.0d-10
 
   integer  :: max_newton_iters     = 15
-  logical  :: jacobian_check       = .true.
   integer  :: print_level          = 0
   
   public :: solve
@@ -40,12 +39,12 @@ contains
   ! Newton solve for condensed form of equations
   !==================================================================!
   
-  subroutine newton_solve_condensed(system, coeff, t, Q)
+  subroutine newton_solve_condensed(system, coeff, t, U)
 
     class(dynamics) , intent(inout) :: system
     type(scalar)    , intent(in)    :: coeff(:)
     type(scalar)    , intent(in)    :: t
-    type(scalar)    , intent(inout) :: Q(:,:)
+    type(scalar)    , intent(inout)    :: U(:,:)
    
     ! Norms for tracking progress
     real(dp)                                  :: abs_res_norm = 0
@@ -54,24 +53,19 @@ contains
 
     ! Other Local variables
     type(scalar), allocatable, dimension(:)   :: res, dq
-    type(scalar), allocatable, dimension(:,:) :: jac, fd_jac
+    type(scalar), allocatable, dimension(:,:) :: jac
 
     integer                                   :: n, nvars, jj
     logical                                   :: conv = .false.
 
-    type(scalar)                              :: jac_err
-    type(scalar), allocatable                 :: U(:,:)
-
-
     ! find the size of the linear system based on the calling object
-    nvars = size(Q(1,:))
+    nvars = size(U(1,:))
 
     if ( nvars .ne. system % get_num_state_vars() ) stop "NVARS-MISMATCH"
 
     if ( .not. allocated(res)    ) allocate( res(nvars)          )
     if ( .not. allocated(dq)     ) allocate( dq(nvars)           )
     if ( .not. allocated(jac)    ) allocate( jac(nvars,nvars)    )
-    if ( .not. allocated(fd_jac) ) allocate( fd_jac(nvars,nvars) )
 
     if ( print_level .ge. 1 ) then
        write(*,'(A11, 2A12)') "Newton-Iter", "|R|", "|R|/|R1|"
@@ -80,53 +74,11 @@ contains
     newton: do n = 1, max_newton_iters
 
        res = 0.0d0
-       call system % add_residual(res, Q)
-
-       ! Get the jacobian matrix
-       if ( system % is_approximate_jacobian() ) then
-
-          ! Compute an approximate Jacobian using finite differences
-          allocate(U, source=Q)
-          jac = 0.0d0
-          call approximate_jacobian(system, jac, coeff, U)
-          deallocate(U)
-
-       else
-
-          ! Use the user supplied Jacobian implementation
-          jac = 0.0d0
-          call system % add_jacobian(jac, coeff, Q)
-
-          ! Check the Jacobian implementation once at the beginning of integration
-          if (   system % get_differential_order() .gt. 0 .and. &
-               & system % get_differential_order() .lt. 3 .and. &
-               & jacobian_check .and. n .eq. 1 ) then
-
-             ! Compute an approximate Jacobian using finite differences
-             allocate(U, source=Q)
-             call approximate_jacobian(system, fd_jac, coeff, U)
-             deallocate(U)
-
-             ! Compare the exact and approximate Jacobians and
-             ! complain about the error in Jacobian if there is any
-             jac_err = maxval(abs(fd_jac - jac))
-             if ( abs(jac_err) .gt. 1.0d-6) then
-                print *, "q     =", Q(1,:)
-                print *, "qdot  =", Q(2,:)
-                print *, "qddot =", Q(3,:)
-                print *, "a,b,c =", coeff
-                print *, "J     =", jac
-                print *, "Jhat  =", fd_jac
-                print *, "WARNING: Possible error in jacobian", jac_err
-             end if
-
-             ! Set that the jacobian is checked
-             jacobian_check = .false.
-
-          end if
-
-       end if
-
+       call system % add_residual(res, U)
+       
+       jac = 0.0d0
+       call system % add_jacobian(jac, coeff, U)
+          
        ! Find norm of the residual
        abs_res_norm = norm(res)
        if ( n .eq. 1) init_norm = abs_res_norm
@@ -149,7 +101,7 @@ contains
        dq = linsolve(jac, -res)
        
        forall(jj=1:system % get_differential_order() + 1)
-          Q(jj,:) = Q(jj,:) + coeff(jj)*dq
+          U(jj,:) = U(jj,:) + coeff(jj)*dq
        end forall
               
     end do newton
@@ -168,7 +120,6 @@ contains
     if (allocated(res))    deallocate(res)
     if (allocated(dq))     deallocate(dq)
     if (allocated(jac))    deallocate(jac)
-    if (allocated(fd_jac)) deallocate(fd_jac)
     
   end subroutine newton_solve_condensed
   

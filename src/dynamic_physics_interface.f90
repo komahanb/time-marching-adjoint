@@ -27,6 +27,9 @@ module dynamic_physics_interface
      procedure :: get_differential_order
      procedure :: set_differential_order
 
+     ! Default finite difference jacobian implementation
+     procedure :: add_jacobian => add_jacobian_fd
+
      ! Deferred procedure to subtypes
      procedure(initial_condition_interface), deferred :: get_initial_condition
 
@@ -76,5 +79,58 @@ contains
     this % differential_order = order
 
   end subroutine set_differential_order
+  
+  !===================================================================!
+  ! Jacobian assembly at each time step.
+  !===================================================================!
+  
+  pure subroutine add_jacobian_fd(this, jacobian, coeff, U)
+
+    class(dynamics) , intent(inout) :: this
+    type(scalar)    , intent(inout) :: jacobian(:,:)
+    type(scalar)    , intent(in)    :: coeff(:)
+    type(scalar)    , intent(in)    :: U(:,:)
+
+    type(integer)             :: nvars, dorder
+    type(integer)             :: n, m    
+    type(scalar), allocatable :: R(:), Rtmp(:), Utmp(:,:)
+    real(8)     , parameter   ::  dh = 1.0d-8
+
+    nvars = this % get_num_state_vars()
+    dorder = this % get_differential_order()
+
+    ! Make a copy of state variables
+    allocate(Utmp, source=U)
+
+    ! Allocate space for residual perturbations
+    allocate(R(nvars))
+    allocate(Rtmp(nvars))
+
+    ! Make a residual call with original variables
+    R = 0.0d0
+    call this % add_residual(R, U)
+
+    diff_order: do n = 1, dorder + 1
+
+       loop_vars: do m = 1, nvars
+
+          ! Perturb the m-th variable of n-th order
+          Utmp(n,m) = Utmp(n,m) + dh
+          
+          ! Make a residual call with the perturbed variable
+          rtmp = 0.0d0
+          call this % add_residual(Rtmp, Utmp)
+
+          ! Unperturb (restore) the m-th variable of n-th order
+          Utmp(n+1,m) = U(n+1,m)
+
+          ! Approximate the jacobian with respect to the m-th variable
+          jacobian(:,m) = jacobian(:,m) + coeff(n)*(Rtmp-R)/dh
+
+       end do loop_vars
+
+    end do diff_order
+
+  end subroutine add_jacobian_fd
   
 end module dynamic_physics_interface

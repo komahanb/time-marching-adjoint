@@ -17,11 +17,11 @@ program test_time_integration
   class(dynamics), allocatable :: sys
 
   test_vanderpol: block
-    allocate(sys, source = smd(2.0d0, 0.0d0, 2.0d0))
+    !allocate(sys, source = smd(2.0d0, 0.0d0, 2.0d0))
     !allocate(sys, source = fvanderpol(1.0d0))
     !allocate(sys, source = freefall(1.0d0, -10.0d0))
-    !allocate(sys, source = ODE(A=[2.0d0, 2.0d0, 2.0d0], order=4, nvars=3))
-    call sys % set_approximate_jacobian(.false.)    
+    allocate(sys, source = ODE(A=[2.0d0, 2.0d0, 2.0d0], order=4, nvars=3))
+    !call sys % set_approximate_jacobian(.false.)    
     call test_integrators(sys)
     deallocate(sys)
   end block test_vanderpol
