@@ -74,10 +74,10 @@ contains
     newton: do n = 1, max_newton_iters
 
        res = 0.0d0
-       call system % add_residual(res, U)
+       call system % add_residual(res, U, t)
        
        jac = 0.0d0
-       call system % add_jacobian(jac, coeff, U)
+       call system % add_jacobian(jac, coeff, U, t)
           
        ! Find norm of the residual
        abs_res_norm = norm(res)
@@ -402,12 +402,13 @@ contains
   ! [d{R}/d{q}] = alpha*[dR/dq] + beta*[dR/dqdot] + gamma*[dR/dqddot]
   !===================================================================!
 
-  subroutine approximate_jacobian( system, jac, coeff, U )
+  subroutine approximate_jacobian( system, jac, coeff, U, t)
 
     class(dynamics)                              :: system
     type(scalar) , intent(inout) :: jac(:,:)
     type(scalar) , intent(inout)      :: U(:,:)                  ! states
-
+    type(scalar)  , intent(in)    :: t
+    
 !@    type(scalar) , allocatable, dimension(:)     :: pstate           ! perturbed ates
     type(scalar) , allocatable, dimension(:)     :: R, Rtmp            ! original residual and perturbed residual
 
@@ -430,7 +431,7 @@ contains
 
     ! Make a residual call with original variables
     R = 0.0d0
-    call system % add_residual(R,  U)
+    call system % add_residual(R,  U, t)
 
     !-----------------------------------------------------------!
     ! Derivative of R WRT Q: dR/dQ
@@ -445,7 +446,7 @@ contains
 
          ! Make a residual call with the perturbed variable
          rtmp = 0
-         call system % add_residual(Rtmp, U)
+         call system % add_residual(Rtmp, U, t)
 
          ! Unperturb (restore) the k-th variable
          pstate(m) =  pstate(m) - dh
@@ -470,7 +471,7 @@ contains
 
          ! Make a residual call with the perturbed variable
          rtmp = 0
-         call system % add_residual(Rtmp, U)
+         call system % add_residual(Rtmp, U, t)
 
          ! Unperturb (restore) the k-th variable
          pstate(m) = pstate(m) - dh
@@ -497,7 +498,7 @@ contains
 
           ! Make a residual call with the perturbed variable
           rtmp = 0
-          call system % add_residual(Rtmp, U)
+          call system % add_residual(Rtmp, U, t)
 
           ! Unperturb (restore) the k-th variable
           pstate(m) = pstate(m) - dh

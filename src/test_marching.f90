@@ -35,7 +35,7 @@ contains
     use runge_kutta_integrator_class , only : dirk
     use backward_differences_integrator_class , only : bdf
 
-    class(dynamics), intent(inout) :: test_system    
+    class(dynamics), intent(inout) :: test_system
     type(ABM)     :: abmobj
     type(newmark) :: nbg
     type(dirk)    :: dirkobj

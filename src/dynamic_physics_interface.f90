@@ -84,12 +84,13 @@ contains
   ! Jacobian assembly at each time step.
   !===================================================================!
   
-  pure subroutine add_jacobian_fd(this, jacobian, coeff, U)
+  pure subroutine add_jacobian_fd(this, jacobian, coeff, U, t)
 
     class(dynamics) , intent(inout) :: this
     type(scalar)    , intent(inout) :: jacobian(:,:)
     type(scalar)    , intent(in)    :: coeff(:)
     type(scalar)    , intent(in)    :: U(:,:)
+    type(scalar)    , intent(in)    :: t
 
     type(integer)             :: nvars, dorder
     type(integer)             :: n, m    
@@ -108,7 +109,7 @@ contains
 
     ! Make a residual call with original variables
     R = 0.0d0
-    call this % add_residual(R, U)
+    call this % add_residual(R, U, t)
 
     diff_order: do n = 1, dorder + 1
 
@@ -119,7 +120,7 @@ contains
           
           ! Make a residual call with the perturbed variable
           rtmp = 0.0d0
-          call this % add_residual(Rtmp, Utmp)
+          call this % add_residual(Rtmp, Utmp, t)
 
           ! Unperturb (restore) the m-th variable of n-th order
           Utmp(n+1,m) = U(n+1,m)

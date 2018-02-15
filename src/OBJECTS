@@ -5,11 +5,7 @@ variables.o \
 mpi.o \
 matrix_interface.o \
 sparse_matrix.o \
-dense_matrix_class.o \
-dense_matrix_test.o \
 vector_interface.o \
-dense_vector_class.o \
-dense_vector_test.o \
 physics_interface.o \
 static_physics_interface.o \
 dynamic_physics_interface.o \
