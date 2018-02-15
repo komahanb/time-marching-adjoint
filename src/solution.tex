@@ -1,0 +1,178 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{fancyhdr}
+\usepackage{extramarks}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{tikz}
+\usepackage[plain]{algorithm}
+\usepackage{algpseudocode}
+\usepackage{fancyvrb}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usetikzlibrary{automata,positioning}
+
+%
+% Basic Document Settings
+%
+
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in
+
+\linespread{1.1}
+
+\pagestyle{fancy}
+\lhead{\hmwkAuthorName}
+\chead{\hmwkClass\ : \hmwkTitle}
+\rhead{\firstxmark}
+\lfoot{\lastxmark}
+\cfoot{\thepage}
+
+\renewcommand\headrulewidth{0.4pt}
+\renewcommand\footrulewidth{0.4pt}
+
+\setlength\parindent{0pt}
+
+%
+% Create Problem Sections
+%
+
+\newcommand{\enterProblemHeader}[2]{
+    \nobreak\extramarks{}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+    \nobreak\extramarks{Problem \arabic{#1} (continued)}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+}
+
+\newcommand{\exitProblemHeader}[1]{
+    \nobreak\extramarks{Problem \arabic{#1} (continued)}{Problem \arabic{#1} continued on next page\ldots}\nobreak{}
+    \stepcounter{#1}
+    \nobreak\extramarks{Problem \arabic{#1}}{}\nobreak{}
+}
+
+\setcounter{secnumdepth}{0}
+\newcounter{partCounter}
+\newcounter{homeworkProblemCounter}
+\setcounter{homeworkProblemCounter}{1}
+\nobreak\extramarks{Problem \arabic{homeworkProblemCounter}}{}\nobreak{}
+
+%
+% Homework Problem Environment
+%
+% This environment takes an optional argument. When given, it will adjust the
+% problem counter. This is useful for when the problems given for your
+% assignment aren't sequential. See the last 3 problems of this template for an
+% example.
+%
+\newenvironment{homeworkProblem}[1][-1]{
+    \ifnum#1>0
+        \setcounter{homeworkProblemCounter}{#1}
+    \fi
+    \section{Problem \arabic{homeworkProblemCounter}}
+    \setcounter{partCounter}{1}
+    \enterProblemHeader{homeworkProblemCounter}
+}{
+    \exitProblemHeader{homeworkProblemCounter}
+}
+
+%
+% Homework Details
+%   - Title
+%   - Due date
+%   - Class
+%   - Section/Time
+%   - Instructor
+%   - Author
+%
+
+\newcommand{\hmwkTitle}{Homework\ \#1}
+\newcommand{\hmwkDueDate}{\today}
+\newcommand{\hmwkClass}{MATH6646 -- Numerical Methods for ODEs}
+
+\newcommand{\hmwkClassTime}{Spring 2018}
+\newcommand{\hmwkClassInstructor}{}
+\newcommand{\hmwkAuthorName}{Komahan Boopathy}
+
+%
+% Title Page
+%
+
+\title{
+    \vspace{2in}
+    \textmd{\textbf{\hmwkClass\ \hmwkTitle}}\\
+    \normalsize\vspace{0.1in}\small{\hmwkDueDate}\\
+    %\vspace{0.1in}\large{\textit{\hmwkClassInstructor\ \hmwkClassTime}}
+    \vspace{3in}
+}
+
+\author{\textbf{\Large\hmwkAuthorName}}
+\date{}
+
+\renewcommand{\part}[1]{\textbf{\large (\alph{partCounter}) }\stepcounter{partCounter}}
+
+%
+% Various Helper Commands
+%
+
+% Useful for algorithms
+\newcommand{\alg}[1]{\textsc{\bfseries \footnotesize #1}}
+
+% For derivatives
+\newcommand{\deriv}[1]{\frac{\mathrm{d}}{\mathrm{d}x} (#1)}
+
+% For partial derivatives
+\newcommand{\pderiv}[2]{\frac{\partial #1}{\partial #2}}
+
+% Integral dx
+\newcommand{\dx}{\mathrm{d}x}
+
+% Alias for the Solution section header
+\newcommand{\solution}{\textbf{\large Solution}}
+
+% Probability commands: Expectation, Variance, Covariance, Bias
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\Bias}{\mathrm{Bias}}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\pagebreak
+
+\begin{homeworkProblem}[4]
+
+  \emph{The following ODE system:
+    $$
+    {y_1}^\prime = \alpha - y_1 - \dfrac{4y_1 y_2}{1 + y_1^2},
+    $$
+    $$
+    {y_2}^\prime = \beta y_1 \left(1 - \dfrac{y_2}{1+y_1^2} \right),
+    $$ where $\alpha$ and $\beta$ are parameters, represents a
+    simplified approximation to a chemical reaction. There is a
+    parameter value $\beta_c = \frac{3\alpha}{5} - \frac{25}{\alpha}$
+    such that for $\beta > \beta_c$ solution trajectories decay in
+    amplitude and spiral in phase space into a stable fixed point,
+    whereas for $\beta < \beta_c$ trajectories oscillate without
+    damping and are attracted to a stable limit cycle. This is called
+    a Hopf bifurcation.}
+
+  \part  \emph{Set $\alpha=10$ and use any of the discretization methods
+    introduced in this chapter with a fixed step size $h=0.01$ to
+    approximate the solution starting at $y_1(0),~y_2(0)=2$, for $0
+    \le t \le 20$. Do this for the parameter values $\beta=2$ and
+    $\beta = 4$. For each case plot $y_1$ vs. $t$ and $y_2$
+    vs. $y_1$. Describe your observations. }
+
+  \part \emph{Investigate the situtation closer to the critical value
+    $\beta_c=3.5$. You may have to increase the length of the
+    integration interval $b$ to get a better look.}
+    
+\end{homeworkProblem}
+
+\end{document}
