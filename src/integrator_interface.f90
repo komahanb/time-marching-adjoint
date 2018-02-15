@@ -141,6 +141,7 @@ contains
     
     ! Write data
     loop_time: do k = 1, this % total_num_steps
+       ! time, q1, qdot1, q2, qdot2, ...
        write(90, *)  this % time(k), this % U (k,:,:)
     end do loop_time
     

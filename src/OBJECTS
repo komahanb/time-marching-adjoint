@@ -38,4 +38,6 @@ newmark_class.o \
 runge_kutta_class.o\
 backward_differences_class.o\
 adjoint_integrator.o\
+test_equation.o\
+hopf_bifurcation_class.o\
 test_marching.o 
