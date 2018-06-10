@@ -131,6 +131,9 @@ contains
 
     end do diff_order
 
+    ! Freeup memory
+    deallocate(R, Rtmp)
+
   end subroutine add_jacobian_fd
   
 end module dynamic_physics_interface
