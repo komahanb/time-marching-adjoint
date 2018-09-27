@@ -1,0 +1,39 @@
+language: fortran
+
+fortran:
+  - 7.0
+
+os:
+  - linux
+
+sudo: required
+dist: trusty
+group: edge
+
+notifications:
+    email: false
+
+git:
+  depth: 1
+
+# gfortran >= 7 required
+addons:
+  apt:
+    sources: ubuntu-toolchain-r-test
+    packages:
+      - gfortran-7
+      - libblas-dev
+      - liblapack-dev
+
+before_install:
+  - sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-7 50
+
+install: ./build.sh
+  - cd src
+  - make
+  
+script:
+  - ./test_marching
+
+after_success:
+- coveralls
