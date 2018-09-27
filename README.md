@@ -2,7 +2,7 @@
 
 # Time Marching and Unsteady Discrete Adjoint Sensitivities
 
-Solves ordinary differential equations of the form: $$R(\dots, \ddot{q}, \dot{q}, q) = 0$$
+Solves ordinary differential equations of the form: $R(\ldots, \ddot{q}, \dot{q}, q) = 0$
 
 ## How to build and run test case?
 
