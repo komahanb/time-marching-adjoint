@@ -2,6 +2,8 @@
 
 # Time Marching and Unsteady Discrete Adjoint Sensitivities
 
+Solves ordinary differential equations of the form: $$R(\dots, \ddot{q}, \dot{q}, q) = 0$$
+
 ## How to build and run test case?
 
 1. Within Makefile.in make sure F90 variable is set to use the fortran compiler that you have. gfortran > 6 is required.
