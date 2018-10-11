@@ -1,29 +1,26 @@
 !=====================================================================!
-! Main Program for testing the integrators on different test problems
+! Solve one dimensional transport equations using integrators
 !=====================================================================!
 
 #include "scalar.fpp"
 
 program test_time_integration
 
-  use vanderpol_system          , only : fvanderpol => vanderpol_first_order
-  use spring_dynamics_class     , only : smd
-  use freefall_dynamics_class   , only : freefall
-  use test_ode_class            , only : ODE
+  use constants                 , only : WP
   use dynamic_physics_interface , only : dynamics
+  use unsteady_transport_class  , only : unsteady_transport
 
   implicit none
 
-  class(dynamics), allocatable :: sys
+  class(dynamics), allocatable :: system
 
-  test_vanderpol: block
-    !allocate(sys, source = smd(2.0d0, 0.0d0, 2.0d0))
-    !allocate(sys, source = fvanderpol(1.0d0))
-    !allocate(sys, source = freefall(1.0d0, -10.0d0))
-    allocate(sys, source = ODE(A=[2.0d0, 2.0d0, 2.0d0], order=4, nvars=3))
-    call test_integrators(sys)
-    deallocate(sys)
-  end block test_vanderpol
+  test_transport: block
+    allocate(system, source = unsteady_transport( &
+         & diffusion_coeff = 0.1_WP, &
+         & convective_velocity = 1.0_WP))
+    call test_integrators(system)
+    deallocate(system)
+  end block test_transport
 
 contains
 
@@ -44,26 +41,26 @@ contains
          & h=1.0d-3, implicit=.true., accuracy_order=6)
     call abmobj % to_string()
     call abmobj % solve()
-    call abmobj % write_solution("abm.dat")
+    call abmobj % write_solution("transport-abm.dat")
 
     dirkobj = DIRK(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
          & h=1.0d-3, implicit=.true., accuracy_order=4)
     call dirkobj % to_string()
     call dirkobj % solve()
-    call dirkobj % write_solution("dirk.dat")
+    call dirkobj % write_solution("transport-dirk.dat")
     
     bdfobj = BDF(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
          & h=1.0d-3, implicit=.true., accuracy_order=6)
     call bdfobj % to_string()
     call bdfobj % solve()
-    call bdfobj % write_solution("bdf.dat")
+    call bdfobj % write_solution("transport-bdf.dat")
     
     if ( test_system % get_differential_order() .eq. 2 ) then
        nbg = newmark(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
             & h=1.0d-3, implicit=.true., accuracy_order=2)
        call nbg % to_string()
        call nbg % solve()
-       call nbg % write_solution("nbg.dat")
+       call nbg % write_solution("transport-nbg.dat")
     end if    
 
   end subroutine test_integrators
