@@ -89,12 +89,12 @@ contains
     type(scalar)             , intent(inout) :: residual(:)
     type(scalar)             , intent(in)    :: U(:,:)
     
-    associate(q=>U(1,:), qdot=> U(2,:), &
+    associate(phi=>U(1,:), phidot=> U(2,:), &
          & vel=>this % conv_speed, gamma => this % diff_coeff)
       
-!!$      residual(1) = residual(1) + qdot(1) - q(2)
+!!$      residual(1) = residual(1) + phidot(1) - q(2)
 !!$      
-!!$      residual(2) = residual(2) + qdot(2) -  mu * (1.0_wp &
+!!$      residual(2) = residual(2) + phidot(2) -  mu * (1.0_wp &
 !!$           & - q(1) * q(1)) * q(2) + q(1)
 
     end associate
@@ -112,7 +112,7 @@ contains
     type(scalar)              , intent(in)    :: coeff(:)
     type(scalar)              , intent(in)    :: U(:,:)
     
-    associate(q=>U(1,:), qdot=> U(2,:), &
+    associate(phi=>U(1,:), phidot=> U(2,:), &
          & vel=>this % conv_speed, gamma => this % diff_coeff, &
          & alpha=>coeff(1), beta=>coeff(2))
 
@@ -131,7 +131,7 @@ contains
 !!$
 !!$      end block DRDQ
 !!$
-!!$      DRDQDOT: block
+!!$      DRDPHIDOT: block
 !!$
 !!$        ! derivative of first equation
 !!$
@@ -143,24 +143,25 @@ contains
 !!$        jacobian(2,1) = jacobian(2,1) + mu*beta*0.0_WP
 !!$        jacobian(2,2) = jacobian(2,2) + mu*beta*1.0_WP
 !!$
-!!$      end block DRDQDOT
+!!$      end block DRDPHIDOT
 
     end associate
 
   end subroutine add_jacobian
   
   !===================================================================!
-  ! Sets the initial condition for use in the integator. If first order
-  ! system just set initial Q, if a second order system set initial Q
-  ! and qdot
+  ! Sets the initial condition for use in the integator. 
   !===================================================================!  
 
   pure subroutine get_initial_condition(this, U)
     
     class(unsteady_transport), intent(in)    :: this
     type(scalar)             , intent(inout) :: U(:,:)
+    type(scalar), parameter :: pi = 4.0_wp*atan(1.0_wp)
 
-    !U(1,1:2) = [ 2.0_WP, 0.0_WP ]
+    associate(phi=>U(1,:), phidot=> U(2,:), &        
+         & vel=>this % conv_speed, gamma => this % diff_coeff)
+    end associate
     
   end subroutine get_initial_condition
 
