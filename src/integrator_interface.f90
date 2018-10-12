@@ -26,6 +26,7 @@ module integrator_interface
      class(dynamics), allocatable :: system
      type(scalar)   , allocatable :: time(:)  ! time values (steps)
      type(scalar)   , allocatable :: U(:,:,:) ! state varibles (steps, deriv_ord, nvars)
+     type(scalar)   , allocatable :: X(:,:)   ! xpoints
      type(scalar)                 :: tinit
      type(scalar)                 :: tfinal
      type(scalar)                 :: h
@@ -175,7 +176,7 @@ contains
     this % U = 0.0d0   
 
     ! Get the initial condition
-    call this % system % get_initial_condition(this % U(1,:,:))
+    call this % system % get_initial_condition(this % U(1,:,:), this % X)
     
     ! March in time
     time: do k = 2, this % total_num_steps

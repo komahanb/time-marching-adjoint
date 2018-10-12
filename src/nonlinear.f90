@@ -39,12 +39,13 @@ contains
   ! Newton solve for condensed form of equations
   !==================================================================!
   
-  subroutine newton_solve_condensed(system, coeff, t, U)
+  subroutine newton_solve_condensed(system, coeff, t, U, X)
 
     class(dynamics) , intent(inout) :: system
     type(scalar)    , intent(in)    :: coeff(:)
     type(scalar)    , intent(in)    :: t
-    type(scalar)    , intent(inout)    :: U(:,:)
+    type(scalar)    , intent(inout) :: U(:,:)
+    type(scalar)   , intent(in)     :: X(:,:)
    
     ! Norms for tracking progress
     real(dp)                                  :: abs_res_norm = 0
@@ -74,10 +75,10 @@ contains
     newton: do n = 1, max_newton_iters
 
        res = 0.0d0
-       call system % add_residual(res, U)
+       call system % add_residual(res, U, X)
        
        jac = 0.0d0
-       call system % add_jacobian(jac, coeff, U)
+       call system % add_jacobian(jac, coeff, U, X)
           
        ! Find norm of the residual
        abs_res_norm = norm(res)
@@ -402,12 +403,12 @@ contains
   ! [d{R}/d{q}] = alpha*[dR/dq] + beta*[dR/dqdot] + gamma*[dR/dqddot]
   !===================================================================!
 
-  subroutine approximate_jacobian( system, jac, coeff, U )
+  subroutine approximate_jacobian( system, jac, coeff, U, X )
 
     class(dynamics)                              :: system
     type(scalar) , intent(inout) :: jac(:,:)
     type(scalar) , intent(inout)      :: U(:,:)                  ! states
-
+    type(scalar)   , intent(in)    :: X(:,:)
 !@    type(scalar) , allocatable, dimension(:)     :: pstate           ! perturbed ates
     type(scalar) , allocatable, dimension(:)     :: R, Rtmp            ! original residual and perturbed residual
 
@@ -430,7 +431,7 @@ contains
 
     ! Make a residual call with original variables
     R = 0.0d0
-    call system % add_residual(R,  U)
+    call system % add_residual(R,  U, X)
 
     !-----------------------------------------------------------!
     ! Derivative of R WRT Q: dR/dQ
@@ -445,7 +446,7 @@ contains
 
          ! Make a residual call with the perturbed variable
          rtmp = 0
-         call system % add_residual(Rtmp, U)
+         call system % add_residual(Rtmp, U, X)
 
          ! Unperturb (restore) the k-th variable
          pstate(m) =  pstate(m) - dh
@@ -470,7 +471,7 @@ contains
 
          ! Make a residual call with the perturbed variable
          rtmp = 0
-         call system % add_residual(Rtmp, U)
+         call system % add_residual(Rtmp, U, X)
 
          ! Unperturb (restore) the k-th variable
          pstate(m) = pstate(m) - dh
@@ -497,7 +498,7 @@ contains
 
           ! Make a residual call with the perturbed variable
           rtmp = 0
-          call system % add_residual(Rtmp, U)
+          call system % add_residual(Rtmp, U, X)
 
           ! Unperturb (restore) the k-th variable
           pstate(m) = pstate(m) - dh

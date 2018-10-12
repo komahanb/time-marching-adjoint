@@ -302,7 +302,7 @@ contains
        if ( this % implicit ) then
           allocate(lincoeff(torder + 1))
           call this % get_linearization_coeff(stage_num, h, lincoeff)
-          call solve(this % system, lincoeff, t(idx), u(idx,:,:))
+          call solve(this % system, lincoeff, t(idx), u(idx,:,:), this % X)
           deallocate(lincoeff)
        end if
 

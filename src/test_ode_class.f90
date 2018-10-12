@@ -88,12 +88,13 @@ contains
   ! the solver.
   ! ===================================================================!
   
-  pure subroutine add_residual(this, residual, U)
+  pure subroutine add_residual(this, residual, U, X)
 
     class(ODE)   , intent(inout) :: this
     type(scalar) , intent(inout) :: residual(:)
     type(scalar) , intent(in)    :: U(:,:)
-    
+    type(scalar) , intent(in)    :: X(:,:)
+
     assemble: block
 
       type(integer) :: order
@@ -120,12 +121,13 @@ contains
   ! respectively.
   !===================================================================!
   
-  pure subroutine add_jacobian(this, jacobian, coeff, U)
+  pure subroutine add_jacobian(this, jacobian, coeff, U, X)
 
     class(ODE)   , intent(inout) :: this
     type(scalar) , intent(inout) :: jacobian(:,:)
     type(scalar) , intent(in)    :: coeff(:)
     type(scalar) , intent(in)    :: U(:,:)
+    type(scalar) , intent(in)    :: X(:,:)
     
     assemble: block
 
@@ -148,10 +150,11 @@ contains
   ! and qdot
   !===================================================================!  
 
-  pure subroutine get_initial_condition(this, U)
+  pure subroutine get_initial_condition(this, U, X)
     
     class(ODE)   , intent(in)    :: this
     type(scalar) , intent(inout) :: U(:,:)
+    type(scalar) , intent(in)    :: X(:,:)
     
     init_values: block
 

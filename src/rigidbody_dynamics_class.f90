@@ -102,11 +102,12 @@ contains
   ! the solver.
   !===================================================================!
   
-  pure subroutine add_residual(this, residual, U)
+  pure subroutine add_residual(this, residual, U, X)
 
     class(rigidbody) , intent(inout) :: this
     type(scalar)     , intent(inout) :: residual(:)
     type(scalar)     , intent(in)    :: U(:,:)
+    type(scalar)     , intent(in)    :: X(:,:)
 
     associate( q => U(1,:), qdot => U(2,:), qddot => U(3,:), &
          & m => this % mass, &
@@ -133,12 +134,13 @@ contains
   ! respectively.
   !===================================================================!
   
-  pure subroutine add_jacobian(this, jacobian, coeff, U)
+  pure subroutine add_jacobian(this, jacobian, coeff, U, X)
 
     class(rigidbody)   , intent(inout) :: this
     type(scalar) , intent(inout) :: jacobian(:,:)
     type(scalar) , intent(in)    :: coeff(:)
     type(scalar) , intent(in)    :: U(:,:)
+    type(scalar) , intent(in)    :: X(:,:)
     
     associate( q => U(1,:), qdot => U(2,:), qddot => U(3,:), &
          & m => this % mass, &
@@ -157,10 +159,11 @@ contains
   ! and qdot
   !===================================================================!  
 
-  pure subroutine get_initial_condition(this, U)
+  pure subroutine get_initial_condition(this, U, X)
     
     class(rigidbody) , intent(in)    :: this
     type(scalar)     , intent(inout) :: U(:,:)
+    type(scalar)     , intent(in)    :: X(:,:)
 
     ! location (might use displacement)
     U(1,1:3) = this % position

@@ -83,11 +83,12 @@ contains
   ! Residual assembly at each time step
   !===================================================================!
   
-  pure subroutine add_residual(this, residual, U)
+  pure subroutine add_residual(this, residual, U, X)
     
     class(unsteady_transport), intent(inout) :: this
     type(scalar)             , intent(inout) :: residual(:)
     type(scalar)             , intent(in)    :: U(:,:)
+    type(scalar)             , intent(in)    :: X(:,:)    
     
     associate(phi=>U(1,:), phidot=> U(2,:), &
          & vel=>this % conv_speed, gamma => this % diff_coeff)
@@ -105,12 +106,13 @@ contains
   ! Jacobian assembly at each time step. 
   !===================================================================!
   
-  pure subroutine add_jacobian(this, jacobian, coeff, U)
+  pure subroutine add_jacobian(this, jacobian, coeff, U, X)
 
     class(unsteady_transport) , intent(inout) :: this
     type(scalar)              , intent(inout) :: jacobian(:,:)
     type(scalar)              , intent(in)    :: coeff(:)
     type(scalar)              , intent(in)    :: U(:,:)
+    type(scalar)             , intent(in)    :: X(:,:)    
     
     associate(phi=>U(1,:), phidot=> U(2,:), &
          & vel=>this % conv_speed, gamma => this % diff_coeff, &
@@ -153,10 +155,11 @@ contains
   ! Sets the initial condition for use in the integator. 
   !===================================================================!  
 
-  pure subroutine get_initial_condition(this, U)
+  pure subroutine get_initial_condition(this, U, X)
     
     class(unsteady_transport), intent(in)    :: this
     type(scalar)             , intent(inout) :: U(:,:)
+    type(scalar)             , intent(in)    :: X(:,:)
     type(scalar), parameter :: pi = 4.0_wp*atan(1.0_wp)
 
     associate(phi=>U(1,:), phidot=> U(2,:), &        

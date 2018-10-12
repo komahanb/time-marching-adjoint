@@ -85,11 +85,12 @@ contains
   ! the solver.
   !===================================================================!
   
-  pure subroutine add_residual(this, residual, U)
+  pure subroutine add_residual(this, residual, U, X)
 
     class(vanderpol_first_order), intent(inout) :: this
     type(scalar)                , intent(inout) :: residual(:)
     type(scalar)                , intent(in)    :: U(:,:)
+    type(scalar)                , intent(in)    :: X(:,:)
 
     associate( q => U(1,:), qdot => U(2,:), mu => this%mu)
 
@@ -116,12 +117,13 @@ contains
   ! respectively.
   !===================================================================!
   
-  pure subroutine add_jacobian(this, jacobian, coeff, U)
+  pure subroutine add_jacobian(this, jacobian, coeff, U, X)
 
     class(vanderpol_first_order) , intent(inout) :: this
     type(scalar)                 , intent(inout) :: jacobian(:,:)
     type(scalar)                 , intent(in)    :: coeff(:)
     type(scalar)                 , intent(in)    :: U(:,:)
+    type(scalar)                 , intent(in)    :: X(:,:)
     
     associate(q=>U(1,:), qdot=> U(2,:), mu=>this%mu, alpha=>coeff(1), beta=>coeff(2))
 
@@ -163,10 +165,11 @@ contains
   ! and qdot
   !===================================================================!  
 
-  pure subroutine get_initial_condition(this, U)
+  pure subroutine get_initial_condition(this, U, X)
     
     class(vanderpol_first_order), intent(in)    :: this
     type(scalar)                , intent(inout) :: U(:,:)
+    type(scalar)                , intent(in)    :: X(:,:)
 
     U(1,1:2) = [ 2.0_WP, 0.0_WP ]
     

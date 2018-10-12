@@ -42,12 +42,13 @@ module dynamic_physics_interface
      ! Supplying the initial condition to march in time
      !----------------------------------------------------------------!
      
-     pure subroutine initial_condition_interface(this, U)
+     pure subroutine initial_condition_interface(this, U, X)
 
        import :: dynamics
 
        class(dynamics), intent(in)  :: this
        type(scalar)   , intent(inout) :: U(:,:)
+       type(scalar)   , intent(in)    :: X(:,:)
 
      end subroutine initial_condition_interface
 
@@ -84,12 +85,13 @@ contains
   ! Jacobian assembly at each time step.
   !===================================================================!
   
-  pure subroutine add_jacobian_fd(this, jacobian, coeff, U)
+  pure subroutine add_jacobian_fd(this, jacobian, coeff, U, X)
 
     class(dynamics) , intent(inout) :: this
     type(scalar)    , intent(inout) :: jacobian(:,:)
     type(scalar)    , intent(in)    :: coeff(:)
     type(scalar)    , intent(in)    :: U(:,:)
+    type(scalar)    , intent(in)    :: X(:,:)
 
     type(integer)             :: nvars, dorder
     type(integer)             :: n, m    
@@ -108,7 +110,7 @@ contains
 
     ! Make a residual call with original variables
     R = 0.0d0
-    call this % add_residual(R, U)
+    call this % add_residual(R, U, X)
 
     diff_order: do n = 1, dorder + 1
 
@@ -119,7 +121,7 @@ contains
           
           ! Make a residual call with the perturbed variable
           rtmp = 0.0d0
-          call this % add_residual(Rtmp, Utmp)
+          call this % add_residual(Rtmp, Utmp, X)
 
           ! Unperturb (restore) the m-th variable of n-th order
           Utmp(n+1,m) = U(n+1,m)

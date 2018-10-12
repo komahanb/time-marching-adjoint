@@ -174,7 +174,7 @@ contains
     if ( this % implicit ) then
        allocate(lincoeff(torder+1))         
        call this % get_linearization_coeff(p, h, lincoeff)
-       call solve(this % system, lincoeff, t(k), u(k,:,:))
+       call solve(this % system, lincoeff, t(k), u(k,:,:), this % X)
        deallocate(lincoeff)        
     end if
 
