@@ -9,7 +9,7 @@ module nonlinear_algebra
 
   ! import dependencies
   use iso_fortran_env           , only : dp => REAL64
-  use linear_algebra            , only : linsolve => solve
+  use linear_algebra            , only : tdma, linsolve => solve
   use dynamic_physics_interface , only : dynamics
   use utils                     , only : norm
 
@@ -60,13 +60,15 @@ contains
     logical                                   :: conv = .false.
 
     ! find the size of the linear system based on the calling object
-    nvars = size(U(1,:))
+    nvars = system % get_num_state_vars()
 
-    if ( nvars .ne. system % get_num_state_vars() ) stop "NVARS-MISMATCH"
-
-    if ( .not. allocated(res)    ) allocate( res(nvars)          )
-    if ( .not. allocated(dq)     ) allocate( dq(nvars)           )
-    if ( .not. allocated(jac)    ) allocate( jac(nvars,nvars)    )
+    if (.not. allocated(res)) allocate(res(nvars))
+    if (.not. allocated(dq)) allocate(dq(nvars))
+    if (system % sparse .eqv. .true.) then
+       if (.not.allocated(jac)) allocate(jac(nvars,3)) ! system % get_bandwidth() #TODO
+    else
+       if (.not.allocated(jac)) allocate(jac(nvars,nvars))
+    end if
 
     if ( print_level .ge. 1 ) then
        write(*,'(A11, 2A12)') "Newton-Iter", "|R|", "|R|/|R1|"
@@ -98,9 +100,15 @@ contains
           exit newton
        end if
 
-       ! Call LAPACK to solve the linear system
-       dq = linsolve(jac, -res)
-       
+       ! Solve the linear system
+       if (system % sparse .eqv. .true.) then
+          ! works currently only for tridiagonal systems
+          res = -res
+          call tdma(jac, res, dq)
+       else
+          dq = linsolve(jac, -res)
+       end if
+
        forall(jj=1:system % get_differential_order() + 1)
           U(jj,:) = U(jj,:) + coeff(jj)*dq
        end forall

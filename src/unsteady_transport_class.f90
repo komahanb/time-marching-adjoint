@@ -24,7 +24,6 @@ module unsteady_transport_class
   type, extends(dynamics) :: unsteady_transport
 
      type(scalar), allocatable :: X(:,:)
-     logical      :: sparse = .false.
      type(scalar) :: dx
      type(scalar) :: conv_speed
      type(scalar) :: diff_coeff 
@@ -159,11 +158,11 @@ end subroutine add_residual
 
       if (this % sparse .eqv. .true.) then           
 
-         jacobian(1,:) = [0.0d0, bb, cc]
+         jacobian(1,:) = [0.0d0, beta + alpha*bb, alpha*cc]
          do concurrent(i = 2 : npts-1)
-            jacobian(i,:) = [aa, bb, cc]
+            jacobian(i,:) = [alpha*aa, beta + alpha*bb, alpha*cc]
          end do
-         jacobian(npts,:) = [aa, bb, 0.0d0]
+         jacobian(npts,:) = [alpha*aa, beta + alpha*bb, 0.0d0]
 
       else
 

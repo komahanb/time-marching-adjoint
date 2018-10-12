@@ -20,7 +20,7 @@ program test_time_integration
          & diffusion_coeff = 0.01_WP, &
          & convective_velocity = 1.0_WP, &
          & bounds = bounds, npts=200, &
-         & sparse = .false.))
+         & sparse = .true.))
     call test_integrators(system)
     deallocate(system)
   end block test_transport

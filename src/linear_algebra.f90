@@ -16,6 +16,9 @@ module linear_algebra
 
   ! restrict access to all functions
   private
+  
+  ! sparse solvers
+  public :: tdma
 
   ! expose only a required functions
   public :: eig, eigvals, eigh              ! eigenvals and vec
@@ -116,6 +119,46 @@ module linear_algebra
   end interface assert_shape
 
 contains
+
+  !===================================================================!
+  ! Tridiagonal matrix algorithm for solving sparse tridiagonal
+  ! systems using Thomas Algorithm. All input arrays are destroyed.
+  ! 
+  ! https://www.cfd-online.com/Wiki/Tridiagonal_matrix_algorithm_-_TDMA_(Thomas_algorithm)
+  !===================================================================!
+
+  pure subroutine tdma(mat, rhs, x)
+
+    ! Arguments
+    real(dp), intent(inout)  :: mat(:,:)
+    real(dp), intent(inout)  :: rhs(:)
+    real(dp), intent(out)    :: x(:)
+
+    ! Local variables
+    integer  :: k, n
+    real(dp) :: m
+
+    associate(A=>mat(:,1), B=>mat(:,2), C=>mat(:,3), D=>rhs)
+
+      ! Find the size of linear system
+      n = size(d)
+
+      ! Forward elimination
+      fwd_elim: do k = 2, n
+         m = A(k)/b(k-1)
+         b(k) = b(k) - m*c(k-1)
+         d(k) = d(k) - m*d(k-1)
+      end do fwd_elim
+
+      ! Backward substitution    
+      x(n) = d(n)/b(n)
+      back_sub: do k = n-1, 1, -1
+         x(k) = (d(k)-c(k)*x(k+1))/b(k)
+      end do back_sub
+
+    end associate
+
+   end subroutine tdma
 
   !-------------------------------------------------------------------!
   ! Get the eigenvalues and eigenvectors of a real matrix.

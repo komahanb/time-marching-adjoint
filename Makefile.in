@@ -34,7 +34,7 @@ LAPACK_DIR = /usr
 
 ifeq ($(COMPILER),gnu)
   F90 = gfortran-7
-  F90FLAGS := -cpp -fbacktrace
+  F90FLAGS := -cpp
 
   # COMPLEX mode
   ifeq ($(COMPLEX),yes)
@@ -48,7 +48,7 @@ ifeq ($(COMPILER),gnu)
 
   # Debugging
   ifeq ($(DEBUG),yes)
-    F90FLAGS += -g -Wall -pedantic -fbounds-check \
+    F90FLAGS += -g -Wall -pedantic -fbounds-check -fbacktrace\
                 -ffpe-trap=invalid,overflow,underflow
     LDFLAGS  += -g
   endif

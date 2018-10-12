@@ -24,7 +24,7 @@ module physics_interface
      type(character(len=:)), allocatable :: description
      type(integer)                       :: num_state_vars
      type(logical)                       :: approximate_jacobian
-
+     logical                             :: sparse ! temp hack
    contains  
 
      ! Provided procedures
