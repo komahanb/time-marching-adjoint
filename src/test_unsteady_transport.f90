@@ -13,11 +13,13 @@ program test_time_integration
   implicit none
 
   class(dynamics), allocatable :: system
+  type(scalar)   , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
 
   test_transport: block
     allocate(system, source = unsteady_transport( &
-         & diffusion_coeff = 0.1_WP, &
-         & convective_velocity = 1.0_WP))
+         & diffusion_coeff = 0.01_WP, &
+         & convective_velocity = 1.0_WP, &
+         & bounds = bounds, npts=100 ))
     call test_integrators(system)
     deallocate(system)
   end block test_transport
