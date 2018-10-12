@@ -1,13 +1,12 @@
 #include "scalar.fpp"
 
 !=====================================================================!
-! Backward Difference Formulas integration module for differential 
-! equations.
+! Crank Nicolson integration module for differential equations.
 !
 ! Author: Komahan Boopathy (komahan@gatech.edu)
 !=====================================================================! 
 
-module backward_differences_integrator_class
+module crank_nicolson_integrator_class
 
   use integrator_interface      , only : integrator
   use dynamic_physics_interface , only : dynamics
@@ -16,17 +15,17 @@ module backward_differences_integrator_class
   implicit none
 
   private
-  public :: BDF
+  public :: CNI
   
   !===================================================================! 
-  ! BDF Integrator type
+  ! CNI Integrator type
   !===================================================================! 
 
-  type, extends(integrator) :: BDF
+  type, extends(integrator) :: CNI
      
      private
 
-     ! BDF variables
+     ! CNI variables
      type(integer)             :: max_order = 6
      type(scalar), allocatable :: A(:,:)
 
@@ -39,19 +38,19 @@ module backward_differences_integrator_class
      ! Destructor
      final :: destroy
 
-  end type BDF
+  end type CNI
 
-  interface BDF
+  interface CNI
      module procedure create
-  end interface BDF
+  end interface CNI
 
 contains
 
   !===================================================================!
-  ! Initialize the BDF datatype and allocate required variables
+  ! Initialize the CNI datatype and allocate required variables
   !===================================================================!
   
-  type(bdf) function create(system, tinit, tfinal, h, implicit, &
+  type(cni) function create(system, tinit, tfinal, h, implicit, &
        & accuracy_order) result(this)
 
     class(dynamics)   , intent(in)   , target :: system
@@ -71,7 +70,7 @@ contains
     !-----------------------------------------------------------------!
 
     if (accuracy_order .le. this % max_order) this % max_order = accuracy_order
-    print '("  >> Max BDF Order        : ",i4)', this % max_order
+    print '("  >> Max CNI Order        : ",i4)', this % max_order
 
     allocate( this % A (this % max_order, this % max_order+1) )
     this % A = 0.0d0 
@@ -85,12 +84,12 @@ contains
     if ( this % max_order .ge. 5 ) this % A(5,1:6) = [137.0d0, -300.0d0, 300.0d0, -200.0d0, 75.0d0, -12.0d0]/60.0d0
     if ( this % max_order .ge. 6 ) this % A(6,1:7) = [147.0d0, -360.0d0, 450.0d0, -400.0d0, 225.0d0, -72.0d0, 10.0d0]/60.0d0
 
-    ! Sanity check on BDF coeffs
+    ! Sanity check on CNI coeffs
     sanity_check: block
       type(integer) :: j
       do j = 1, this % max_order
          if (abs(sum(real_part(this % A(j,1:j+1)))) .gt. 1.0d-15 ) then
-            print *, "Error in BDF Coeff for order ", abs(sum(real_part(this % A(j,1:j+1)))), j
+            print *, "Error in CNI Coeff for order ", abs(sum(real_part(this % A(j,1:j+1)))), j
             stop
          end if
       end do
@@ -99,17 +98,17 @@ contains
   end function create
 
   !=================================================================!
-  ! Destructor for the BDF integrator
+  ! Destructor for the CNI integrator
   !=================================================================!
   
   pure subroutine destroy(this)
 
-    type(BDF), intent(inout) :: this
+    type(CNI), intent(inout) :: this
 
     ! Parent class call
     call this % destruct()
 
-    ! Deallocate BDF coefficient
+    ! Deallocate CNI coefficient
     if(allocated(this % A)) deallocate(this % A)
 
   end subroutine destroy
@@ -121,7 +120,7 @@ contains
 
   pure type(integer) function get_bandwidth(this, time_index) result(width)
 
-    class(BDF)   , intent(in) :: this
+    class(CNI)   , intent(in) :: this
     type(integer), intent(in) :: time_index
 
     width = time_index - 1
@@ -140,7 +139,7 @@ contains
     use nonlinear_algebra, only : solve
 
     ! Argument variables
-    class(BDF)   , intent(inout) :: this
+    class(CNI)   , intent(inout) :: this
     type(scalar) , intent(inout) :: t(:)
     type(scalar) , intent(inout) :: u(:,:,:)
     type(integer), intent(in)    :: p
@@ -163,7 +162,7 @@ contains
     ! Assume a value for lowest order state
     u(k,1,:) = 0.0d0
 
-    ! Find the higher order states based on BDF formula
+    ! Find the higher order states based on CNI formula
     do n = 1, torder
        do i = 0, p
           scale = this % A(p,i+1)/h !(t(k-i)-t(k-i-1))
@@ -217,7 +216,7 @@ contains
   
   pure subroutine get_linearization_coeff(this, cindex, h, lincoeff)
 
-    class(BDF)    , intent(in)    :: this
+    class(CNI)    , intent(in)    :: this
     type(integer) , intent(in)    :: cindex
     type(scalar)  , intent(in)    :: h
     type(scalar)  , intent(inout) :: lincoeff(:)
@@ -236,4 +235,4 @@ contains
 
 end subroutine get_linearization_coeff
 
-end module backward_differences_integrator_class
+end module crank_nicolson_integrator_class

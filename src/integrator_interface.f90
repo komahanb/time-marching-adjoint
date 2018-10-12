@@ -146,10 +146,13 @@ contains
 !!$    end do loop_time
     
     ! Write data
-    write(90, *) "time ", "state"
+    write(90, *) "time ", "x ", "y ", "z ",  "state "
     loop_vars : do j = 1, this % system % get_num_state_vars()
        loop_time: do k = 1, this % total_num_steps 
-          write(90, *) this % tinit + this % time(k), this % U (k, 1, j)
+          write(90, *) this % time(k), this % system % x(1,j), &
+               & this % system % x(2,j), &
+               & this % system % x(3,j), &
+               & this % U (k, 1, j)
        end do loop_time
     end do loop_vars
     
@@ -175,6 +178,7 @@ contains
     
     allocate(this % time(this % total_num_steps))
     this % time = 0.0d0
+    this % time(1) = this % tinit
     
     allocate( this % U( &
          & this % total_num_steps, &

@@ -25,6 +25,8 @@ module physics_interface
      type(integer)                       :: num_state_vars
      type(logical)                       :: approximate_jacobian
      logical                             :: sparse ! temp hack
+     type(scalar)          , allocatable :: X(:,:) ! temp maybe? contain ref to a class?
+
    contains  
 
      ! Provided procedures

@@ -23,7 +23,6 @@ module unsteady_transport_class
   
   type, extends(dynamics) :: unsteady_transport
 
-     type(scalar), allocatable :: X(:,:)
      type(scalar) :: dx
      type(scalar) :: conv_speed
      type(scalar) :: diff_coeff 

@@ -16,47 +16,73 @@ program test_time_integration
   type(scalar)   , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
 
   test_transport: block
+    ! case 1
     allocate(system, source = unsteady_transport( &
          & diffusion_coeff = 0.01_WP, &
          & convective_velocity = 1.0_WP, &
-         & bounds = bounds, npts=200, &
+         & bounds = bounds, npts=500, &
          & sparse = .true.))
-    call test_integrators(system)
+    call test_integrators(system, 'case1')
     deallocate(system)
+    
+    !case 2
+    allocate(system, source = unsteady_transport( &
+         & diffusion_coeff = 0.0_WP, &
+         & convective_velocity = 1.0_WP, &
+         & bounds = bounds, npts=500, &
+         & sparse = .true.))
+    call test_integrators(system, 'case2')
+    deallocate(system)
+
   end block test_transport
 
 contains
 
-  subroutine test_integrators(test_system)
+  subroutine test_integrators(test_system, prefix)
 
     use abm_integrator_class , only : ABM
     use newmark_integrator_class , only : newmark
     use runge_kutta_integrator_class , only : dirk
     use backward_differences_integrator_class , only : bdf
 
-    class(dynamics), intent(inout) :: test_system    
+    class(dynamics) , intent(inout) :: test_system
+    character(len=*), intent(in)    :: prefix
+
     type(ABM)     :: abmobj
     type(newmark) :: nbg
     type(dirk)    :: dirkobj
     type(bdf)     :: bdfobj
-
+!!$
 !!$    abmobj = ABM(system = test_system, tinit=10.0d0, tfinal = 20.0d0, &
-!!$         & h=1.0d-3, implicit=.true., accuracy_order=2)
+!!$         & h=1.0d-3, implicit=.false., accuracy_order=1)
 !!$    call abmobj % to_string()
 !!$    call abmobj % solve()
 !!$    call abmobj % write_solution("transport-abm.dat")
 !!$
+!!$stop
 !!$    dirkobj = DIRK(system = test_system, tinit=10.0d0, tfinal = 20.0d0, &
 !!$         & h=1.0d-3, implicit=.true., accuracy_order=2)
 !!$    call dirkobj % to_string()
 !!$    call dirkobj % solve()
 !!$    call dirkobj % write_solution("transport-dirk.dat")
     
-    bdfobj = BDF(system = test_system, tinit=10.0d0, tfinal = 15.0d0, &
-         & h=1.0d-3, implicit=.true., accuracy_order=2)
+    bdfobj = BDF(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=1.0d-2, implicit = .false., accuracy_order=1)
     call bdfobj % to_string()
     call bdfobj % solve()
-    call bdfobj % write_solution("transport-bdf.dat")   
+    call bdfobj % write_solution(trim(prefix)//"-transport-explicit-euler.dat")   
+
+    bdfobj = BDF(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=1.0d-2, implicit = .true., accuracy_order=1)
+    call bdfobj % to_string()
+    call bdfobj % solve()
+    call bdfobj % write_solution(trim(prefix)//"-transport-implicit-euler.dat")   
+
+    bdfobj = BDF(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=1.0d-2, implicit = .true., accuracy_order=2)
+    call bdfobj % to_string()
+    call bdfobj % solve()
+    call bdfobj % write_solution(trim(prefix)//"-transport-cni.dat")
 
   end subroutine test_integrators
 
