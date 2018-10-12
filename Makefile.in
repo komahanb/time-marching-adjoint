@@ -3,9 +3,9 @@
 #=====================================================================#
 
 COMPILER = gnu
-DEBUG    = yes
+DEBUG    = no
 PROFILE  = no
-OPTIMIZE = no
+OPTIMIZE = yes
 MPI      = no
 HDF5     = no
 PETSC    = no

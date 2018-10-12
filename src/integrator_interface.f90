@@ -140,14 +140,22 @@ contains
        return
     end if
     
+!!$    ! Write data
+!!$    loop_time: do k = 1, this % total_num_steps
+!!$       write(90, *) this % time(k), this % U (k,1,:)
+!!$    end do loop_time
+    
     ! Write data
-    loop_time: do k = 1, this % total_num_steps
-       write(90, *)  this % time(k), this % U (k,1,:)
-    end do loop_time
+    write(90, *) "time ", "state"
+    loop_vars : do j = 1, this % system % get_num_state_vars()
+       loop_time: do k = 1, this % total_num_steps 
+          write(90, *) this % tinit + this % time(k), this % U (k, 1, j)
+       end do loop_time
+    end do loop_vars
     
     ! Close resource
     close(90)
-
+    
   end subroutine write_solution
 
   !===================================================================!
