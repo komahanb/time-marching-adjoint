@@ -21,7 +21,7 @@ module nonlinear_algebra
   real(dp) :: rel_res_tol          = 1.0d-10
 
   integer  :: max_newton_iters     = 15
-  integer  :: print_level          = 0
+  integer  :: print_level          = 2
   
   public :: solve
 
@@ -79,7 +79,7 @@ contains
        
        jac = 0.0d0
        call system % add_jacobian(jac, coeff, U, X)
-          
+       
        ! Find norm of the residual
        abs_res_norm = norm(res)
        if ( n .eq. 1) init_norm = abs_res_norm

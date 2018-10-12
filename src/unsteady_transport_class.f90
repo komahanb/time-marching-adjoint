@@ -24,7 +24,7 @@ module unsteady_transport_class
   type, extends(dynamics) :: unsteady_transport
 
      type(scalar), allocatable :: X(:,:)
-
+     type(scalar) :: dx
      type(scalar) :: conv_speed
      type(scalar) :: diff_coeff 
      
@@ -32,7 +32,7 @@ module unsteady_transport_class
      
      ! Implement deferred procedures from superclasses
      procedure :: add_residual
-     procedure :: add_jacobian
+     !procedure :: add_jacobian
      procedure :: get_initial_condition
      
      ! Destructor
@@ -72,9 +72,9 @@ contains
     this % diff_coeff = diffusion_coeff
     
     allocate(this % X(3,npts+2)); this % X = 0.0_wp;
-    dx = (bounds(2) - bounds(1))/dble(npts+1)
+    this % dx = (bounds(2) - bounds(1))/dble(npts+1)
     do i = 1, npts + 2
-       this % X(1,i) = bounds(1) + dble(i-1)*dx
+       this % X(1,i) = bounds(1) + dble(i-1)*this % dx
     end do
     
     ! Set the number of state variables based on spatial
@@ -98,23 +98,34 @@ contains
   !===================================================================!
   
   pure subroutine add_residual(this, residual, U, X)
-    
+
     class(unsteady_transport), intent(inout) :: this
     type(scalar)             , intent(inout) :: residual(:)
     type(scalar)             , intent(in)    :: U(:,:)
     type(scalar)             , intent(in)    :: X(:,:)    
-    
-    associate(phi=>U(1,:), phidot=> U(2,:), &
-         & vel=>this % conv_speed, gamma => this % diff_coeff)
-      
-!!$      residual(1) = residual(1) + phidot(1) - q(2)
-!!$      
-!!$      residual(2) = residual(2) + phidot(2) -  mu * (1.0_wp &
-!!$           & - q(1) * q(1)) * q(2) + q(1)
 
-    end associate
-    
-  end subroutine add_residual
+    ! Locals
+    type(scalar) :: a, b, c
+    integer :: i
+
+    associate(phi=>U(1,:), phidot=> U(2,:), &
+         & npts=>this % get_num_state_vars(), &
+         & vel=>this % conv_speed, gamma => this % diff_coeff)
+
+    a = -(vel/(2.0_wp*this % dx) + gamma/(this % dx*this % dx))
+    b = 2.0_wp*gamma/(this % dx*this % dx)
+    c = (vel/(2.0_wp*this % dx) - gamma/(this % dx*this % dx))
+
+    ! Residual with BC applied
+    residual(1) = residual(1) +  b*phi(1) + c*phi(2)
+    forall(i = 2:npts-1)
+       residual(i) = residual(i) + a*phi(i-1) + b*phi(i) + c*phi(i+1)
+    end forall
+    residual(npts) = residual(npts) + a*phi(npts-1) + b*phi(npts)
+
+  end associate
+
+end subroutine add_residual
 
   !===================================================================!
   ! Jacobian assembly at each time step. 
@@ -126,12 +137,11 @@ contains
     type(scalar)              , intent(inout) :: jacobian(:,:)
     type(scalar)              , intent(in)    :: coeff(:)
     type(scalar)              , intent(in)    :: U(:,:)
-    type(scalar)             , intent(in)    :: X(:,:)    
-    
-    associate(phi=>U(1,:), phidot=> U(2,:), &
-         & vel=>this % conv_speed, gamma => this % diff_coeff, &
-         & alpha=>coeff(1), beta=>coeff(2))
+    type(scalar)              , intent(in)    :: X(:,:)    
 
+!!$    associate(phi=>U(1,:), phidot=> U(2,:), &
+!!$         & vel=>this % conv_speed, gamma => this % diff_coeff, &
+!!$         & alpha=>coeff(1), beta=>coeff(2))
 !!$
 !!$      DRDQ: block
 !!$
@@ -160,8 +170,8 @@ contains
 !!$        jacobian(2,2) = jacobian(2,2) + mu*beta*1.0_WP
 !!$
 !!$      end block DRDPHIDOT
-
-    end associate
+!!$
+!!$    end associate
 
   end subroutine add_jacobian
   
@@ -174,15 +184,16 @@ contains
     class(unsteady_transport), intent(in)    :: this
     type(scalar)             , intent(inout) :: U(:,:)
     type(scalar)             , intent(in)    :: X(:,:)
-    type(scalar), parameter :: pi = 4.0_wp*atan(1.0_wp)
+    type(scalar) :: pi
     integer :: i
 
-    associate(phi=>U(1,:), phidot=> U(2,:), x=>this%X(1,:), &        
-         & vel=>this % conv_speed, gamma => this % diff_coeff)
+    pi = 4.0_wp*atan(1.0_wp)
+    
+    associate(phi=>U(1,:), x=>this % X(1,:))
       
-      forall(i=1:this % get_num_state_vars())
-         phi(i) = (0.4_wp*pi)**(-0.5_wp)*exp(-2.5_wp*(x(i)-10.0_wp)**2.0_wp)
-      end forall
+      do i=1,this % get_num_state_vars()
+         phi(i) = (0.4_wp*pi)**(-0.5_wp)*exp(-2.5_wp*(x(i)-10.0_wp)*(x(i)-10.0_wp))
+      end do
       
     end associate
     

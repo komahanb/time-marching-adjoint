@@ -19,7 +19,7 @@ program test_time_integration
     allocate(system, source = unsteady_transport( &
          & diffusion_coeff = 0.01_WP, &
          & convective_velocity = 1.0_WP, &
-         & bounds = bounds, npts=100 ))
+         & bounds = bounds, npts=1000 ))
     call test_integrators(system)
     deallocate(system)
   end block test_transport
@@ -38,32 +38,24 @@ contains
     type(newmark) :: nbg
     type(dirk)    :: dirkobj
     type(bdf)     :: bdfobj
-        
-    abmobj = ABM(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
-         & h=1.0d-3, implicit=.true., accuracy_order=6)
-    call abmobj % to_string()
-    call abmobj % solve()
-    call abmobj % write_solution("transport-abm.dat")
-
-    dirkobj = DIRK(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
-         & h=1.0d-3, implicit=.true., accuracy_order=4)
-    call dirkobj % to_string()
-    call dirkobj % solve()
-    call dirkobj % write_solution("transport-dirk.dat")
-    
-    bdfobj = BDF(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
-         & h=1.0d-3, implicit=.true., accuracy_order=6)
+!!$        
+!!$    abmobj = ABM(system = test_system, tinit=10.0d0, tfinal = 20.0d0, &
+!!$         & h=1.0d-3, implicit=.true., accuracy_order=2)
+!!$    call abmobj % to_string()
+!!$    call abmobj % solve()
+!!$    call abmobj % write_solution("transport-abm.dat")
+!!$
+!!$    dirkobj = DIRK(system = test_system, tinit=10.0d0, tfinal = 20.0d0, &
+!!$         & h=1.0d-3, implicit=.true., accuracy_order=2)
+!!$    call dirkobj % to_string()
+!!$    call dirkobj % solve()
+!!$    call dirkobj % write_solution("transport-dirk.dat")
+!!$    
+    bdfobj = BDF(system = test_system, tinit=10.0d0, tfinal = 20.0d0, &
+         & h=1.0d-3, implicit=.true., accuracy_order=2)
     call bdfobj % to_string()
     call bdfobj % solve()
-    call bdfobj % write_solution("transport-bdf.dat")
-    
-    if ( test_system % get_differential_order() .eq. 2 ) then
-       nbg = newmark(system = test_system, tinit=0.0d0, tfinal = 10.0d0, &
-            & h=1.0d-3, implicit=.true., accuracy_order=2)
-       call nbg % to_string()
-       call nbg % solve()
-       call nbg % write_solution("transport-nbg.dat")
-    end if    
+    call bdfobj % write_solution("transport-bdf.dat")   
 
   end subroutine test_integrators
 
