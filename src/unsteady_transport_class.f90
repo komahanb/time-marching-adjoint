@@ -24,6 +24,7 @@ module unsteady_transport_class
   type, extends(dynamics) :: unsteady_transport
 
      type(scalar), allocatable :: X(:,:)
+     logical      :: sparse = .false.
      type(scalar) :: dx
      type(scalar) :: conv_speed
      type(scalar) :: diff_coeff 
@@ -32,7 +33,7 @@ module unsteady_transport_class
      
      ! Implement deferred procedures from superclasses
      procedure :: add_residual
-     !procedure :: add_jacobian
+     procedure :: add_jacobian
      procedure :: get_initial_condition
      
      ! Destructor
@@ -53,11 +54,12 @@ contains
   
   type(unsteady_transport) function construct_unsteady_transport( &
        & diffusion_coeff, convective_velocity, &
-       & bounds, npts) result (this)
+       & bounds, npts, sparse) result (this)
 
     type(scalar), intent(in) :: diffusion_coeff, convective_velocity
     type(scalar), intent(in) :: bounds(2)
     integer     , intent(in) :: npts
+    logical     , intent(in) :: sparse
 
     type(scalar) :: dx
     integer      :: i
@@ -70,7 +72,10 @@ contains
     ! System parameters
     this % conv_speed = convective_velocity
     this % diff_coeff = diffusion_coeff
-    
+
+    ! Sparse or dense assembly
+    this % sparse = sparse
+
     allocate(this % X(3,npts+2)); this % X = 0.0_wp;
     this % dx = (bounds(2) - bounds(1))/dble(npts+1)
     do i = 1, npts + 2
@@ -117,11 +122,11 @@ contains
     c = (vel/(2.0_wp*this % dx) - gamma/(this % dx*this % dx))
 
     ! Residual with BC applied
-    residual(1) = residual(1) +  b*phi(1) + c*phi(2)
+    residual(1) = residual(1) +  b*phi(1) + c*phi(2) + phidot(1) -a*0.0_wp
     forall(i = 2:npts-1)
-       residual(i) = residual(i) + a*phi(i-1) + b*phi(i) + c*phi(i+1)
+       residual(i) = residual(i) + a*phi(i-1) + b*phi(i) + c*phi(i+1) + phidot(i)
     end forall
-    residual(npts) = residual(npts) + a*phi(npts-1) + b*phi(npts)
+    residual(npts) = residual(npts) + a*phi(npts-1) + b*phi(npts) + phidot(npts) -c*0.0_wp
 
   end associate
 
@@ -139,39 +144,48 @@ end subroutine add_residual
     type(scalar)              , intent(in)    :: U(:,:)
     type(scalar)              , intent(in)    :: X(:,:)    
 
-!!$    associate(phi=>U(1,:), phidot=> U(2,:), &
-!!$         & vel=>this % conv_speed, gamma => this % diff_coeff, &
-!!$         & alpha=>coeff(1), beta=>coeff(2))
-!!$
-!!$      DRDQ: block
-!!$
-!!$        ! derivative of first equation
-!!$
-!!$        jacobian(1,1) = jacobian(1,1) + alpha*0.0_WP
-!!$        jacobian(1,2) = jacobian(1,2) - alpha*1.0_WP
-!!$
-!!$        ! derivative of second equation
-!!$
-!!$        jacobian(2,1) = jacobian(2,1) + mu*alpha*(1.0d0 + 2.0d0*q(1)*q(2))
-!!$        jacobian(2,2) = jacobian(2,2) + mu*alpha*(q(1)*q(1) - 1.0_WP)
-!!$
-!!$      end block DRDQ
-!!$
-!!$      DRDPHIDOT: block
-!!$
-!!$        ! derivative of first equation
-!!$
-!!$        jacobian(1,1) = jacobian(1,1) + beta*1.0_WP
-!!$        jacobian(1,2) = jacobian(1,2) + beta*0.0_WP
-!!$
-!!$        ! derivative of second equation
-!!$
-!!$        jacobian(2,1) = jacobian(2,1) + mu*beta*0.0_WP
-!!$        jacobian(2,2) = jacobian(2,2) + mu*beta*1.0_WP
-!!$
-!!$      end block DRDPHIDOT
-!!$
-!!$    end associate
+    ! Locals
+    type(scalar) :: aa, bb, cc
+    integer      :: i, j
+    
+    associate(phi=>U(1,:), phidot=> U(2,:), &
+         & npts=>this % get_num_state_vars(), &
+         & vel=>this % conv_speed, gamma => this % diff_coeff, &
+         & alpha=>coeff(1), beta=>coeff(2))      
+
+      aa = -(vel/(2.0_wp*this % dx) + gamma/(this % dx*this % dx))
+      bb = 2.0_wp*gamma/(this % dx*this % dx)
+      cc = (vel/(2.0_wp*this % dx) - gamma/(this % dx*this % dx))
+
+      if (this % sparse .eqv. .true.) then           
+
+         jacobian(1,:) = [0.0d0, bb, cc]
+         do concurrent(i = 2 : npts-1)
+            jacobian(i,:) = [aa, bb, cc]
+         end do
+         jacobian(npts,:) = [aa, bb, 0.0d0]
+
+      else
+
+         do i = 1, npts
+            do j = 1, npts
+               if (i .eq. j-1) then
+                  ! upper diagonal
+                  jacobian(i,j) = jacobian(i,j) + alpha*cc 
+               else if (i .eq. j) then
+                  ! diagonal
+                  jacobian(i,i) = jacobian(i,j) + beta + alpha*bb
+               else if (i .eq. j+1) then
+                  ! lower diagonal
+                  jacobian(i,j) = jacobian(i,j) + alpha*aa
+               else
+               end if
+            end do
+         end do
+
+      end if
+
+    end associate
 
   end subroutine add_jacobian
   

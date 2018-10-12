@@ -21,7 +21,7 @@ module nonlinear_algebra
   real(dp) :: rel_res_tol          = 1.0d-10
 
   integer  :: max_newton_iters     = 15
-  integer  :: print_level          = 2
+  integer  :: print_level          = 0
   
   public :: solve
 
