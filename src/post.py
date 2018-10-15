@@ -24,6 +24,29 @@ def exact1(x,t, gamma=0.01):
 def exact2(x,t, gamma=0.01):
     return (0.4*np.pi)**(-0.5)*np.exp(-2.5*(x-t)**2.0)
 
+def plot_rmse(summary, name):
+    '''
+    Plot ideal, total, forward and reverse modes
+    '''
+    
+    plt.figure()
+    
+    fig, ax = plt.subplots()
+    ax.spines['right'].set_visible(True)
+    ax.spines['top'].set_visible(True)
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')   
+
+    plt.loglog(summary['npts'], summary['rmse'] , '-o' , lw =2, mec='black', label='linear case', color=colors[0])
+    plt.legend(loc='upper right')
+    
+    plt.ylabel('RMSE') 
+    plt.xlabel('npts')
+    
+    plt.savefig(name, bbox_inches='tight', pad_inches=0.05)
+    
+    return
+
 def plot_space_snaps(data, sindices, xval, exact, name):
     '''
     Plot x vs u for different data sets
@@ -168,8 +191,6 @@ def plot_history(summary, name):
     ax.yaxis.set_ticks_position('left')   
 
     plt.loglog(jacobi['iteration'], jacobi['residual']    , '-' , lw =2, mec='black', label='jacobi', color=colors[0])
-    plt.loglog(seidel['iteration'], seidel['residual'] , '-' , lw =2, mec='black', label='seidel', color=colors[2])
-    plt.loglog(sor['iteration']   , sor['residual']       , '-' , lw =2, mec='black', label='sor'   , color=colors[4])
 
     plt.legend(loc='upper right')
     
@@ -206,6 +227,10 @@ def plot_time(summary, name):
     return
 
 ######################################################################
+spatial_rmse = npl.Map("imp-euler-spatial-error.dat")
+plot_rmse(spatial_rmse, "imp-euler-spatial-error.pdf")
+
+stop
 
 # t = np.arange(10, 40, step=.1)
 # plt.plot(t, exact1(15,t))
