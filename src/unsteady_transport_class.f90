@@ -125,9 +125,9 @@ contains
        residual(i) = residual(i) + a*phi(i-1) + b*phi(i) + c*phi(i+1) + phidot(i)
     end forall
     residual(npts) = residual(npts) + a*phi(npts-1) + b*phi(npts) + phidot(npts) -c*0.0_wp
-
+    
   end associate
-
+  
 end subroutine add_residual
 
   !===================================================================!
@@ -157,11 +157,11 @@ end subroutine add_residual
 
       if (this % sparse .eqv. .true.) then           
 
-         jacobian(1,:) = [0.0d0, beta + alpha*bb, alpha*cc]
+         jacobian(1,:) = jacobian(1,:) + [0.0d0, beta + alpha*bb, alpha*cc]
          do concurrent(i = 2 : npts-1)
-            jacobian(i,:) = [alpha*aa, beta + alpha*bb, alpha*cc]
+            jacobian(i,:) =  jacobian(i,:) + [alpha*aa, beta + alpha*bb, alpha*cc]
          end do
-         jacobian(npts,:) = [alpha*aa, beta + alpha*bb, 0.0d0]
+         jacobian(npts,:) = jacobian(npts,:) + [alpha*aa, beta + alpha*bb, 0.0d0]
 
       else
 

@@ -39,13 +39,14 @@ contains
   ! Newton solve for condensed form of equations
   !==================================================================!
   
-  subroutine newton_solve_condensed(system, coeff, t, U, X)
+  subroutine newton_solve_condensed(system, coeff, t, U, X, rhs)
 
     class(dynamics) , intent(inout) :: system
     type(scalar)    , intent(in)    :: coeff(:)
     type(scalar)    , intent(in)    :: t
     type(scalar)    , intent(inout) :: U(:,:)
     type(scalar)   , intent(in)     :: X(:,:)
+    type(scalar)   , intent(in), optional :: rhs(:)
    
     ! Norms for tracking progress
     real(dp)                                  :: abs_res_norm = 0
@@ -78,7 +79,11 @@ contains
 
        res = 0.0d0
        call system % add_residual(res, U, X)
-       
+       if (present(rhs)) then
+          ! Handle arbitrary rhs external to system
+          res = res + rhs
+       end if
+
        jac = 0.0d0
        call system % add_jacobian(jac, coeff, U, X)
        
