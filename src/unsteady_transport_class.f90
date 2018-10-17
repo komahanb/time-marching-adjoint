@@ -32,6 +32,7 @@ module unsteady_transport_class
      ! Implement deferred procedures from superclasses
      procedure :: add_residual
      procedure :: add_jacobian
+     procedure :: add_jacobian_vector_product => add_jacobian_vector_product
      procedure :: get_initial_condition
      
      ! Destructor
@@ -125,11 +126,11 @@ contains
        residual(i) = residual(i) + a*phi(i-1) + b*phi(i) + c*phi(i+1) + phidot(i)
     end forall
     residual(npts) = residual(npts) + a*phi(npts-1) + b*phi(npts) + phidot(npts) -c*0.0_wp
-    
+
   end associate
   
-end subroutine add_residual
-
+  end subroutine add_residual
+  
   !===================================================================!
   ! Jacobian assembly at each time step. 
   !===================================================================!
@@ -186,6 +187,71 @@ end subroutine add_residual
     end associate
 
   end subroutine add_jacobian
+  
+  !=====================================================================!
+  ! Routine to return the product of jacobian matrix with a compatible
+  ! vector.
+  !=====================================================================!
+  
+  pure subroutine add_jacobian_vector_product(this, pdt, vec, scalars, U, X)
+
+    class(unsteady_transport), intent(inout) :: this
+    type(scalar)   , intent(inout) :: pdt(:)
+    type(scalar)   , intent(in)    :: vec(:)
+    type(scalar)   , intent(in)    :: scalars(:)
+    type(scalar)   , intent(in)    :: U(:,:)
+    type(scalar)   , intent(in)    :: X(:,:)
+
+    ! Locals
+    type(scalar) :: aa, bb, cc
+    integer      :: i, j
+
+    associate(phi=>U(1,:), phidot=> U(2,:), &
+         & npts=>this % get_num_state_vars(), &
+         & vel=>this % conv_speed, gamma => this % diff_coeff, &
+         & alpha=>scalars(1), beta=>scalars(2))      
+
+      aa = -(vel/(2.0_wp*this % dx) + gamma/(this % dx*this % dx))
+      bb = 2.0_wp*gamma/(this % dx*this % dx)
+      cc = (vel/(2.0_wp*this % dx) - gamma/(this % dx*this % dx))
+
+      if (this % sparse .eqv. .true.) then           
+
+         pdt(1) = pdt(1) + dot_product([beta + alpha*bb, alpha*cc], vec(1:2))
+         
+         !jacobian(1,:) = jacobian(1,:) + [0.0d0, beta + alpha*bb, alpha*cc]
+         do concurrent(i = 2 : npts-1)
+            !pdt(i) = pdt(i) + 
+            pdt(i) = pdt(i) + dot_product([alpha*aa, beta + alpha*bb, alpha*cc], vec(i-1:i+1))
+            !jacobian(i,:) =  jacobian(i,:) + [alpha*aa, beta + alpha*bb, alpha*cc]
+         end do
+         !         pdt(npts) = pdt(npts) +
+         pdt(npts) = pdt(npts) + dot_product([alpha*aa, beta + alpha*bb], vec(npts-1:npts))
+         !jacobian(npts,:) = jacobian(npts,:) + [alpha*aa, beta + alpha*bb, 0.0d0]
+         
+      else
+
+         do i = 1, npts
+            do j = 1, npts
+               if (i .eq. j-1) then
+                  ! upper diagonal
+                  !jacobian(i,j) = jacobian(i,j) + alpha*cc 
+               else if (i .eq. j) then
+                  ! diagonal
+                  !jacobian(i,i) = jacobian(i,j) + beta + alpha*bb
+               else if (i .eq. j+1) then
+                  ! lower diagonal
+                  !jacobian(i,j) = jacobian(i,j) + alpha*aa
+               else
+               end if
+            end do
+         end do
+
+      end if
+
+    end associate
+
+  end subroutine add_jacobian_vector_product
   
   !===================================================================!
   ! Sets the initial condition for use in the integator. 

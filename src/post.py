@@ -227,71 +227,67 @@ def plot_time(summary, name):
     return
 
 ######################################################################
-spatial_rmse = npl.Map("imp-euler-spatial-error.dat")
-plot_rmse(spatial_rmse, "imp-euler-spatial-error.pdf")
-
-stop
-
-# t = np.arange(10, 40, step=.1)
-# plt.plot(t, exact1(15,t))
-# plt.plot(t, exact1(25,t))
-# plt.show()
-# stop
-
-nx = 500
-ny = 3001
+nx     = 500
+ny     = 3001
 tindex = 0
-
+ 
 exp_euler = npl.Map("case1-transport-explicit-euler.dat")
 exp_euler_new = {}
-exp_euler_new['time'] = exp_euler['time'].reshape((nx,ny))
-exp_euler_new['x'] = exp_euler['x'].reshape((nx,ny))
+exp_euler_new['time']  = exp_euler['time'].reshape((nx,ny))
+exp_euler_new['x']     = exp_euler['x'].reshape((nx,ny))
 exp_euler_new['state'] = exp_euler['state'].reshape((nx,ny))
-
-plot_space_snaps(exp_euler_new, [125,250], [15.0, 25.0], exact1, 'case1-spacesnap-expeuler.pdf')
-
-stop
-
-## avals = exp_euler_new['time'][250,:]
-## xvals = exp_euler_new['x'][250,:]
-
-## #plt.plot(avals, exp_euler_new['state'][::500,:])
-## #plt.show()
-## print avals
-## print xvals
-## stop
-## for aa in avals:
-##     print aa
-
-
 
 imp_euler = npl.Map("case1-transport-implicit-euler.dat")
 imp_euler_new = {}
-imp_euler_new['time'] = imp_euler['time'].reshape((nx,ny))
-imp_euler_new['x'] = imp_euler['x'].reshape((nx,ny))
+imp_euler_new['time']  = imp_euler['time'].reshape((nx,ny))
+imp_euler_new['x']     = imp_euler['x'].reshape((nx,ny))
 imp_euler_new['state'] = imp_euler['state'].reshape((nx,ny))
 
 cni = npl.Map("case1-transport-cni.dat")
 cni_new = {}
-cni_new['time'] = cni['time'].reshape((nx,ny))
-cni_new['x'] = cni['x'].reshape((nx,ny))
+cni_new['time']  = cni['time'].reshape((nx,ny))
+cni_new['x']     = cni['x'].reshape((nx,ny))
 cni_new['state'] = cni['state'].reshape((nx,ny))
+
+dirk2 = npl.Map("case1-transport-implicit-dirk2.dat")
+dirk2_new = {}
+dirk2_new['time']  = dirk2['time'].reshape((nx,ny))
+dirk2_new['x']     = dirk2['x'].reshape((nx,ny))
+dirk2_new['state'] = dirk2['state'].reshape((nx,ny))
+
+dirk3 = npl.Map("case1-transport-implicit-dirk3.dat")
+dirk3_new = {}
+dirk3_new['time']  = dirk3['time'].reshape((nx,ny))
+dirk3_new['x']     = dirk3['x'].reshape((nx,ny))
+dirk3_new['state'] = dirk3['state'].reshape((nx,ny))
+
+dirk4 = npl.Map("case1-transport-implicit-dirk4.dat")
+dirk4_new = {}
+dirk4_new['time']  = dirk4['time'].reshape((nx,ny))
+dirk4_new['x']     = dirk4['x'].reshape((nx,ny))
+dirk4_new['state'] = dirk4['state'].reshape((nx,ny))
 
 solutions = {}
 solutions['exp_euler'] = exp_euler_new
 solutions['imp_euler'] = imp_euler_new
-solutions['cni'] = cni_new
+solutions['cni']       = cni_new
+solutions['dirk2']     = dirk2_new
+solutions['dirk3']     = dirk3_new
+solutions['dirk4']     = dirk4_new
 
 #plot_solution(solutions, tindex, exact1, 'linear_solution.pdf')
 
 # Case 1
-#plot_time_snaps(exp_euler_new, [1000,2000,3000], exact1, 'case1-timesnaps-expeuler.pdf')
-#plot_time_snaps(imp_euler_new, [1000,2000,3000], exact1, 'case1-timesnaps-impeuler.pdf')
-#plot_time_snaps(cni_new      , [1000,2000,3000], exact1, 'case1-timesnaps-cni.pdf')
+plot_time_snaps(exp_euler_new, [1000,2000,3000], exact1, 'case1-timesnaps-expeuler.pdf')
+plot_time_snaps(imp_euler_new, [1000,2000,3000], exact1, 'case1-timesnaps-impeuler.pdf')
+plot_time_snaps(cni_new      , [1000,2000,3000], exact1, 'case1-timesnaps-cni.pdf')
+plot_time_snaps(dirk2_new    , [1000,2000,3000], exact1, 'case1-timesnaps-dirk2.pdf')
+plot_time_snaps(dirk3_new    , [1000,2000,3000], exact1, 'case1-timesnaps-dirk3.pdf')
+plot_time_snaps(dirk4_new    , [1000,2000,3000], exact1, 'case1-timesnaps-dirk4.pdf')
 
-
-plot_space_snaps(imp_euler_new, [125,250], [15.0, 25.0], exact1, 'case1-spacesnap-impeuler.pdf')
-plot_space_snaps(cni_new      , [125,250], [15.0, 25.0], exact1, 'case1-spacesnap-cni.pdf')
+stop
+#plot_space_snaps(imp_euler_new, [125,250], [15.0, 25.0], exact1, 'case1-spacesnap-impeuler.pdf')
+#plot_space_snaps(cni_new      , [125,250], [15.0, 25.0], exact1, 'case1-spacesnap-cni.pdf')
 
 stop
 
@@ -373,3 +369,32 @@ plot_nonlinear_solution(nonsol2, 'nonlinear_solution-case2.pdf')
 plot_nonlinear_solution(nonsol3, 'nonlinear_solution-case3.pdf')
 
 stop
+
+#spatial_rmse = npl.Map("imp-euler-spatial-error.dat")
+#plot_rmse(spatial_rmse, "imp-euler-spatial-error.pdf")
+
+stop
+
+# t = np.arange(10, 40, step=.1)
+# plt.plot(t, exact1(15,t))
+# plt.plot(t, exact1(25,t))
+# plt.show()
+# stop
+
+
+
+#plot_space_snaps(exp_euler_new, [125,250], [15.0, 25.0], exact1, 'case1-spacesnap-expeuler.pdf')
+
+#stop
+
+## avals = exp_euler_new['time'][250,:]
+## xvals = exp_euler_new['x'][250,:]
+
+## #plt.plot(avals, exp_euler_new['state'][::500,:])
+## #plt.show()
+## print avals
+## print xvals
+## stop
+## for aa in avals:
+##     print aa
+

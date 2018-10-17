@@ -148,11 +148,12 @@ contains
     ! Write data
     write(90, *) "time ", "x ", "y ", "z ",  "state "
     loop_vars : do j = 1, this % system % get_num_state_vars()
-       loop_time: do k = 1, this % total_num_steps 
-          write(90, *) this % time(k), this % system % x(1,j+1), &
+       loop_time: do k = 1, this % num_time_steps !total_num_steps !
+          write(90, *) this % time((this % num_stages+1)*k - this % num_stages), &
+               & this % system % x(1,j+1), &
                & this % system % x(2,j+1), &
                & this % system % x(3,j+1), &
-               & this % U (k, 1, j)
+               & this % U ((this % num_stages+1)*k - this % num_stages, 1, j)
        end do loop_time
     end do loop_vars
     
@@ -201,6 +202,8 @@ contains
             & p, &
             & ierr)   
 
+       !! if (k.eq.50) stop
+
     end do time
     
   end subroutine solve
@@ -214,7 +217,7 @@ contains
     class(integrator), intent(in) :: this
     
     print '("  >> Physical System      : " ,A10)' , this % system % get_description()
-    print '("  >> Num state variables  : " ,i4)'  , this % system % get_num_state_vars()
+    print '("  >> Num state variables  : " ,i8)'  , this % system % get_num_state_vars()
     print '("  >> Equation order       : " ,i4)'  , this % system % get_differential_order()
     print '("  >> Start time           : " ,F8.3)', this % tinit
     print '("  >> End time             : " ,F8.3)', this % tfinal

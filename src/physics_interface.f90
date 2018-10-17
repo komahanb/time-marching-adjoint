@@ -32,10 +32,14 @@ module physics_interface
      ! Provided procedures
      procedure :: get_num_state_vars      , set_num_state_vars
      procedure :: get_description         , set_description
-     
+
+     ! Dummy implementation. Interface it later
+     procedure :: add_jacobian_vector_product
+
      ! Deferred procedures
      procedure(add_residual_interface), deferred :: add_residual
      procedure(add_jacobian_interface), deferred :: add_jacobian
+     !procedure(add_jacobian_vector_product_interface), deferred :: add_jacobian_vector_product
 
   end type physics
 
@@ -76,6 +80,24 @@ module physics_interface
   end interface
 
 contains
+  
+  !=====================================================================!
+  ! Routine to return the product of jacobian matrix with a compatible
+  ! vector
+  ! =====================================================================!
+
+  pure subroutine add_jacobian_vector_product(this, pdt, vec, scalars, U, X)
+
+    class(physics) , intent(inout) :: this
+    type(scalar)   , intent(inout) :: pdt(:)
+    !type(scalar)   , intent(inout) :: jacobian(:,:)
+
+    type(scalar)   , intent(in)    :: vec(:)
+    type(scalar)   , intent(in)    :: scalars(:)
+    type(scalar)   , intent(in)    :: U(:,:)
+    type(scalar)   , intent(in)    :: X(:,:)
+
+  end subroutine add_jacobian_vector_product
  
   !===================================================================!
   ! Returns the number of state variables in the physical system
