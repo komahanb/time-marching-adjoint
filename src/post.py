@@ -24,73 +24,6 @@ def exact1(x,t, gamma=0.01):
 def exact2(x,t, gamma=0.01):
     return (0.4*np.pi)**(-0.5)*np.exp(-2.5*(x-t)**2.0)
 
-def plot_rmse(summary, name):
-    '''
-    Plot ideal, total, forward and reverse modes
-    '''
-    
-    plt.figure()
-    
-    fig, ax = plt.subplots()
-    ax.spines['right'].set_visible(True)
-    ax.spines['top'].set_visible(True)
-    ax.xaxis.set_ticks_position('bottom')
-    ax.yaxis.set_ticks_position('left')   
-
-    plt.loglog(summary['npts'], summary['rmse'] , '-o' , lw =2, mec='black', label='linear case', color=colors[0])
-    plt.legend(loc='upper right')
-    
-    plt.ylabel('RMSE') 
-    plt.xlabel('npts')
-    
-    plt.savefig(name, bbox_inches='tight', pad_inches=0.05)
-    
-    return
-
-def plot_space_snaps(data, sindices, xval, exact, name):
-    '''
-    Plot x vs u for different data sets
-    '''
-    
-    # Plot
-    plt.figure()    
-    fig, ax = plt.subplots()
-    ax.spines['right'].set_visible(True)
-    ax.spines['top'].set_visible(True)
-    ax.xaxis.set_ticks_position('bottom')
-    ax.yaxis.set_ticks_position('left')   
-    #ax.annotate('192,000 dof', xy=(4, 500))
-    #ax.annotate('2 million dof', xy=(25, 10000))
-    plt.axis([5, 45, -0.2, 1.0])
-    plt.xticks(np.arange(5, 50, step=5))
-
-    #avals = exp_euler_new['time'][250,:]
-    #xvals = exp_euler_new['x'][250,:]
-    
-    time0 = data['time'][sindices[0], :]
-    time1 = data['time'][sindices[1], :]
-
-    print time0
-    print time1
-    
-    #ax.annotate(('time = %gs') % time, xy=(30,0.5))
-    #ax.annotate(('\Delta t = %gs') % (0.001), xy=(30,0.4))
-    
-    # plot solutions on same graph
-    plt.plot(time0 , exact(xval[0], time0)           , '-' , lw =2, mec='black',  color=colors[6])
-    plt.plot(time0 , data['state'][sindices[0],:] , '-' , lw =2, mec='black', label='x=%2gs'%(xval), color=colors[7])
-
-    plt.plot(time1 , exact(xval[1], time1)           , '-' , lw =2, mec='black',  color=colors[8])
-    plt.plot(time1 , data['state'][sindices[1],:] , '-' , lw =2, mec='black', label='x=%2gs'%(xval), color=colors[9])
-    
-    plt.legend(loc='upper left', framealpha=0.0)
-    plt.xlabel('domain')
-    plt.ylabel('solution')
-
-    plt.savefig(name, bbox_inches='tight', pad_inches=0.05)
-        
-    return
-
 def plot_time_snaps(data, tindices, exact, name):
     '''
     Plot x vs u for different data sets
@@ -127,8 +60,44 @@ def plot_time_snaps(data, tindices, exact, name):
     plt.plot(x , exact(x, time2)              , '-' , lw =2, mec='black',  color=colors[4])
     plt.plot(x , data['state'][:,tindices[2]] , '-' , lw =2, mec='black', label='time=%2gs'%(time2), color=colors[5])
     
-    plt.legend(loc='upper left', framealpha=0.0)
+    plt.legend(loc='upper right', framealpha=0.0)
     plt.xlabel('domain')
+    plt.ylabel('solution')
+
+    plt.savefig(name, bbox_inches='tight', pad_inches=0.05)
+        
+    return
+
+def plot_space_snaps(data, sindices, times, exact, name):
+    '''
+    Plot x vs u for different data sets
+    '''
+    
+    # Plot
+    plt.figure()    
+    fig, ax = plt.subplots()
+    ax.spines['right'].set_visible(True)
+    ax.spines['top'].set_visible(True)
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')   
+    #ax.annotate('192,000 dof', xy=(4, 500))
+    #ax.annotate('2 million dof', xy=(25, 10000))
+    plt.axis([10, 40, -0.2, 1.0])
+    plt.xticks(np.arange(10, 45, step=5))
+
+    #plt.plt(time0, data['state'][sindices[0],:])
+    #ax.annotate(('time = %gs') % time, xy=(30,0.5))
+    #ax.annotate(('\Delta t = %gs') % (0.001), xy=(30,0.4))
+    
+    # plot solutions on same graph
+    plt.plot(data['time'][125,:] , exact(15, data['time'][125,:]) , '-' , lw =2, mec='black',  color=colors[0])
+    plt.plot(data['time'][125,:], data['state'][125,:], '-' , lw =2, mec='black', label='x=%2gs'%(15), color=colors[1])
+
+    plt.plot(data['time'][250,:] , exact(25, data['time'][250,:]) , '-' , lw =2, mec='black',  color=colors[2])
+    plt.plot(data['time'][250,:], data['state'][250,:], '-' , lw =2, mec='black', label='x=%2gs'%(25), color=colors[3])
+
+    plt.legend(loc='upper left', framealpha=0.0)
+    plt.xlabel('time')
     plt.ylabel('solution')
 
     plt.savefig(name, bbox_inches='tight', pad_inches=0.05)
@@ -174,33 +143,6 @@ def plot_solution(sets, tindex, exact, name):
         
     return
 
-def plot_history(summary, name):
-    '''
-    Plot ideal, total, forward and reverse modes
-    '''
-    jacobi = summary['jacobi']
-    seidel = summary['seidel']
-    sor = summary['sor']
-    
-    plt.figure()
-    
-    fig, ax = plt.subplots()
-    ax.spines['right'].set_visible(True)
-    ax.spines['top'].set_visible(True)
-    ax.xaxis.set_ticks_position('bottom')
-    ax.yaxis.set_ticks_position('left')   
-
-    plt.loglog(jacobi['iteration'], jacobi['residual']    , '-' , lw =2, mec='black', label='jacobi', color=colors[0])
-
-    plt.legend(loc='upper right')
-    
-    plt.ylabel('residual') 
-    plt.xlabel('number of iterations')
-    
-    plt.savefig(name, bbox_inches='tight', pad_inches=0.05)
-    
-    return
-
 def plot_time(summary, name):
     '''
     Plot computational time for jacobi, seidel and sor
@@ -227,41 +169,41 @@ def plot_time(summary, name):
     return
 
 ######################################################################
-nx     = 500
+nx     = 502
 ny     = 3001
 tindex = 0
  
-exp_euler = npl.Map("case1-transport-explicit-euler.dat")
+exp_euler = npl.Map("case2-transport-explicit-euler.dat")
 exp_euler_new = {}
 exp_euler_new['time']  = exp_euler['time'].reshape((nx,ny))
 exp_euler_new['x']     = exp_euler['x'].reshape((nx,ny))
 exp_euler_new['state'] = exp_euler['state'].reshape((nx,ny))
 
-imp_euler = npl.Map("case1-transport-implicit-euler.dat")
+imp_euler = npl.Map("case2-transport-implicit-euler.dat")
 imp_euler_new = {}
 imp_euler_new['time']  = imp_euler['time'].reshape((nx,ny))
 imp_euler_new['x']     = imp_euler['x'].reshape((nx,ny))
 imp_euler_new['state'] = imp_euler['state'].reshape((nx,ny))
 
-cni = npl.Map("case1-transport-cni.dat")
+cni = npl.Map("case2-transport-cni.dat")
 cni_new = {}
 cni_new['time']  = cni['time'].reshape((nx,ny))
 cni_new['x']     = cni['x'].reshape((nx,ny))
 cni_new['state'] = cni['state'].reshape((nx,ny))
 
-dirk2 = npl.Map("case1-transport-implicit-dirk2.dat")
+dirk2 = npl.Map("case2-transport-implicit-dirk2.dat")
 dirk2_new = {}
 dirk2_new['time']  = dirk2['time'].reshape((nx,ny))
 dirk2_new['x']     = dirk2['x'].reshape((nx,ny))
 dirk2_new['state'] = dirk2['state'].reshape((nx,ny))
 
-dirk3 = npl.Map("case1-transport-implicit-dirk3.dat")
+dirk3 = npl.Map("case2-transport-implicit-dirk3.dat")
 dirk3_new = {}
 dirk3_new['time']  = dirk3['time'].reshape((nx,ny))
 dirk3_new['x']     = dirk3['x'].reshape((nx,ny))
 dirk3_new['state'] = dirk3['state'].reshape((nx,ny))
 
-dirk4 = npl.Map("case1-transport-implicit-dirk4.dat")
+dirk4 = npl.Map("case2-transport-implicit-dirk4.dat")
 dirk4_new = {}
 dirk4_new['time']  = dirk4['time'].reshape((nx,ny))
 dirk4_new['x']     = dirk4['x'].reshape((nx,ny))
@@ -278,16 +220,28 @@ solutions['dirk4']     = dirk4_new
 #plot_solution(solutions, tindex, exact1, 'linear_solution.pdf')
 
 # Case 1
-plot_time_snaps(exp_euler_new, [1000,2000,3000], exact1, 'case1-timesnaps-expeuler.pdf')
-plot_time_snaps(imp_euler_new, [1000,2000,3000], exact1, 'case1-timesnaps-impeuler.pdf')
-plot_time_snaps(cni_new      , [1000,2000,3000], exact1, 'case1-timesnaps-cni.pdf')
-plot_time_snaps(dirk2_new    , [1000,2000,3000], exact1, 'case1-timesnaps-dirk2.pdf')
-plot_time_snaps(dirk3_new    , [1000,2000,3000], exact1, 'case1-timesnaps-dirk3.pdf')
-plot_time_snaps(dirk4_new    , [1000,2000,3000], exact1, 'case1-timesnaps-dirk4.pdf')
+plot_time_snaps(exp_euler_new, [1000,2000,3000], exact1, 'case2-timesnaps-expeuler.pdf')
+plot_time_snaps(imp_euler_new, [1000,2000,3000], exact1, 'case2-timesnaps-impeuler.pdf')
+plot_time_snaps(cni_new      , [1000,2000,3000], exact1, 'case2-timesnaps-cni.pdf')
+plot_time_snaps(dirk2_new    , [1000,2000,3000], exact1, 'case2-timesnaps-dirk2.pdf')
+plot_time_snaps(dirk3_new    , [1000,2000,3000], exact1, 'case2-timesnaps-dirk3.pdf')
+plot_time_snaps(dirk4_new    , [1000,2000,3000], exact1, 'case2-timesnaps-dirk4.pdf')
+
+plot_space_snaps(exp_euler_new, [125,250], [15.0, 25.0], exact1, 'case2-spacesnaps-expeuler.pdf')
+plot_space_snaps(imp_euler_new, [125,250], [15.0, 25.0], exact1, 'case2-spacesnaps-impeuler.pdf')
+plot_space_snaps(cni_new      , [125,250], [15.0, 25.0], exact1, 'case2-spacesnaps-cni.pdf')
+plot_space_snaps(dirk2_new    , [125,250], [15.0, 25.0], exact1, 'case2-spacesnaps-dirk2.pdf')
+plot_space_snaps(dirk3_new    , [125,250], [15.0, 25.0], exact1, 'case2-spacesnaps-dirk3.pdf')
+plot_space_snaps(dirk4_new    , [125,250], [15.0, 25.0], exact1, 'case2-spacesnaps-dirk4.pdf')
 
 stop
-#plot_space_snaps(imp_euler_new, [125,250], [15.0, 25.0], exact1, 'case1-spacesnap-impeuler.pdf')
-#plot_space_snaps(cni_new      , [125,250], [15.0, 25.0], exact1, 'case1-spacesnap-cni.pdf')
+
+time1 = dirk4_new['time'][250,:]
+plt.plt(time1, dirk4_new['state'][250,:])
+plt.show()
+
+#plot_space_snaps(imp_euler_new, [125,250], [15.0, 25.0], exact1, 'case2-spacesnap-impeuler.pdf')
+#plot_space_snaps(cni_new      , [125,250], [15.0, 25.0], exact1, 'case2-spacesnap-cni.pdf')
 
 stop
 

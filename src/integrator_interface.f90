@@ -115,6 +115,7 @@ contains
     if(allocated(this % U)) deallocate(this % U)
     if(allocated(this % time)) deallocate(this % time)
     if(allocated(this % system)) deallocate(this % system)
+    if(allocated(this % X)) deallocate(this % x)
     
   end subroutine destruct
 
