@@ -161,11 +161,11 @@ contains
 
       if (this % sparse .eqv. .true.) then
          
-         jacobian(1,:) = jacobian(1,:) + [1.0d0, 0.0d0, 0.0d0]
+         jacobian(1,:) = jacobian(1,:) + [0.0d0, alpha*1.0d0, 0.0d0]
          do concurrent(i = 2:npts-1)
             jacobian(i,:) = jacobian(i,:) + [alpha*aa, beta + alpha*bb, alpha*cc]
          end do
-         jacobian(npts,:) = jacobian(npts,:) + [0.0d0, 0.0d0, 1.0d0]
+         jacobian(npts,:) = jacobian(npts,:) + [0.0d0, alpha*1.0d0, 0.0d0]
 
       else
 

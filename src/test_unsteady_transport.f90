@@ -12,35 +12,35 @@ program test_time_integration
   
   implicit none
 
-  test_transport: block
-
-  class(dynamics), allocatable :: system
-  type(scalar)   , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
-
-    ! case 1
-    allocate(system, source = unsteady_transport( &
-         & diffusion_coeff = 0.01_WP, &
-         & convective_velocity = 1.0_WP, &
-         & bounds = bounds, npts=500, &
-         & sparse = .false.))
-    call test_integrators(system, 'case1')
-    deallocate(system)
-    
-    !case 2
-    allocate(system, source = unsteady_transport( &
-         & diffusion_coeff = 0.0_WP, &
-         & convective_velocity = 1.0_WP, &
-         & bounds = bounds, npts=500, &
-         & sparse = .false.))
-    call test_integrators(system, 'case2')
-    deallocate(system)
-
-  end block test_transport
+!!$  test_transport: block
+!!$
+!!$  class(dynamics), allocatable :: system
+!!$  type(scalar)   , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
+!!$
+!!$    ! case 1
+!!$    allocate(system, source = unsteady_transport( &
+!!$         & diffusion_coeff = 0.01_WP, &
+!!$         & convective_velocity = 1.0_WP, &
+!!$         & bounds = bounds, npts=4, &
+!!$         & sparse = .false.))
+!!$    call test_integrators(system, 'case1')
+!!$    deallocate(system)
+!!$    
+!!$    !case 2
+!!$    allocate(system, source = unsteady_transport( &
+!!$         & diffusion_coeff = 0.0_WP, &
+!!$         & convective_velocity = 1.0_WP, &
+!!$         & bounds = bounds, npts=500, &
+!!$         & sparse = .false.))
+!!$    call test_integrators(system, 'case2')
+!!$    deallocate(system)
+!!$
+!!$  end block test_transport
 
   spatial_convergence : block
 
     real(wp) :: rmse(6), h
-    integer  :: npts = 100
+    integer  :: npts = 50
     integer  :: n
 
     ! grid spacing
@@ -137,7 +137,7 @@ contains
 !!$          t = bdfobj % time(k)
 !!$          x = system % X(1,j+1)
 !!$          error = bdfobj % U (k, 1, j) - exact(t, x)
-!!$          rmse(2) = rmse(2) + error**2.0_wp
+!!$          rmse(2) = rmse(2) + erevaluror**2.0_wp
 !!$       end do
 !!$    end do
 !!$    rmse(2) = sqrt(rmse(2)/(system % get_num_state_vars()*bdfobj % num_time_steps))
@@ -197,7 +197,7 @@ contains
          & diffusion_coeff = 0.01_WP, &
          & convective_velocity = 1.0_WP, &
          & bounds = bounds, npts=npts, &
-         & sparse = .false.))
+         & sparse = .true.))
 
     ! dirk2
     dirkobj = DIRK(system = system, tinit=10.0d0, tfinal = 11.0d0, &
