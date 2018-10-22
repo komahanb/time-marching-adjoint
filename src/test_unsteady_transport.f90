@@ -22,7 +22,7 @@ program test_time_integration
          & diffusion_coeff = 0.01_WP, &
          & convective_velocity = 1.0_WP, &
          & bounds = bounds, npts=500, &
-         & sparse = .true.))
+         & sparse = .false.))
     call test_integrators(system, 'case1')
     deallocate(system)
     
@@ -31,7 +31,7 @@ program test_time_integration
          & diffusion_coeff = 0.0_WP, &
          & convective_velocity = 1.0_WP, &
          & bounds = bounds, npts=500, &
-         & sparse = .true.))
+         & sparse = .false.))
     call test_integrators(system, 'case2')
     deallocate(system)
 
@@ -45,7 +45,9 @@ program test_time_integration
 
     ! grid spacing
     open(12, file='spatial-error.dat')
-    write(12, *) "npts ", "h ", "dirk2 ", "dirk3 ", "dirk4 ", "exp-euler ", "imp-euler ", "cni "
+    write(12, *) "npts ", "h ", &
+         & "dirk2 ", "dirk3 ", "dirk4 ", &
+         & "exp-euler ", "imp-euler ", "cni "
 
     do n = 1, 4
        h = 40.0d0/dble(npts+1)
@@ -195,7 +197,7 @@ contains
          & diffusion_coeff = 0.01_WP, &
          & convective_velocity = 1.0_WP, &
          & bounds = bounds, npts=npts, &
-         & sparse = .true.))
+         & sparse = .false.))
 
     ! dirk2
     dirkobj = DIRK(system = system, tinit=10.0d0, tfinal = 11.0d0, &

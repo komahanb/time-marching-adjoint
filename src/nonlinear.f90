@@ -435,10 +435,10 @@ contains
     !  computing everything newly here)
     jac = 0.0d0
 
-    nvars = size(U(1,:))   
+    nvars = system % get_num_state_vars()
 
     ! Allocate required arrays
- !   allocate(pstate(nvars)); pstate = 0.0d0;
+    !   allocate(pstate(nvars)); pstate = 0.0d0;
     allocate(R(nvars));      R = 0.0d0;
     allocate(Rtmp(nvars));   Rtmp = 0.0d0;
 

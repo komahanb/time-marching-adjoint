@@ -83,7 +83,7 @@ contains
     
     ! Set the number of state variables based on spatial
     ! discretization of the governing equations
-    call this % set_num_state_vars(npts) ! ignore boundary nodes
+    call this % set_num_state_vars(npts+2) ! include boundary nodes in system
     
   end function construct_unsteady_transport
   
@@ -110,8 +110,11 @@ contains
 
     ! Locals
     type(scalar) :: a, b, c
+    real(wp) :: d, e
     integer :: i
 
+    d = 0.0d0
+    e = 0.0d0
     associate(phi=>U(1,:), phidot=> U(2,:), &
          & npts=>this % get_num_state_vars(), &
          & vel=>this % conv_speed, gamma => this % diff_coeff)
@@ -121,11 +124,11 @@ contains
     c = (vel/(2.0_wp*this % dx) - gamma/(this % dx*this % dx))
 
     ! Residual with BC applied
-    residual(1) = residual(1) +  b*phi(1) + c*phi(2) + phidot(1) -a*0.0_wp
-    forall(i = 2:npts-1)
-       residual(i) = residual(i) + a*phi(i-1) + b*phi(i) + c*phi(i+1) + phidot(i)
+    residual(1) = residual(1) + phi(1) - d
+    forall(i = 2 : npts-1)
+       residual(i) = residual(i) + phidot(i) + a*phi(i-1) + b*phi(i) + c*phi(i+1) 
     end forall
-    residual(npts) = residual(npts) + a*phi(npts-1) + b*phi(npts) + phidot(npts) -c*0.0_wp
+    residual(npts) = residual(npts) + phi(npts) - e
 
   end associate
   
@@ -151,22 +154,23 @@ contains
          & npts=>this % get_num_state_vars(), &
          & vel=>this % conv_speed, gamma => this % diff_coeff, &
          & alpha=>coeff(1), beta=>coeff(2))      
-
+      
       aa = -(vel/(2.0_wp*this % dx) + gamma/(this % dx*this % dx))
       bb = 2.0_wp*gamma/(this % dx*this % dx)
       cc = (vel/(2.0_wp*this % dx) - gamma/(this % dx*this % dx))
 
-      if (this % sparse .eqv. .true.) then           
-
-         jacobian(1,:) = jacobian(1,:) + [0.0d0, beta + alpha*bb, alpha*cc]
-         do concurrent(i = 2 : npts-1)
-            jacobian(i,:) =  jacobian(i,:) + [alpha*aa, beta + alpha*bb, alpha*cc]
+      if (this % sparse .eqv. .true.) then
+         
+         jacobian(1,:) = jacobian(1,:) + [1.0d0, 0.0d0, 0.0d0]
+         do concurrent(i = 2:npts-1)
+            jacobian(i,:) = jacobian(i,:) + [alpha*aa, beta + alpha*bb, alpha*cc]
          end do
-         jacobian(npts,:) = jacobian(npts,:) + [alpha*aa, beta + alpha*bb, 0.0d0]
+         jacobian(npts,:) = jacobian(npts,:) + [0.0d0, 0.0d0, 1.0d0]
 
       else
 
-         do i = 1, npts
+         jacobian(1,1) = alpha*1.0d0
+         do i = 2, npts-1
             do j = 1, npts
                if (i .eq. j-1) then
                   ! upper diagonal
@@ -181,6 +185,7 @@ contains
                end if
             end do
          end do
+         jacobian(npts,npts) = alpha*1.0d0
 
       end if
 
@@ -217,35 +222,35 @@ contains
 
       if (this % sparse .eqv. .true.) then           
 
-         pdt(1) = pdt(1) + dot_product([beta + alpha*bb, alpha*cc], vec(1:2))
-         
-         !jacobian(1,:) = jacobian(1,:) + [0.0d0, beta + alpha*bb, alpha*cc]
-         do concurrent(i = 2 : npts-1)
-            !pdt(i) = pdt(i) + 
-            pdt(i) = pdt(i) + dot_product([alpha*aa, beta + alpha*bb, alpha*cc], vec(i-1:i+1))
-            !jacobian(i,:) =  jacobian(i,:) + [alpha*aa, beta + alpha*bb, alpha*cc]
-         end do
-         !         pdt(npts) = pdt(npts) +
-         pdt(npts) = pdt(npts) + dot_product([alpha*aa, beta + alpha*bb], vec(npts-1:npts))
-         !jacobian(npts,:) = jacobian(npts,:) + [alpha*aa, beta + alpha*bb, 0.0d0]
+!!$         pdt(1) = pdt(1) + dot_product([beta + alpha*bb, alpha*cc], vec(1:2))
+!!$         
+!!$         !jacobian(1,:) = jacobian(1,:) + [0.0d0, beta + alpha*bb, alpha*cc]
+!!$         do concurrent(i = 2 : npts-1)
+!!$            !pdt(i) = pdt(i) + 
+!!$            pdt(i) = pdt(i) + dot_product([alpha*aa, beta + alpha*bb, alpha*cc], vec(i-1:i+1))
+!!$            !jacobian(i,:) =  jacobian(i,:) + [alpha*aa, beta + alpha*bb, alpha*cc]
+!!$         end do
+!!$         !         pdt(npts) = pdt(npts) +
+!!$         pdt(npts) = pdt(npts) + dot_product([alpha*aa, beta + alpha*bb], vec(npts-1:npts))
+!!$         !jacobian(npts,:) = jacobian(npts,:) + [alpha*aa, beta + alpha*bb, 0.0d0]
          
       else
 
-         do i = 1, npts
-            do j = 1, npts
-               if (i .eq. j-1) then
-                  ! upper diagonal
-                  !jacobian(i,j) = jacobian(i,j) + alpha*cc 
-               else if (i .eq. j) then
-                  ! diagonal
-                  !jacobian(i,i) = jacobian(i,j) + beta + alpha*bb
-               else if (i .eq. j+1) then
-                  ! lower diagonal
-                  !jacobian(i,j) = jacobian(i,j) + alpha*aa
-               else
-               end if
-            end do
-         end do
+!!$         do i = 1, npts
+!!$            do j = 1, npts
+!!$               if (i .eq. j-1) then
+!!$                  ! upper diagonal
+!!$                  !jacobian(i,j) = jacobian(i,j) + alpha*cc 
+!!$               else if (i .eq. j) then
+!!$                  ! diagonal
+!!$                  !jacobian(i,i) = jacobian(i,j) + beta + alpha*bb
+!!$               else if (i .eq. j+1) then
+!!$                  ! lower diagonal
+!!$                  !jacobian(i,j) = jacobian(i,j) + alpha*aa
+!!$               else
+!!$               end if
+!!$            end do
+!!$         end do
 
       end if
 
@@ -267,7 +272,7 @@ contains
 
     pi = 4.0_wp*atan(1.0_wp)
     
-    associate(phi=>U(1,:), x=>this % X(1,:))
+    associate(phi=>U(1,:), x=>this%X(1,:))
       
       do i=1,this % get_num_state_vars()
          phi(i) = (0.4_wp*pi)**(-0.5_wp)*exp(-2.5_wp*(x(i)-10.0_wp)*(x(i)-10.0_wp))
