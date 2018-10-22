@@ -79,14 +79,19 @@ contains
 
        res = 0.0d0
        call system % add_residual(res, U, X)
+       
+       ! Handle arbitrary rhs external to system
        if (present(rhs)) then
-          ! Handle arbitrary rhs external to system
           res = res + rhs
        end if
 
        jac = 0.0d0
-       call system % add_jacobian(jac, coeff, U, X)
-       
+       if (system % approximate_jacobian .eqv. .true.) then
+          call approximate_jacobian(system, jac, coeff, U, X)
+       else
+          call system % add_jacobian(jac, coeff, U, X)
+       end if       
+
        ! Find norm of the residual
        abs_res_norm = norm(res)
        if ( n .eq. 1) init_norm = abs_res_norm
@@ -104,7 +109,7 @@ contains
           conv = .false.
           exit newton
        end if
-
+              
        ! Solve the linear system
        if (system % sparse .eqv. .true.) then
           ! works currently only for tridiagonal systems
@@ -112,7 +117,7 @@ contains
           call tdma(jac, res, dq)
        else
           dq = linsolve(jac, -res)
-       end if
+       end if       
 
        forall(jj=1:system % get_differential_order() + 1)
           U(jj,:) = U(jj,:) + coeff(jj)*dq
@@ -426,17 +431,22 @@ contains
     type(scalar) , allocatable, dimension(:)     :: R, Rtmp            ! original residual and perturbed residual
 
     ! Scalars
-    type(scalar)                                 :: dh = 1.0d-12       ! finite-diff step size
-    type(scalar) , intent(in)                    :: coeff(:)           ! linearization coefficients
-    integer                                      :: m                  ! loop variables
+    type(scalar)                                 :: dh = 1.0d-6       ! finite-diff step size
+    type(scalar) , intent(in)                    :: coeff(:)          ! linearization coefficients
+    integer                                      :: m                 ! loop variables
     integer :: nvars
+    
+    if (system % get_differential_order() .gt. 2) then
+       print *, 'error: using approximate jacobian for system order > 2'
+       stop
+    end if
 
     !  Zero the supplied jacobian matrix for safety (as we are
     !  computing everything newly here)
     jac = 0.0d0
 
     nvars = system % get_num_state_vars()
-
+       
     ! Allocate required arrays
     !   allocate(pstate(nvars)); pstate = 0.0d0;
     allocate(R(nvars));      R = 0.0d0;
