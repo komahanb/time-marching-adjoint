@@ -12,52 +12,58 @@ program test_time_integration
   
   implicit none
   
-  test_transport: block
-
-    class(dynamics), allocatable :: system
-    type(scalar)   , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
-
-    ! case 1
-    allocate(system, source = unsteady_transport( &
-         & diffusion_coeff = 0.01_WP, &
-         & convective_velocity = 1.0_WP, &
-         & bounds = bounds, npts=500, &
-         & sparse = .true.))
-    call test_integrators(system, 'case1')
-    deallocate(system)
-
-    !case 2
-    allocate(system, source = unsteady_transport( &
-         & diffusion_coeff = 0.0_WP, &
-         & convective_velocity = 1.0_WP, &
-         & bounds = bounds, npts=500, &
-         & sparse = .true.))
-    call test_integrators(system, 'case2')
-    deallocate(system)
-
-  end block test_transport
-
-  stop
+!!$  test_transport: block
+!!$
+!!$    class(dynamics), allocatable :: system
+!!$    type(scalar)   , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
+!!$
+!!$    ! case 1
+!!$    allocate(system, source = unsteady_transport( &
+!!$         & diffusion_coeff = 0.01_WP, &
+!!$         & convective_velocity = 1.0_WP, &
+!!$         & bounds = bounds, npts=500, &
+!!$         & sparse = .true.))
+!!$    call test_integrators(system, 'case1')
+!!$    deallocate(system)
+!!$
+!!$    !case 2
+!!$    allocate(system, source = unsteady_transport( &
+!!$         & diffusion_coeff = 0.0_WP, &
+!!$         & convective_velocity = 1.0_WP, &
+!!$         & bounds = bounds, npts=500, &
+!!$         & sparse = .true.))
+!!$    call test_integrators(system, 'case2')
+!!$    deallocate(system)
+!!$
+!!$  end block test_transport
 
   spatial_convergence : block
 
-    real(wp) :: rmse(6), h
-    integer  :: npts = 50
+    real(wp) :: rmse(6), time(6), h
+    integer  :: npts = 400
     integer  :: n
 
+    
+    open(13, file='timing.dat')
+    write(13, *) "npts ", "h ", &
+         & "dirk2 ", "dirk3 ", "dirk4 ", &
+         & "imp-euler ", "exp-euler ", "cni "
+    
     ! grid spacing
     open(12, file='spatial-error.dat')
     write(12, *) "npts ", "h ", &
          & "dirk2 ", "dirk3 ", "dirk4 ", &
-         & "exp-euler ", "imp-euler ", "cni "
-
-    do n = 1, 4
-       h = 40.0d0/dble(npts+1)
-       call evaluate_spatial_error(npts, rmse)
+         & "imp-euler ", "exp-euler ","cni "
+    h = 0.1d0
+    do n = 1, 5
+       call evaluate_spatial_error(npts, h, rmse, time)
        write(12, *) npts, h, rmse(1), rmse(2), rmse(3), rmse(4), rmse(5), rmse(6)
-       npts = npts*10
+       write(13, *) npts, h, time(1), time(2), time(3), time(4), time(5), time(6)
+       h = h/2.0d0
+       npts = npts*2
     end do
     close(12)
+    close(13)
 
   end block spatial_convergence
 
@@ -176,129 +182,148 @@ contains
 
   end function exact
   
-  subroutine evaluate_spatial_error(npts, rmse)
+  subroutine evaluate_spatial_error(npts, h, rmse, time)
 
     use dynamic_physics_interface             , only : dynamics
-    use unsteady_transport_class              , only : unsteady_transport   
-
+    use unsteady_transport_class              , only : unsteady_transport
+    
+    use backward_differences_integrator_class , only : bdf
     use abm_integrator_class                  , only : ABM
     use runge_kutta_integrator_class          , only : DIRK
     
     integer         , intent(in)  :: npts
-    real(wp)        , intent(out) :: rmse(6)
+    real(wp)        , intent(out) :: rmse(6), time(6)
     type(scalar)    , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
     class(dynamics) , allocatable :: system
     integer                       :: j, k
-    real(wp)                      :: error, t, x
+    real(wp)                      :: error, t, x, h
     
-    type(ABM)     :: exp_euler, imp_euler, cni
+    type(ABM)     :: imp_euler, cni
+    type(BDF)     :: exp_euler
     type(dirk)    :: dirkobj
 
+    real(wp) :: tic, toc
+    
     ! Case 1
     allocate(system, source = unsteady_transport( &
          & diffusion_coeff = 0.01_WP, &
          & convective_velocity = 1.0_WP, &
          & bounds = bounds, npts=npts, &
-         & sparse = .false.))
+         & sparse = .true.))
 
     ! dirk2
-    dirkobj = DIRK(system = system, tinit=10.0d0, tfinal = 11.0d0, &
-         & h=1.0d-2, implicit=.true., accuracy_order=2)
+    call cpu_time(tic)           
+    dirkobj = DIRK(system = system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=h, implicit=.true., accuracy_order=2)
     call dirkobj % to_string()
     call dirkobj % solve()
+    call cpu_time(toc)
+    time(1) = toc - tic
     rmse(1) = 0.0d0
     do j = 1, system % get_num_state_vars()
-       do k = 2,2!,1, dirkobj % num_time_steps          
+       do k = 1, dirkobj % num_time_steps          
           t = dirkobj % time((dirkobj % num_stages+1)*k - dirkobj % num_stages)
           x = system % X(1,j)
           error = dirkobj % U ((dirkobj % num_stages+1)*k - dirkobj % num_stages, 1, j) - exact(t, x)
-          print *, x, dirkobj % U ((dirkobj % num_stages+1)*k - dirkobj % num_stages, 1, j), exact(t, x)
           rmse(1) = rmse(1) + error**2.0_wp
        end do
     end do
-    rmse(1) = sqrt(rmse(1)/(system % get_num_state_vars()))
-
-stop
+    rmse(1) = sqrt(rmse(1)/(dirkobj % num_time_steps * system % get_num_state_vars()))
 
     ! dirk 3
-    dirkobj = DIRK(system = system, tinit=10.0d0, tfinal = 11.0d0, &
-         & h=1.0d-2, implicit=.true., accuracy_order=3)
+    call cpu_time(tic)
+    dirkobj = DIRK(system = system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=h, implicit=.true., accuracy_order=3)
     call dirkobj % to_string()
     call dirkobj % solve()
+    call cpu_time(toc)
+    time(2) = toc - tic
     rmse(2) = 0.0d0
     do j = 1, system % get_num_state_vars()
-       do k = 2,2!1, dirkobj % num_time_steps          
+       do k = 1, dirkobj % num_time_steps          
           t = dirkobj % time((dirkobj % num_stages+1)*k - dirkobj % num_stages)
           x = system % X(1,j)
           error = dirkobj % U ((dirkobj % num_stages+1)*k - dirkobj % num_stages, 1, j) - exact(t, x)
           rmse(2) = rmse(2) + error**2.0_wp
        end do
     end do
-    rmse(2) = sqrt(rmse(2)/(system % get_num_state_vars()))
+    rmse(2) = sqrt(rmse(2)/(dirkobj % num_time_steps * system % get_num_state_vars()))
 
     ! dirk 4
-    dirkobj = DIRK(system = system, tinit=10.0d0, tfinal = 11.0d0, &
-         & h=1.0d-2, implicit=.true., accuracy_order=4)
+    call cpu_time(tic)
+    dirkobj = DIRK(system = system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=h, implicit=.true., accuracy_order=4)
     call dirkobj % to_string()
     call dirkobj % solve()
+    call cpu_time(toc)
+    time(3) = toc - tic
     rmse(3) = 0.0d0
     do j = 1, system % get_num_state_vars()
-       do k = 2,2!1, dirkobj % num_time_steps          
+       do k = 1, dirkobj % num_time_steps          
           t = dirkobj % time((dirkobj % num_stages+1)*k - dirkobj % num_stages)
           x = system % X(1,j)
           error = dirkobj % U ((dirkobj % num_stages+1)*k - dirkobj % num_stages, 1, j) - exact(t, x)
           rmse(3) = rmse(3) + error**2.0_wp
        end do
     end do
-    rmse(3) = sqrt(rmse(3)/(system % get_num_state_vars()))
-
-    ! explicit euler
-    exp_euler = ABM(system = system, tinit=10.0d0, tfinal = 11.0d0, &
-         & h=1.0d-2, implicit = .false., accuracy_order=1)
-    call exp_euler % to_string()
-    call exp_euler % solve()
-    rmse(5) = 0.0d0
-    do j = 1, system % get_num_state_vars()
-       do k = 2,2!1, exp_euler % num_time_steps          
-          t = exp_euler % time((exp_euler % num_stages+1)*k - exp_euler % num_stages)
-          x = system % X(1,j)
-          error = exp_euler % U ((exp_euler % num_stages+1)*k - exp_euler % num_stages, 1, j) - exact(t, x)
-          rmse(5) = rmse(5) + error**2.0_wp
-       end do
-    end do
-    rmse(5) = sqrt(rmse(5)/(system % get_num_state_vars()))
+    rmse(3) = sqrt(rmse(3)/(dirkobj % num_time_steps * system % get_num_state_vars()))
     
     ! implicit euler
-    imp_euler = ABM(system = system, tinit=10.0d0, tfinal = 11.0d0, &
-         & h=1.0d-2, implicit = .true., accuracy_order=1)
+    call cpu_time(tic)
+    imp_euler = ABM(system = system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=h, implicit = .true., accuracy_order=1)
     call imp_euler % to_string()
     call imp_euler % solve()
+    call cpu_time(toc)
+    time(4) = toc - tic
     rmse(4) = 0.0d0
     do j = 1, system % get_num_state_vars()
-       do k = 2,2!1, imp_euler % num_time_steps          
+       do k = 1, imp_euler % num_time_steps          
           t = imp_euler % time((imp_euler % num_stages+1)*k - imp_euler % num_stages)
           x = system % X(1,j)
           error = imp_euler % U ((imp_euler % num_stages+1)*k - imp_euler % num_stages, 1, j) - exact(t, x)
           rmse(4) = rmse(4) + error**2.0_wp
        end do
     end do
-    rmse(4) = sqrt(rmse(4)/(system % get_num_state_vars()))
+    rmse(4) = sqrt(rmse(4)/(imp_euler % num_time_steps * system % get_num_state_vars()))
 
+    ! explicit euler
+    call cpu_time(tic)
+    exp_euler = BDF(system = system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=h, implicit = .false., accuracy_order=1)
+    call exp_euler % to_string()
+    call exp_euler % solve()
+    call cpu_time(toc)
+    time(5) = toc - tic
+    rmse(5) = 0.0d0
+    do j = 1, system % get_num_state_vars()
+       do k = 1, exp_euler % num_time_steps          
+          t = exp_euler % time((exp_euler % num_stages+1)*k - exp_euler % num_stages)
+          x = system % X(1,j)
+          error = exp_euler % U ((exp_euler % num_stages+1)*k - exp_euler % num_stages, 1, j) - exact(t, x)
+          rmse(5) = rmse(5) + error**2.0_wp
+       end do
+    end do
+    rmse(5) = sqrt(rmse(5)/(exp_euler % num_time_steps*system % get_num_state_vars()))
+    
     ! cni
-    cni = ABM(system = system, tinit=10.0d0, tfinal = 11.0d0, &
-         & h=1.0d-2, implicit = .true., accuracy_order=2)    
+    call cpu_time(tic)
+    cni = ABM(system = system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=h, implicit = .true., accuracy_order=2)    
     call cni % to_string()
     call cni % solve()
+    call cpu_time(toc)
+    time(6) = toc - tic
     rmse(6) = 0.0d0
     do j = 1, system % get_num_state_vars()
-       do k = 2,2 !1, cni % num_time_steps          
+       do k = 1, cni % num_time_steps          
           t = cni % time((cni % num_stages+1)*k - cni % num_stages)
           x = system % X(1,j)
           error = cni % U ((cni % num_stages+1)*k - cni % num_stages, 1, j) - exact(t, x)
           rmse(6) = rmse(6) + error**2.0_wp
        end do
     end do
-    rmse(6) = sqrt(rmse(6)/(system % get_num_state_vars()))
+    rmse(6) = sqrt(rmse(6)/(cni % num_time_steps*system % get_num_state_vars()))
 
     deallocate(system)
 

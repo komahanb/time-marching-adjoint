@@ -86,11 +86,12 @@ contains
        end if
 
        jac = 0.0d0
-       if (system % approximate_jacobian .eqv. .true.) then
+       if ( system % approximate_jacobian .eqv. .true. .and. &
+            & system % sparse .eqv. .false.) then
           call approximate_jacobian(system, jac, coeff, U, X)
        else
           call system % add_jacobian(jac, coeff, U, X)
-       end if       
+       end if
 
        ! Find norm of the residual
        abs_res_norm = norm(res)
