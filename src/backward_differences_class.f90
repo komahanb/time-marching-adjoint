@@ -172,7 +172,7 @@ contains
     end do
     
     ! Perform a nonlinear solution if this is a implicit method
-    if ( this % implicit ) then
+    if ( this % implicit .eqv. .true. ) then
 
        allocate(lincoeff(torder+1))         
        call this % get_linearization_coeff(p, h, lincoeff)

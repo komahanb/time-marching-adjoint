@@ -11,31 +11,33 @@ program test_time_integration
   use unsteady_transport_class  , only : unsteady_transport
   
   implicit none
+  
+  test_transport: block
 
-!!$  test_transport: block
-!!$
-!!$  class(dynamics), allocatable :: system
-!!$  type(scalar)   , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
-!!$
-!!$    ! case 1
-!!$    allocate(system, source = unsteady_transport( &
-!!$         & diffusion_coeff = 0.01_WP, &
-!!$         & convective_velocity = 1.0_WP, &
-!!$         & bounds = bounds, npts=4, &
-!!$         & sparse = .false.))
-!!$    call test_integrators(system, 'case1')
-!!$    deallocate(system)
-!!$    
-!!$    !case 2
-!!$    allocate(system, source = unsteady_transport( &
-!!$         & diffusion_coeff = 0.0_WP, &
-!!$         & convective_velocity = 1.0_WP, &
-!!$         & bounds = bounds, npts=500, &
-!!$         & sparse = .false.))
-!!$    call test_integrators(system, 'case2')
-!!$    deallocate(system)
-!!$
-!!$  end block test_transport
+    class(dynamics), allocatable :: system
+    type(scalar)   , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
+
+    ! case 1
+    allocate(system, source = unsteady_transport( &
+         & diffusion_coeff = 0.01_WP, &
+         & convective_velocity = 1.0_WP, &
+         & bounds = bounds, npts=500, &
+         & sparse = .true.))
+    call test_integrators(system, 'case1')
+    deallocate(system)
+
+    !case 2
+    allocate(system, source = unsteady_transport( &
+         & diffusion_coeff = 0.0_WP, &
+         & convective_velocity = 1.0_WP, &
+         & bounds = bounds, npts=500, &
+         & sparse = .true.))
+    call test_integrators(system, 'case2')
+    deallocate(system)
+
+  end block test_transport
+
+  stop
 
   spatial_convergence : block
 
@@ -197,7 +199,7 @@ contains
          & diffusion_coeff = 0.01_WP, &
          & convective_velocity = 1.0_WP, &
          & bounds = bounds, npts=npts, &
-         & sparse = .true.))
+         & sparse = .false.))
 
     ! dirk2
     dirkobj = DIRK(system = system, tinit=10.0d0, tfinal = 11.0d0, &
@@ -210,10 +212,13 @@ contains
           t = dirkobj % time((dirkobj % num_stages+1)*k - dirkobj % num_stages)
           x = system % X(1,j)
           error = dirkobj % U ((dirkobj % num_stages+1)*k - dirkobj % num_stages, 1, j) - exact(t, x)
+          print *, x, dirkobj % U ((dirkobj % num_stages+1)*k - dirkobj % num_stages, 1, j), exact(t, x)
           rmse(1) = rmse(1) + error**2.0_wp
        end do
     end do
     rmse(1) = sqrt(rmse(1)/(system % get_num_state_vars()))
+
+stop
 
     ! dirk 3
     dirkobj = DIRK(system = system, tinit=10.0d0, tfinal = 11.0d0, &
@@ -303,14 +308,16 @@ contains
 
     use abm_integrator_class         , only : ABM
     use runge_kutta_integrator_class , only : DIRK
+    use backward_differences_integrator_class, only : BDF
 
     class(dynamics) , intent(inout) :: test_system
     character(len=*), intent(in)    :: prefix
 
-    type(ABM)     :: exp_euler, imp_euler, cni
+    type(BDF)     :: exp_euler
+    type(ABM)     :: imp_euler, cni
     type(dirk)    :: dirkobj
-
-    exp_euler = ABM(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
+  
+    exp_euler = BDF(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
          & h=1.0d-2, implicit=.false., accuracy_order=1)
     call exp_euler % to_string()
     call exp_euler % solve()
