@@ -86,8 +86,7 @@ contains
        end if
 
        jac = 0.0d0
-       if ( system % approximate_jacobian .eqv. .true. .and. &
-            & system % sparse .eqv. .false.) then
+       if ( (system % approximate_jacobian .eqv. .true.) .and. (system % sparse .eqv. .false.) ) then
           call approximate_jacobian(system, jac, coeff, U, X)
        else
           call system % add_jacobian(jac, coeff, U, X)
@@ -119,6 +118,12 @@ contains
        else
           dq = linsolve(jac, -res)
        end if       
+
+       ! Apply BCs on dq
+       ! call system % apply_bc(dq)?
+       ! print *, 'update', dq(1), dq(nvars)
+       ! dq(1) = 0.0d0
+       ! dq(nvars) = 0.0d0
 
        forall(jj=1:system % get_differential_order() + 1)
           U(jj,:) = U(jj,:) + coeff(jj)*dq
