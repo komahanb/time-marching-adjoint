@@ -12,205 +12,233 @@ program test_time_integration
   
   implicit none
   
-!!$  test_transport: block
-!!$
-!!$    class(dynamics), allocatable :: system
-!!$    type(scalar)   , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
-!!$
-!!$    ! case 1
-!!$    allocate(system, source = unsteady_transport( &
-!!$         & diffusion_coeff = 0.01_WP, &
-!!$         & convective_velocity = 1.0_WP, &
-!!$         & bounds = bounds, npts=500, &
-!!$         & sparse = .true.))
-!!$    call test_integrators(system, 'case1')
-!!$    deallocate(system)
-!!$
-!!$    !case 2
-!!$    allocate(system, source = unsteady_transport( &
-!!$         & diffusion_coeff = 0.0_WP, &
-!!$         & convective_velocity = 1.0_WP, &
-!!$         & bounds = bounds, npts=500, &
-!!$         & sparse = .true.))
-!!$    call test_integrators(system, 'case2')
-!!$    deallocate(system)
-!!$
-!!$  end block test_transport
+  test_transport: block
 
-  spatial_convergence : block
+    class(dynamics), allocatable :: system
+    type(scalar)   , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
 
+    ! case 1
+    allocate(system, source = unsteady_transport( &
+         & diffusion_coeff = 0.01_WP, &
+         & convective_velocity = 1.0_WP, &
+         & bounds = bounds, npts=500, &
+         & sparse = .true.))
+    call test_integrators(system, 'case1')
+    deallocate(system)
+
+    !case 2
+    allocate(system, source = unsteady_transport( &
+         & diffusion_coeff = 0.0_WP, &
+         & convective_velocity = 1.0_WP, &
+         & bounds = bounds, npts=500, &
+         & sparse = .true.))
+    call test_integrators(system, 'case2')
+    deallocate(system)
+
+  end block test_transport
+
+  convergence : block
+
+    class(dynamics), allocatable :: system
+    type(scalar)   , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
     real(wp) :: rmse(6), time(6), h
-    integer  :: npts = 400
+    integer  :: npts
     integer  :: n
 
-    
-    open(13, file='timing.dat')
+    !-----------------------------------------------------------------!
+    ! Run for convection - diffusion physics
+    !-----------------------------------------------------------------!
+
+    ! File handlers
+    open(13, file='timing-case1.dat')
     write(13, *) "npts ", "h ", &
          & "dirk2 ", "dirk3 ", "dirk4 ", &
          & "imp-euler ", "exp-euler ", "cni "
     
-    ! grid spacing
-    open(12, file='spatial-error.dat')
+    open(12, file='spatial-error-case1.dat')
     write(12, *) "npts ", "h ", &
          & "dirk2 ", "dirk3 ", "dirk4 ", &
          & "imp-euler ", "exp-euler ","cni "
-    h = 0.1d0
+
+    ! Reference spacing
+    h   = 0.1d0
+    npts = 400
+
+    ! Solve for each spacing and find rmse and time
     do n = 1, 5
-       call evaluate_spatial_error(npts, h, rmse, time)
+
+       allocate(system, source = unsteady_transport( &
+            & diffusion_coeff = 0.01_WP, &
+            & convective_velocity = 1.0_WP, &
+            & bounds = bounds, npts = npts, &
+            & sparse = .true.))
+       
+       call evaluate_spatial_error(system, exact_conv_diff, h, rmse, time)
+       
        write(12, *) npts, h, rmse(1), rmse(2), rmse(3), rmse(4), rmse(5), rmse(6)
        write(13, *) npts, h, time(1), time(2), time(3), time(4), time(5), time(6)
+
+       ! Refine spacing
        h = h/2.0d0
        npts = npts*2
+
+       deallocate(system)
+
     end do
+
+    close(12)
+    close(13)
+   
+    !-----------------------------------------------------------------!
+    ! Run for diffusion physics
+    !-----------------------------------------------------------------!
+    
+    ! File handlers
+    open(13, file='timing-case2.dat')
+    write(13, *) "npts ", "h ", &
+         & "dirk2 ", "dirk3 ", "dirk4 ", &
+         & "imp-euler ", "exp-euler ", "cni "
+
+    open(12, file='spatial-error-case2.dat')
+    write(12, *) "npts ", "h ", &
+         & "dirk2 ", "dirk3 ", "dirk4 ", &
+         & "imp-euler ", "exp-euler ","cni "
+
+    ! Reference spacing
+    h = 0.1d0
+    npts = 400
+
+    ! Solve for each spacing and find rmse and time
+    do n = 1, 5
+
+       allocate(system, source = unsteady_transport( &
+            & diffusion_coeff = 0.00_WP, &
+            & convective_velocity = 1.0_WP, &
+            & bounds = bounds, npts = npts, &
+            & sparse = .true.))
+
+       call evaluate_spatial_error(system, exact_diff, h, rmse, time)
+
+       write(12, *) npts, h, rmse(1), rmse(2), rmse(3), rmse(4), rmse(5), rmse(6)
+       write(13, *) npts, h, time(1), time(2), time(3), time(4), time(5), time(6)
+
+       ! Refine spacing
+       h = h/2.0d0
+       npts = npts*2
+
+       deallocate(system)
+
+    end do
+
     close(12)
     close(13)
 
-  end block spatial_convergence
-
-!!$  temporal_convergence : block
-!!$
-!!$    real(wp) :: rmse(3), h
-!!$    integer  :: nsteps = 1000
-!!$    integer  :: n
-!!$
-!!$    ! grid spacing
-!!$    open(12, file='imp-euler-temporal-error.dat')
-!!$    write(12, *) "nsteps ", "h ", "rmse1 ", "rmse2 ", "rmse3 "
-!!$
-!!$    do n = 1, 5
-!!$       h = 5.0d0/dble(nsteps+1)
-!!$       call evaluate_temporal_error(nsteps, rmse)
-!!$       write(12, *) nsteps, h, rmse(1), rmse(2), rmse(3)
-!!$       nsteps = nsteps*2
-!!$    end do
-!!$
-!!$    close(12)
-!!$
-!!$  end block temporal_convergence
+  end block convergence
 
 contains
 
-!!$  subroutine evaluate_temporal_error(nsteps, rmse)
-!!$
-!!$    use dynamic_physics_interface             , only : dynamics
-!!$    use backward_differences_integrator_class , only : bdf
-!!$    use unsteady_transport_class              , only : unsteady_transport   
-!!$
-!!$    integer         , intent(in)  :: nsteps
-!!$    real(wp)        , intent(inout) :: rmse(3)
-!!$    type(scalar)    , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
-!!$    class(dynamics) , allocatable :: system
-!!$    type(bdf)                     :: bdfobj
-!!$    integer                       :: j, k
-!!$    real(wp)                      :: error, t, x
-!!$    real(wp) :: h
-!!$
-!!$    h = (15.0_wp - 10.0_wp)/dble(nsteps+1)
-!!$
-!!$    ! Case 1
-!!$    allocate(system, source = unsteady_transport( &
-!!$         & diffusion_coeff = 0.01_WP, &
-!!$         & convective_velocity = 1.0_WP, &
-!!$         & bounds = bounds, npts = 1000, &
-!!$         & sparse = .true.))
-!!$
-!!$    ! create integrator with supplied mesh resolution
-!!$    bdfobj = BDF(system = system, tinit=10.0d0, tfinal = 15.0d0, &
-!!$         & h=h, implicit = .false., accuracy_order=1)
-!!$    call bdfobj % to_string()
-!!$    call bdfobj % solve()
-!!$
-!!$    ! find rmse at the last time step
-!!$    rmse(1) = 0.0d0   
-!!$    do j = 1, system % get_num_state_vars()
-!!$       do k = 1, bdfobj % num_time_steps
-!!$          t = bdfobj % time(k)
-!!$          x = system % X(1,j+1)
-!!$          error = bdfobj % U (k, 1, j) - exact(t, x)
-!!$          rmse(1) = rmse(1) + error**2.0_wp
-!!$       end do
-!!$    end do
-!!$    rmse(1) = sqrt(rmse(1)/(system % get_num_state_vars()*bdfobj % num_time_steps))
-!!$
-!!$    ! create integrator with supplied mesh resolution
-!!$    bdfobj = BDF(system = system, tinit=10.0d0, tfinal = 15.0d0, &
-!!$         & h=h, implicit = .true., accuracy_order=1)
-!!$    call bdfobj % to_string()
-!!$    call bdfobj % solve()
-!!$    
-!!$    ! find rmse at the last time step
-!!$    rmse(2) = 0.0d0
-!!$    do j = 1, system % get_num_state_vars()
-!!$       do k = 1, bdfobj % num_time_steps
-!!$          t = bdfobj % time(k)
-!!$          x = system % X(1,j+1)
-!!$          error = bdfobj % U (k, 1, j) - exact(t, x)
-!!$          rmse(2) = rmse(2) + erevaluror**2.0_wp
-!!$       end do
-!!$    end do
-!!$    rmse(2) = sqrt(rmse(2)/(system % get_num_state_vars()*bdfobj % num_time_steps))
-!!$
-!!$    ! create integrator with supplied mesh resolution
-!!$    bdfobj = BDF(system = system, tinit=10.0d0, tfinal = 15.0d0, &
-!!$         & h=h, implicit = .true., accuracy_order=2)
-!!$    call bdfobj % to_string()
-!!$    call bdfobj % solve()
-!!$
-!!$    ! find rmse at the last time step
-!!$    rmse(3) = 0.0d0
-!!$    do j = 1, system % get_num_state_vars()
-!!$       do k = 1, bdfobj % num_time_steps
-!!$          t = bdfobj % time(k)
-!!$          x = system % X(1,j+1)
-!!$          error = bdfobj % U (k, 1, j) - exact(t, x)
-!!$          rmse(3) = rmse(3) + error**2.0_wp
-!!$       end do
-!!$    end do
-!!$    rmse(3) = sqrt(rmse(3)/(system % get_num_state_vars()*bdfobj % num_time_steps))
-!!$
-!!$    deallocate(system)
-!!$
-!!$  end subroutine evaluate_temporal_error
+  subroutine test_integrators(test_system, prefix)
 
-  pure real(wp) function exact(t,x) result(val)
+    use abm_integrator_class         , only : ABM
+    use runge_kutta_integrator_class , only : DIRK
+    use backward_differences_integrator_class, only : BDF
+
+    class(dynamics) , intent(inout) :: test_system
+    character(len=*), intent(in)    :: prefix
+
+    type(BDF)     :: exp_euler
+    type(ABM)     :: imp_euler, cni
+    type(dirk)    :: dirkobj
+  
+    exp_euler = BDF(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=1.0d-2, implicit=.false., accuracy_order=1)
+    call exp_euler % to_string()
+    call exp_euler % solve()
+    call exp_euler % write_solution(trim(prefix)//"-transport-explicit-euler.dat")
+
+    imp_euler = ABM(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=1.0d-2, implicit=.true., accuracy_order=1)
+    call imp_euler % to_string()
+    call imp_euler % solve()
+    call imp_euler % write_solution(trim(prefix)//"-transport-implicit-euler.dat")
+
+    cni = ABM(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=1.0d-2, implicit=.true., accuracy_order=2)
+    call cni % to_string()
+    call cni % solve()
+    call cni % write_solution(trim(prefix)//"-transport-cni.dat")
+
+    dirkobj = DIRK(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=1.0d-2, implicit=.true., accuracy_order=2)
+    call dirkobj % to_string()
+    call dirkobj % solve()
+    call dirkobj % write_solution(trim(prefix)//"-transport-implicit-dirk2.dat")
+
+    dirkobj = DIRK(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=1.0d-2, implicit=.true., accuracy_order=3)
+    call dirkobj % to_string()
+    call dirkobj % solve()
+    call dirkobj % write_solution(trim(prefix)//"-transport-implicit-dirk3.dat")
+
+    dirkobj = DIRK(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
+         & h=1.0d-2, implicit=.true., accuracy_order=4)
+    call dirkobj % to_string()
+    call dirkobj % solve()
+    call dirkobj % write_solution(trim(prefix)//"-transport-implicit-dirk4.dat")
+
+  end subroutine test_integrators
+
+
+  ! Exact solution for convection-diffusion  
+  pure real(wp) function exact_conv_diff(t,x) result(val)
 
     real(wp), intent(in) :: t, x
     real(wp), parameter :: PI = 4.0_wp*atan(1.0_wp)
     real(wp), parameter :: gamma = 0.01_wp
 
-    val = (4.0_wp*pi*gamma*t)**(-0.5_wp)*exp(-((x-t)**2.0_wp)/(4.0_wp*gamma*t))
+    val = (4.0_wp*pi*gamma*t)**(-0.5_wp)*exp(-((x-t)**2.0_wp)/(4.0_wp*gamma*t))   
+    
+  end function exact_conv_diff
 
-  end function exact
-  
-  subroutine evaluate_spatial_error(npts, h, rmse, time)
+  ! Exact solution for diffusion
+  pure real(wp) function exact_diff(t,x) result(val)
+
+    real(wp), intent(in) :: t, x
+    real(wp), parameter :: PI = 4.0_wp*atan(1.0_wp)
+    real(wp), parameter :: gamma = 0.01_wp
+
+    val = (0.4_wp*PI)**(-0.5_wp)*exp(-2.5_wp*(x-t)*(x-t))
+    
+  end function exact_diff
+
+  subroutine evaluate_spatial_error(system, exact, h, rmse, time)
 
     use dynamic_physics_interface             , only : dynamics
-    use unsteady_transport_class              , only : unsteady_transport
-    
+    use unsteady_transport_class              , only : unsteady_transport    
     use backward_differences_integrator_class , only : bdf
     use abm_integrator_class                  , only : ABM
     use runge_kutta_integrator_class          , only : DIRK
     
-    integer         , intent(in)  :: npts
-    real(wp)        , intent(out) :: rmse(6), time(6)
-    type(scalar)    , parameter   :: bounds(2) = [5.0_wp, 45.0_wp]
-    class(dynamics) , allocatable :: system
-    integer                       :: j, k
-    real(wp)                      :: error, t, x, h
-    
+    ! Arguments
+    class(dynamics), intent(in) :: system   
+    interface
+       pure real(8) function exact(t, x)
+         real(8), intent(in) ::  t, x
+       end function exact
+    end interface
+    real(wp), intent(in) :: h
+    real(wp) , intent(out) :: rmse(6), time(6)
+
+    ! Integrators used
     type(ABM)     :: imp_euler, cni
     type(BDF)     :: exp_euler
     type(dirk)    :: dirkobj
 
+    ! Locals
     real(wp) :: tic, toc
+    integer :: j, k
+    real(wp) :: error, t, x
     
-    ! Case 1
-    allocate(system, source = unsteady_transport( &
-         & diffusion_coeff = 0.01_WP, &
-         & convective_velocity = 1.0_WP, &
-         & bounds = bounds, npts=npts, &
-         & sparse = .true.))
-
     ! dirk2
     call cpu_time(tic)           
     dirkobj = DIRK(system = system, tinit=10.0d0, tfinal = 40.0d0, &
@@ -325,60 +353,7 @@ contains
     end do
     rmse(6) = sqrt(rmse(6)/(cni % num_time_steps*system % get_num_state_vars()))
 
-    deallocate(system)
-
   end subroutine evaluate_spatial_error
-
-  subroutine test_integrators(test_system, prefix)
-
-    use abm_integrator_class         , only : ABM
-    use runge_kutta_integrator_class , only : DIRK
-    use backward_differences_integrator_class, only : BDF
-
-    class(dynamics) , intent(inout) :: test_system
-    character(len=*), intent(in)    :: prefix
-
-    type(BDF)     :: exp_euler
-    type(ABM)     :: imp_euler, cni
-    type(dirk)    :: dirkobj
-  
-    exp_euler = BDF(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
-         & h=1.0d-2, implicit=.false., accuracy_order=1)
-    call exp_euler % to_string()
-    call exp_euler % solve()
-    call exp_euler % write_solution(trim(prefix)//"-transport-explicit-euler.dat")
-
-    imp_euler = ABM(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
-         & h=1.0d-2, implicit=.true., accuracy_order=1)
-    call imp_euler % to_string()
-    call imp_euler % solve()
-    call imp_euler % write_solution(trim(prefix)//"-transport-implicit-euler.dat")
-
-    cni = ABM(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
-         & h=1.0d-2, implicit=.true., accuracy_order=2)
-    call cni % to_string()
-    call cni % solve()
-    call cni % write_solution(trim(prefix)//"-transport-cni.dat")
-
-    dirkobj = DIRK(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
-         & h=1.0d-2, implicit=.true., accuracy_order=2)
-    call dirkobj % to_string()
-    call dirkobj % solve()
-    call dirkobj % write_solution(trim(prefix)//"-transport-implicit-dirk2.dat")
-
-    dirkobj = DIRK(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
-         & h=1.0d-2, implicit=.true., accuracy_order=3)
-    call dirkobj % to_string()
-    call dirkobj % solve()
-    call dirkobj % write_solution(trim(prefix)//"-transport-implicit-dirk3.dat")
-
-    dirkobj = DIRK(system = test_system, tinit=10.0d0, tfinal = 40.0d0, &
-         & h=1.0d-2, implicit=.true., accuracy_order=4)
-    call dirkobj % to_string()
-    call dirkobj % solve()
-    call dirkobj % write_solution(trim(prefix)//"-transport-implicit-dirk4.dat")
-
-  end subroutine test_integrators
 
 end program test_time_integration
 
