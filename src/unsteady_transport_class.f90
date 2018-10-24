@@ -75,6 +75,10 @@ contains
     ! Sparse or dense assembly
     this % sparse = sparse
 
+    ! Use FD jacobian or supplied jacobian
+    this % approximate_jacobian = .false.
+
+    ! Node locations
     allocate(this % X(3,npts+2)); this % X = 0.0_wp;
     this % dx = (bounds(2) - bounds(1))/dble(npts+1)
     do i = 1, npts + 2
@@ -124,11 +128,11 @@ contains
     c = (vel/(2.0_wp*this % dx) - gamma/(this % dx*this % dx))
 
     ! Residual with BC applied
-    residual(1) = residual(1) + phi(1) - d
+    residual(1) = residual(1) + phidot(1) + phi(1) - d
     forall(i = 2 : npts-1)
        residual(i) = residual(i) + phidot(i) + a*phi(i-1) + b*phi(i) + c*phi(i+1) 
     end forall
-    residual(npts) = residual(npts) + phi(npts) - e
+    residual(npts) = residual(npts) + phidot(npts) + phi(npts) - e
 
   end associate
   
@@ -161,20 +165,20 @@ contains
 
       if (this % sparse .eqv. .true.) then
          
-         jacobian(1,:) = jacobian(1,:) + [0.0d0, alpha*1.0d0, 0.0d0]
+         jacobian(1,:) = jacobian(1,:) + [0.0d0, beta*1.0d0 + alpha*1.0d0, 0.0d0]
          do concurrent(i = 2:npts-1)
             jacobian(i,:) = jacobian(i,:) + [alpha*aa, beta + alpha*bb, alpha*cc]
          end do
-         jacobian(npts,:) = jacobian(npts,:) + [0.0d0, alpha*1.0d0, 0.0d0]
+         jacobian(npts,:) = jacobian(npts,:) + [0.0d0, beta*1.0d0 + alpha*1.0d0, 0.0d0]
 
       else
 
-         jacobian(1,1) = alpha*1.0d0
+         jacobian(1,1) = beta*1.0d0 + alpha*1.0d0
          do i = 2, npts-1
             do j = 1, npts
                if (i .eq. j-1) then
                   ! upper diagonal
-                  jacobian(i,j) = jacobian(i,j) + alpha*cc 
+                  jacobian(i,j) = jacobian(i,j) + alpha*cc
                else if (i .eq. j) then
                   ! diagonal
                   jacobian(i,i) = jacobian(i,j) + beta + alpha*bb
@@ -185,7 +189,7 @@ contains
                end if
             end do
          end do
-         jacobian(npts,npts) = alpha*1.0d0
+         jacobian(npts,npts) = beta*1.0d0 + alpha*1.0d0
 
       end if
 
