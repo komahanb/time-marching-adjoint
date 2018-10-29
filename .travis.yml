@@ -33,7 +33,7 @@ install:
   - make
   
 script:
-  - ./test_marching
+  - ./test_unsteady_transport
 
 after_success:
 - coveralls
