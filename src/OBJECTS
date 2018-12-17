@@ -33,6 +33,7 @@ rigidbody_dynamics_class.o \
 test_ode_class.o \
 decay_ode_class.o \
 utils.o \
+module_random_number.o \
 lapack.o \
 linear_algebra.o \
 nonlinear.o\

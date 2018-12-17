@@ -143,7 +143,7 @@ contains
     
     ! Write data
     loop_time: do k = 1, this % total_num_steps
-       write(90, *) this % time(k), this % U (k,1,:)
+       write(90, *) this % time(k), this % U (k,1,:), this % U (k,2,:)
     end do loop_time
     
 !!$    ! Write data

@@ -15,7 +15,7 @@ program test
   class(dynamics), allocatable :: system
   type(bdf)                    :: bdfobj
 
-  allocate(system, source = decay(gamma = 0.0d0))
+  allocate(system, source = decay(gamma = 1.0d0))
   bdfobj = BDF(system = system, tinit=0.0d0, tfinal = 1.0d0, &
        & h=1.0d-3, implicit=.true., accuracy_order=2)
   call bdfobj % to_string()
