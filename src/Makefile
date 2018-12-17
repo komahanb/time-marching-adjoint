@@ -1,6 +1,6 @@
 include ../Makefile.in
 
-program = test_unsteady_transport
+program = test_stochastic_marching
 
 #=====================================================================#
 # Object Files

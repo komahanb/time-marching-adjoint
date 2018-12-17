@@ -141,22 +141,22 @@ contains
        return
     end if
     
-!!$    ! Write data
-!!$    loop_time: do k = 1, this % total_num_steps
-!!$       write(90, *) this % time(k), this % U (k,1,:)
-!!$    end do loop_time
-    
     ! Write data
-    write(90, *) "time ", "x ", "y ", "z ",  "state "
-    loop_vars : do j = 1, this % system % get_num_state_vars()
-       loop_time: do k = 1, this % num_time_steps !total_num_steps !
-          write(90, *) this % time((this % num_stages+1)*k - this % num_stages), &
-               & this % system % x(1,j), &
-               & this % system % x(2,j), &
-               & this % system % x(3,j), &
-               & this % U ((this % num_stages+1)*k - this % num_stages, 1, j)
-       end do loop_time
-    end do loop_vars
+    loop_time: do k = 1, this % total_num_steps
+       write(90, *) this % time(k), this % U (k,1,:)
+    end do loop_time
+    
+!!$    ! Write data
+!!$    write(90, *) "time ", "x ", "y ", "z ",  "state "
+!!$    loop_vars : do j = 1, this % system % get_num_state_vars()
+!!$       loop_time: do k = 1, this % num_time_steps !total_num_steps !
+!!$          write(90, *) this % time((this % num_stages+1)*k - this % num_stages), &
+!!$               & this % system % x(1,j), &
+!!$               & this % system % x(2,j), &
+!!$               & this % system % x(3,j), &
+!!$               & this % U ((this % num_stages+1)*k - this % num_stages, 1, j)
+!!$       end do loop_time
+!!$    end do loop_vars
     
     ! Close resource
     close(90)
