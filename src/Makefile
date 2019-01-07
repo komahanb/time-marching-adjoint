@@ -1,6 +1,6 @@
 include ../Makefile.in
 
-program = test_stochastic_marching
+program = test_marching
 
 #=====================================================================#
 # Object Files

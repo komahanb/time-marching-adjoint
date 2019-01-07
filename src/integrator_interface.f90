@@ -143,7 +143,10 @@ contains
     
     ! Write data
     loop_time: do k = 1, this % total_num_steps
-       write(90, *) this % time(k), this % U (k,1,:), this % U (k,2,:)
+       if (mod(k-1,this % num_stages+1) .eq. 0) then
+          ! Generalize this based on differential order
+          write(90, *) this % time(k), this % U (k,1,:), this % U (k,2,:), this % U (k,3,:)
+       end if
     end do loop_time
     
 !!$    ! Write data
