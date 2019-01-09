@@ -31,6 +31,7 @@ spring_dynamics_class.o \
 freefall_dynamics_class.o \
 rigidbody_dynamics_class.o \
 test_ode_class.o \
+first_order_ode_class.o \
 decay_ode_class.o \
 utils.o \
 module_random_number.o \

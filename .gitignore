@@ -1,5 +1,6 @@
 # Compiled objects and modules
 *.log
+*.dat 
 *.mod
 *.o
 *.out
