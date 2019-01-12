@@ -15,12 +15,13 @@ for i in range(len(colors)):
     r, g, b = colors[i]    
     colors[i] = (r / 255., g / 255., b / 255.)
     
+#def exact_solution(t):
+#    return 50 - 2*np.exp(-0.196*t)
+
 def exact_solution(t):
-    return 50 - 2*np.exp(-0.196*t)
+    return -0.5*np.exp(-6.0*t) -2.0*t*np.exp(-6.0*t)
 
 def get_error(sets, xkey, ykey, exact):
-    """
-    """
     error_data = {}
     keys = sets.keys()
     for key in keys:
@@ -70,7 +71,7 @@ def plot_solution(sets, xkey, ykey, name):
     for key in keys:
         cidx += 2
         data = sets[key]
-        plt.semilogy(data[xkey], data[ykey], '-' , lw=3, mec='black', label=key, color=colors[cidx])
+        plt.semilogy(data[xkey], data[ykey], '-' , lw=3, mec='black', label=key)
         
     # Axis formatting
     plt.legend(loc='upper right')
@@ -102,8 +103,7 @@ def plot_refinement(sets, xkey, ykey, name):
         data = sets[key]
         plt.loglog(data[xkey], data[ykey], '-' ,
                    lw=3, mec='black',
-                   label=key,
-                   color=colors[cidx])
+                   label=key)
     # Axis formatting
     plt.legend(loc='lower left')
     plt.xlabel(xkey)
@@ -152,15 +152,24 @@ def invertmap(sets):
 
 def get_files(n):
     files = {}
-    files['bdf1']  = 'fode-bdf1-'  + n + '.dat'
-    files['bdf2']  = 'fode-bdf2-'  + n + '.dat'
-    files['bdf3']  = 'fode-bdf3-'  + n + '.dat'
-    files['dirk2'] = 'fode-dirk2-' + n + '.dat'
-    files['dirk3'] = 'fode-dirk3-' + n + '.dat'
-    files['dirk4'] = 'fode-dirk4-' + n + '.dat'
-    files['abm1']  = 'fode-abm1-'  + n + '.dat'
-    files['abm2']  = 'fode-abm2-'  + n + '.dat'
-    files['abm3']  = 'fode-abm3-'  + n + '.dat'
+    files['bdf1']  = 'smd-bdf1-'  + n + '.dat'
+    files['bdf2']  = 'smd-bdf2-'  + n + '.dat'
+    files['bdf3']  = 'smd-bdf3-'  + n + '.dat'
+    files['bdf4']  = 'smd-bdf4-'  + n + '.dat'
+    files['bdf5']  = 'smd-bdf5-'  + n + '.dat'
+    files['bdf6']  = 'smd-bdf6-'  + n + '.dat'
+    
+    files['dirk2'] = 'smd-dirk2-' + n + '.dat'
+    files['dirk3'] = 'smd-dirk3-' + n + '.dat'
+    files['dirk4'] = 'smd-dirk4-' + n + '.dat'
+    
+    files['abm1']  = 'smd-abm1-'  + n + '.dat'
+    files['abm2']  = 'smd-abm2-'  + n + '.dat'
+    files['abm3']  = 'smd-abm3-'  + n + '.dat'
+    files['abm4']  = 'smd-abm4-'  + n + '.dat'
+    files['abm5']  = 'smd-abm5-'  + n + '.dat'
+    files['abm6']  = 'smd-abm6-'  + n + '.dat'
+    
     return files
 
 def get_numerical_orders(data):
@@ -185,7 +194,7 @@ sizes = ['1250', '2500', '5000', '10000']
 RMSE = {}
 for size in sizes:
     RMSE[size] = find_rmse(get_files(size))    
-print RMSE
+#print RMSE
 
 rmse = invertmap(RMSE)
 plot_refinement(rmse, 'spacing', 'error', 'convergence.pdf')

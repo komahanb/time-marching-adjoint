@@ -94,8 +94,8 @@ contains
 
        ! Find norm of the residual
        abs_res_norm = norm(res)
-       if ( n .eq. 1) init_norm = abs_res_norm
-       rel_res_norm = abs_res_norm/init_norm
+       if ( n .eq. 1) init_norm = abs_res_norm       
+       rel_res_norm = abs_res_norm/(init_norm + tiny(1.0d0))
 
        if ( print_level .eq. 2) then
           write(*, "(I10,2ES12.2)") n, abs_res_norm, rel_res_norm

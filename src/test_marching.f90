@@ -18,12 +18,15 @@ program test_time_integration
   class(dynamics), allocatable :: sys
 
   test_vanderpol: block
-    !allocate(sys, source = smd(1.0d0, 0.5d0, 5.0d0))
+    !allocate(sys, source = smd(0.5d0, 6.0d0, 18.0d0))
     allocate(sys, source = FODE(9.8d0, -0.196d0))
     !allocate(sys, source = fvanderpol(1.0d0))
     !allocate(sys, source = freefall(1.0d0, -10.0d0))
     !allocate(sys, source = ODE(A=[2.0d0, 2.0d0, 2.0d0], order=4, nvars=3))
     call test_integrators(sys, 0.0d0, 10.0d0, 1250, "-1250")
+    call test_integrators(sys, 0.0d0, 10.0d0, 2500, "-2500")
+    call test_integrators(sys, 0.0d0, 10.0d0, 5000, "-5000")
+    call test_integrators(sys, 0.0d0, 10.0d0, 10000, "-10000")
     deallocate(sys)
   end block test_vanderpol
 
@@ -53,69 +56,93 @@ contains
          & h=h, implicit=.true., accuracy_order=2)
     call dirkobj % to_string()
     call dirkobj % solve()
-    call dirkobj % write_solution("fode-dirk2"//suffix//".dat")
+    call dirkobj % write_solution("smd-dirk2"//suffix//".dat")
 
     dirkobj = DIRK(system = test_system, tinit=tinit, tfinal = tfinal, &
          & h=h, implicit=.true., accuracy_order=3)
     call dirkobj % to_string()
     call dirkobj % solve()
-    call dirkobj % write_solution("fode-dirk3"//suffix//".dat")
+    call dirkobj % write_solution("smd-dirk3"//suffix//".dat")
 
     dirkobj = DIRK(system = test_system, tinit=tinit, tfinal = tfinal, &
          & h=h, implicit=.true., accuracy_order=4)
     call dirkobj % to_string()
     call dirkobj % solve()
-    call dirkobj % write_solution("fode-dirk4"//suffix//".dat")
+    call dirkobj % write_solution("smd-dirk4"//suffix//".dat")
 
     ! bdf
     bdfobj = BDF(system = test_system, tinit=tinit, tfinal = tfinal, &
          & h=h, implicit=.true., accuracy_order=1)
     call bdfobj % to_string()
     call bdfobj % solve()
-    call bdfobj % write_solution("fode-bdf1"//suffix//".dat")
+    call bdfobj % write_solution("smd-bdf1"//suffix//".dat")
 
     bdfobj = BDF(system = test_system, tinit=tinit, tfinal = tfinal, &
          & h=h, implicit=.true., accuracy_order=2)
     call bdfobj % to_string()
     call bdfobj % solve()
-    call bdfobj % write_solution("fode-bdf2"//suffix//".dat")
+    call bdfobj % write_solution("smd-bdf2"//suffix//".dat")
 
     bdfobj = BDF(system = test_system, tinit=tinit, tfinal = tfinal, &
          & h=h, implicit=.true., accuracy_order=3)
     call bdfobj % to_string()
     call bdfobj % solve()
-    call bdfobj % write_solution("fode-bdf3"//suffix//".dat")
+    call bdfobj % write_solution("smd-bdf3"//suffix//".dat")
 
     bdfobj = BDF(system = test_system, tinit=tinit, tfinal = tfinal, &
          & h=h, implicit=.true., accuracy_order=4)
     call bdfobj % to_string()
     call bdfobj % solve()
-    call bdfobj % write_solution("fode-bdf4"//suffix//".dat")
+    call bdfobj % write_solution("smd-bdf4"//suffix//".dat")
+
+    bdfobj = BDF(system = test_system, tinit=tinit, tfinal = tfinal, &
+         & h=h, implicit=.true., accuracy_order=5)
+    call bdfobj % to_string()
+    call bdfobj % solve()
+    call bdfobj % write_solution("smd-bdf5"//suffix//".dat")
+
+    bdfobj = BDF(system = test_system, tinit=tinit, tfinal = tfinal, &
+         & h=h, implicit=.true., accuracy_order=6)
+    call bdfobj % to_string()
+    call bdfobj % solve()
+    call bdfobj % write_solution("smd-bdf6"//suffix//".dat")
 
     ! abm
     abmobj = ABM(system = test_system, tinit=tinit, tfinal = tfinal, &
          & h=h, implicit=.true., accuracy_order=1)
     call abmobj % to_string()
     call abmobj % solve()
-    call abmobj % write_solution("fode-abm1"//suffix//".dat")
+    call abmobj % write_solution("smd-abm1"//suffix//".dat")
 
     abmobj = ABM(system = test_system, tinit=tinit, tfinal = tfinal, &
          & h=h, implicit=.true., accuracy_order=2)
     call abmobj % to_string()
     call abmobj % solve()
-    call abmobj % write_solution("fode-abm2"//suffix//".dat")
+    call abmobj % write_solution("smd-abm2"//suffix//".dat")
 
     abmobj = ABM(system = test_system, tinit=tinit, tfinal = tfinal, &
          & h=h, implicit=.true., accuracy_order=3)
     call abmobj % to_string()
     call abmobj % solve()
-    call abmobj % write_solution("fode-abm3"//suffix//".dat")
+    call abmobj % write_solution("smd-abm3"//suffix//".dat")
 
     abmobj = ABM(system = test_system, tinit=tinit, tfinal = tfinal, &
          & h=h, implicit=.true., accuracy_order=4)
     call abmobj % to_string()
     call abmobj % solve()
-    call abmobj % write_solution("fode-abm4"//suffix//".dat")
+    call abmobj % write_solution("smd-abm4"//suffix//".dat")
+
+    abmobj = ABM(system = test_system, tinit=tinit, tfinal = tfinal, &
+         & h=h, implicit=.true., accuracy_order=5)
+    call abmobj % to_string()
+    call abmobj % solve()
+    call abmobj % write_solution("smd-abm5"//suffix//".dat")
+
+    abmobj = ABM(system = test_system, tinit=tinit, tfinal = tfinal, &
+         & h=h, implicit=.true., accuracy_order=6)
+    call abmobj % to_string()
+    call abmobj % solve()
+    call abmobj % write_solution("smd-abm6"//suffix//".dat")
 
   end subroutine test_integrators
 

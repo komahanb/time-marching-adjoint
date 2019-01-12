@@ -153,7 +153,7 @@ contains
     type(scalar) , intent(inout) :: U(:,:)
     type(scalar) , intent(in)    :: X(:,:)
     
-    U(1,:) = 0.0_WP
+    U(1,:) = -0.5_WP
     U(2,:) = 1.0_WP 
     
   end subroutine get_initial_condition
